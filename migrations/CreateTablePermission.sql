@@ -1,5 +1,5 @@
-CREATE TABLE "permission" (
+CREATE TABLE IF NOT EXISTS "permission" (
   "id" serial PRIMARY KEY,
-  "name" varchar,
+  "name" varchar NOT NULL,
   "description" text
 );

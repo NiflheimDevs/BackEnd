@@ -1,12 +1,13 @@
-CREATE TABLE "bid" (
+CREATE TABLE IF NOT EXISTS "bid" (
   "id" serial PRIMARY KEY,
-  "user_team_id" int,
-  "projet_id" int,
-  "value" numeric,
-  "expected_time" datetime,
-  "type" int,
-  FOREIGN KEY ("projet_id") REFERENCES "project" ("id"),
-  FOREIGN KEY ("user_team_id") REFERENCES "user" ("id"),
-  FOREIGN KEY ("user_team_id") REFERENCES "team" ("id"),
-  FOREIGN KEY ("id") REFERENCES "project" ("selected_bid_id")
+  "team_id" int NOT NULL,
+  "project_id" int NOT NULL,
+  "value" numeric NOT NULL,
+  "expected_time" timestamp NOT NULL,
+  "created_time" timestamp NOT NULL,
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id")
 );
+
+ALTER TABLE bid
+ADD FOREIGN KEY ("project_id")
+REFERENCES "project" ("id");

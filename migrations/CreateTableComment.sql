@@ -1,9 +1,9 @@
-CREATE TABLE "comment" (
+CREATE TABLE IF NOT EXISTS "comment" (
   "id" serial PRIMARY KEY,
-  "from_user_id" int,
-  "to_user_id" int,
+  "project_id" int NOT NULL,
+  "bid_id" int NOT NULL,
   "content" text,
-  "rating" int,
-  FOREIGN KEY ("from_user_id") REFERENCES "user" ("id"),
-  FOREIGN KEY ("to_user_id") REFERENCES "user" ("id")
+  "rating" int NOT NULL,
+  FOREIGN KEY ("project_id") REFERENCES "project" ("id"),
+  FOREIGN KEY ("bid_id") REFERENCES "bid" ("id")
 );

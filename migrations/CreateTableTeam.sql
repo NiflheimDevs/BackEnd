@@ -1,4 +1,5 @@
-CREATE TABLE "team" (
+CREATE TABLE IF NOT EXISTS "team" (
   "id" serial PRIMARY KEY,
-  "title" varchar
+  "title" varchar,
+  "description" text
 );
