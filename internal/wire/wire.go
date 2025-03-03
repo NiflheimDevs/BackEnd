@@ -1,3 +1,6 @@
+//go:build wireinject
+// +build wireinject
+
 package wire
 
 import (
@@ -15,3 +18,20 @@ var ServiceProviderSet = wire.NewSet(
 var HandlerProviderSet = wire.NewSet(
 	handlers.NewUserHandler,
 )
+
+var ProviderSet = wire.NewSet(
+	DatabaseProviderSet,
+	ServiceProviderSet,
+	HandlerProviderSet,
+)
+
+type Application struct {
+}
+
+func InitializeApplication() (*Application, error) {
+	wire.Build(
+		ProviderSet,
+		wire.Struct(new(Application), "*"),
+	)
+	return &Application{}, nil
+}
