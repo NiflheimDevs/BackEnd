@@ -7,7 +7,7 @@ type Constants struct {
 }
 
 type DBConst struct {
-	MaxOpenDbConn int
+	MaxOpenDbConn int32
 	MaxIdleDbConn time.Duration
 	MaxDbLifeTime time.Duration
 }

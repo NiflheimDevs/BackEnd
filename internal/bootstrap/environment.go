@@ -20,7 +20,10 @@ type Database struct {
 }
 
 func NewEnvironment() *Env {
-	godotenv.Load(".env")
+	err := godotenv.Load("../.env")
+	if err != nil {
+		panic(err)
+	}
 	return &Env{
 		DB: Database{
 			DB_Host:      os.Getenv("DB_HOST"),
