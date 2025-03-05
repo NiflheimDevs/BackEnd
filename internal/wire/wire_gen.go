@@ -9,6 +9,7 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	"github.com/niflheimdevs/backend/internal/services"
@@ -16,7 +17,8 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApplication(db *pgxpool.Pool) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Application, error) {
+	constants := ProvideConstants(container)
 	userRepo := repositories.UserRepo{
 		PG: db,
 	}
@@ -24,6 +26,7 @@ func InitializeApplication(db *pgxpool.Pool) (*Application, error) {
 		UserRepo: userRepo,
 	}
 	userHandler := &handlers.UserHandler{
+		Constants:   constants,
 		UserService: userService,
 	}
 	application := &Application{
@@ -39,6 +42,10 @@ var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"))
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"))
 
 var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"))
+
+func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
+	return container.Const
+}
 
 var ProviderSet = wire.NewSet(
 	RepoProviderSet,
