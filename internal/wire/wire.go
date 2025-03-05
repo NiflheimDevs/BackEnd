@@ -18,8 +18,8 @@ var RepoProviderSet = wire.NewSet(
 )
 
 var ServiceProviderSet = wire.NewSet(
-	// services.NewUserService,
 	wire.Struct(new(services.UserService), "*"),
+	wire.Struct(new(services.JWTToken), "*"),
 )
 
 var HandlerProviderSet = wire.NewSet(

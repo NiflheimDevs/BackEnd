@@ -1,0 +1,46 @@
+package services
+
+import (
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	jwt_keys "github.com/niflheimdevs/backend/internal/jwt"
+)
+
+type JWTToken struct{}
+
+func NewJWTToken() *JWTToken {
+	return &JWTToken{}
+}
+
+func (jt *JWTToken) GenerateToken(userID int) (string, string) {
+	jwtKeys := jwt_keys.GetJWTKeys()
+
+	accessTokenClaims := jwt.MapClaims{
+		"iss": "test",
+		"sub": userID,
+		"exp": time.Now().Add(time.Minute * 15).Unix(),
+		"iat": time.Now().Unix(),
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessTokenClaims)
+	accessTokenString, err := accessToken.SignedString(jwtKeys.PrivateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	refreshTokenClaims := jwt.MapClaims{
+		"iss": "test",
+		"sub": userID,
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"iat": time.Now().Unix(),
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, refreshTokenClaims)
+	refreshTokenString, err := refreshToken.SignedString(jwtKeys.PrivateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	return accessTokenString, refreshTokenString
+}
