@@ -25,9 +25,11 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Applicat
 	userService := services.UserService{
 		UserRepo: userRepo,
 	}
+	jwtToken := services.JWTToken{}
 	userHandler := &handlers.UserHandler{
 		Constants:   constants,
 		UserService: userService,
+		JWTService:  jwtToken,
 	}
 	application := &Application{
 		UserHandler: userHandler,
@@ -39,7 +41,7 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Applicat
 
 var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"))
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.JWTToken), "*"))
 
 var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"))
 
