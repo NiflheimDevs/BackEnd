@@ -4,9 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/niflheimdevs/backend/internal/wire"
 )
 
-func Routes() http.Handler {
+func Routes(app *wire.Application) http.Handler {
 	mux := chi.NewRouter()
 
 	return mux
