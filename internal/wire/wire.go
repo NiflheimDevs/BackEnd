@@ -6,6 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	"github.com/niflheimdevs/backend/internal/services"
@@ -26,6 +27,10 @@ var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.UserHandler), "*"),
 )
 
+func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
+	return container.Const
+}
+
 var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
@@ -36,8 +41,9 @@ type Application struct {
 	UserHandler *handlers.UserHandler
 }
 
-func InitializeApplication(db *pgxpool.Pool) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Application, error) {
 	wire.Build(
+		ProvideConstants,
 		ProviderSet,
 		wire.Struct(new(Application), "*"),
 	)
