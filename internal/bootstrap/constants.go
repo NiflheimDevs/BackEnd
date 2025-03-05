@@ -3,7 +3,8 @@ package bootstrap
 import "time"
 
 type Constants struct {
-	Database DBConst
+	Database    DBConst
+	JWTKeysPath string
 }
 
 type DBConst struct {
@@ -14,10 +15,11 @@ type DBConst struct {
 
 func NewConstant() *Constants {
 	return &Constants{
-		DBConst{
+		Database: DBConst{
 			MaxOpenDbConn: 10,
 			MaxIdleDbConn: 5 * time.Minute,
 			MaxDbLifeTime: 5 * time.Minute,
 		},
+		JWTKeysPath: "./jwt",
 	}
 }
