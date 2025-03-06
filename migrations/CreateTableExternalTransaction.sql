@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS "external_transaction" (
   "user_id" int NOT NULL,
   "type" int NOT NULL,
   "amount" numeric NOT NULL,
-  FOREIGN KEY ("user_id") REFERENCES "user" ("id")
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
 );
