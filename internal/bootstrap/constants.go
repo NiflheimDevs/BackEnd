@@ -20,6 +20,6 @@ func NewConstant() *Constants {
 			MaxIdleDbConn: 5 * time.Minute,
 			MaxDbLifeTime: 5 * time.Minute,
 		},
-		JWTKeysPath: "./jwt",
+		JWTKeysPath: "../internal/jwt",
 	}
 }

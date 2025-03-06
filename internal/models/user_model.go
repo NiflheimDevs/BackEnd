@@ -5,7 +5,7 @@ type UserModel struct {
 	FirstName   string
 	LastName    string
 	Username    string
-	Password    string
+	Password    []byte
 	Email       string
 	Is_verified bool
 	Bio         string
