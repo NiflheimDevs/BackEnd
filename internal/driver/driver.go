@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
+	"github.com/redis/go-redis/v9"
 )
 
 func ConnectSQL(di *bootstrap.Di) *pgxpool.Pool {
@@ -37,4 +38,20 @@ func ConnectSQL(di *bootstrap.Di) *pgxpool.Pool {
 	}
 
 	return pool
+}
+
+func ConncetRedis(di *bootstrap.Di) *redis.Client {
+	ctx := context.Background()
+	dsn := fmt.Sprintf("%s:%s", di.Env.DB.RDB_Addr, di.Env.DB.RDB_Port)
+	client := redis.NewClient(&redis.Options{
+		Addr:     dsn,
+		Password: di.Env.DB.RDB_Password,
+		Username: di.Env.DB.RDB_User,
+		DB:       0,
+	})
+	_, err := client.Ping(ctx).Result()
+	if err != nil {
+		panic(err)
+	}
+	return client
 }

@@ -18,10 +18,11 @@ func main() {
 	log.Printf("Connecting to database...")
 
 	db := driver.ConnectSQL(di)
+	myRedis := driver.ConncetRedis(di)
 
 	defer db.Close()
 
-	app, err := wire.InitializeApplication(db)
+	app, err := wire.InitializeApplication(db, myRedis)
 	if err != nil {
 		panic(err)
 	}

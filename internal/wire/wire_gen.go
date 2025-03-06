@@ -11,12 +11,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	"github.com/niflheimdevs/backend/internal/repositories"
+	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/services"
+	"github.com/redis/go-redis/v9"
 )
 
 // Injectors from wire.go:
 
-func InitializeApplication(db *pgxpool.Pool) (*Application, error) {
+func InitializeApplication(db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
 	userRepo := repositories.UserRepo{
 		PG: db,
 	}
@@ -34,7 +36,7 @@ func InitializeApplication(db *pgxpool.Pool) (*Application, error) {
 
 // wire.go:
 
-var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"))
+var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(redis2.UserCache), "*"))
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"))
 

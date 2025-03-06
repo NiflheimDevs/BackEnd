@@ -8,12 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	"github.com/niflheimdevs/backend/internal/repositories"
+	R "github.com/niflheimdevs/backend/internal/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/services"
+	"github.com/redis/go-redis/v9"
 )
 
 var RepoProviderSet = wire.NewSet(
 	// repositories.NewUserRepo,
 	wire.Struct(new(repositories.UserRepo), "*"),
+	wire.Struct(new(R.UserCache), "*"),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -36,7 +39,7 @@ type Application struct {
 	UserHandler *handlers.UserHandler
 }
 
-func InitializeApplication(db *pgxpool.Pool) (*Application, error) {
+func InitializeApplication(db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
 	wire.Build(
 		ProviderSet,
 		wire.Struct(new(Application), "*"),
