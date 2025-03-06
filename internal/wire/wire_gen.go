@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
+	"github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	"github.com/niflheimdevs/backend/internal/services"
 )
@@ -31,8 +32,13 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Applicat
 		UserService: userService,
 		JWTService:  jwtToken,
 	}
+	rateLimit := middleware_rate_limit.NewRateLimit()
+	middlewares := &Middlewares{
+		RateLimit: rateLimit,
+	}
 	application := &Application{
 		UserHandler: userHandler,
+		Middlewares: middlewares,
 	}
 	return application, nil
 }
@@ -45,6 +51,8 @@ var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*")
 
 var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"))
 
+var MiddlewareProviderSet = wire.NewSet(middleware_rate_limit.NewRateLimit, wire.Struct(new(Middlewares), "*"))
+
 func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 	return container.Const
 }
@@ -53,8 +61,14 @@ var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
+	MiddlewareProviderSet,
 )
+
+type Middlewares struct {
+	RateLimit *middleware_rate_limit.RateLimit
+}
 
 type Application struct {
 	UserHandler *handlers.UserHandler
+	Middlewares *Middlewares
 }
