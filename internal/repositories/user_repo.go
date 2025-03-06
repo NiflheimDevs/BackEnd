@@ -18,16 +18,28 @@ func NewUserRepo(PG *pgxpool.Pool) *UserRepo {
 	}
 }
 
+func (repo *UserRepo) AddPassword(username string, hash []byte) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "UPDATE users SET password=$1 WHERE username=$2"
+
+	_, err := repo.PG.Exec(ctx, query, hash, username)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (repo *UserRepo) FindUserByUsername(username string) (*models.UserModel, error) {
 	var user models.UserModel
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT * FROM user WHERE username = $1"
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE username = $1"
 
-	err := repo.PG.QueryRow(ctx, query, username).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Username,
-		&user.Password, &user.Email, &user.Is_verified, &user.Bio, &user.Phone)
+	err := repo.PG.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
 
 	if err != nil {
 		return nil, err
@@ -42,10 +54,9 @@ func (repo *UserRepo) FindUserByEmail(email string) (*models.UserModel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT * FROM user WHERE email = $1"
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE email = $1"
 
-	err := repo.PG.QueryRow(ctx, query, email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Username,
-		&user.Password, &user.Email, &user.Is_verified, &user.Bio, &user.Phone)
+	err := repo.PG.QueryRow(ctx, query, email).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
 
 	if err != nil {
 		return nil, err
