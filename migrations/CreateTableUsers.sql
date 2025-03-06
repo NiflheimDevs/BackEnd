@@ -1,9 +1,9 @@
-CREATE TABLE IF NOT EXISTS "user" (
+CREATE TABLE IF NOT EXISTS "users" (
   "id" serial PRIMARY KEY,
   "firstname" varchar,
   "lastname" varchar,
   "username" varchar NOT NULL,
-  "pasword" varchar NOT NULL,
+  "pasword" bytea NOT NULL,
   "email" varchar,
   "is_verified" bool DEFAULT FALSE,
   "bio" text,
