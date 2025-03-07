@@ -18,17 +18,32 @@ func NewUserRepo(PG *pgxpool.Pool) *UserRepo {
 	}
 }
 
-func (repo *UserRepo) AddPassword(username string, hash []byte) {
+func (repo *UserRepo) UpdateUserPassword(id int, password []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "UPDATE users SET password=$1 WHERE username=$2"
+	query := "UPDATE users SET password=$1 WHERE id = $2"
 
-	_, err := repo.PG.Exec(ctx, query, hash, username)
+	_, err := repo.PG.Exec(ctx, query, password, id)
+
+	return err
+}
+
+func (repo *UserRepo) FindUserByID(id int) (*models.UserModel, error) {
+	var user models.UserModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE id = $1"
+
+	err := repo.PG.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+
+	return &user, nil
 }
 
 func (repo *UserRepo) FindUserByUsername(username string) (*models.UserModel, error) {
