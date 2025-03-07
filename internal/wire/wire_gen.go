@@ -22,8 +22,12 @@ func InitializeApplication(db *pgxpool.Pool, myRedis *redis.Client) (*Applicatio
 	userRepo := repositories.UserRepo{
 		PG: db,
 	}
+	userCache := redis2.UserCache{
+		DB: myRedis,
+	}
 	userService := services.UserService{
-		UserRepo: userRepo,
+		UserRepo:  userRepo,
+		CacheRepo: userCache,
 	}
 	userHandler := &handlers.UserHandler{
 		UserService: userService,
