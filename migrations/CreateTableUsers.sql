@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "firstname" varchar,
   "lastname" varchar,
   "username" varchar NOT NULL,
-  "pasword" bytea NOT NULL,
+  "password" bytea NOT NULL,
   "email" varchar,
   "is_verified" bool DEFAULT FALSE,
   "bio" text,

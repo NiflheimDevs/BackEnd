@@ -42,3 +42,29 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 
 	return user
 }
+
+func (userService *UserService) ChangePassword(user_id int, old_password string, new_password string) {
+	user, err := userService.UserRepo.FindUserByID(user_id)
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = bcrypt.CompareHashAndPassword(user.Password, []byte(old_password))
+
+	if err != nil {
+		panic(err)
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(new_password), 15)
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = userService.UserRepo.UpdateUserPassword(user_id, password)
+
+	if err != nil {
+		panic(err)
+	}
+}
