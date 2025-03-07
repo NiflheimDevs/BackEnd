@@ -5,9 +5,16 @@ type UserModel struct {
 	FirstName   string
 	LastName    string
 	Username    string
-	password    string
-	email       string
-	is_verified bool
-	bio         string
-	phone       string
+	Password    []byte
+	Email       string
+	Is_verified bool
+	Bio         string
+	Phone       string
+}
+
+type UserCacheData struct {
+	Username string
+	Phone    string
+	Password []byte
+	OTP      string
 }
