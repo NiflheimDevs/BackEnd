@@ -11,12 +11,18 @@ import (
 	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
+type Vaha struct {
+	MyValidator *validator.Validate
+}
+
 func NewValidator() *validator.Validate {
-	var validate = validator.New()
-	validate.RegisterValidation("password", passwordValidation)
-	validate.RegisterValidation("username", usernameValidation)
-	validate.RegisterValidation("phone", phoneValidation)
-	return validate
+	MyValidator := validator.New()
+
+	MyValidator.RegisterValidation("password", passwordValidation)
+	MyValidator.RegisterValidation("username", usernameValidation)
+	MyValidator.RegisterValidation("phone", phoneValidation)
+
+	return MyValidator
 }
 
 func Validated[T any](validate *validator.Validate, r *http.Request) T {
@@ -48,7 +54,7 @@ func validateRegex(errors *exceptions.Exception, regex string, text string, tag 
 func passwordValidation(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
 	var exc exceptions.Exception
-
+	exc.Tag = enums.BAD_REQUEST
 	validateRegex(&exc, ".{,32}", password, enums.PASSWORD_TOO_LONG)
 	validateRegex(&exc, ".{8,}", password, enums.PASSWORD_TOO_SHORT)
 	validateRegex(&exc, "[a-z]", password, enums.PASSWORD_NO_SMALL)
@@ -63,6 +69,7 @@ func passwordValidation(fl validator.FieldLevel) bool {
 func usernameValidation(fl validator.FieldLevel) bool {
 	username := fl.Field().String()
 	var exc exceptions.Exception
+	exc.Tag = enums.BAD_REQUEST
 
 	validateRegex(&exc, ".{,32}", username, enums.USERNAME_INVALID)
 	validateRegex(&exc, ".{2,}", username, enums.USERNAME_INVALID)

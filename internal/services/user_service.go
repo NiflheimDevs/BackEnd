@@ -13,11 +13,11 @@ import (
 )
 
 type UserService struct {
-	UserRepo  repositories.UserRepo
-	CacheRepo redis.UserCache
+	UserRepo  *repositories.UserRepo
+	CacheRepo *redis.UserCache
 }
 
-func NewUserService(userRepo repositories.UserRepo, cacheRepo redis.UserCache) *UserService {
+func NewUserService(userRepo *repositories.UserRepo, cacheRepo *redis.UserCache) *UserService {
 	return &UserService{
 		UserRepo:  userRepo,
 		CacheRepo: cacheRepo,

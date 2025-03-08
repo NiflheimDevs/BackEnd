@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -10,11 +11,11 @@ import (
 )
 
 type UserHandler struct {
-	UserService services.UserService
+	UserService *services.UserService
 	Validator   *validator.Validate
 }
 
-func NewUserHandler(userService services.UserService, validator *validator.Validate) *UserHandler {
+func NewUserHandler(userService *services.UserService, validator *validator.Validate) *UserHandler {
 	return &UserHandler{
 		UserService: userService,
 		Validator:   validator,
@@ -27,13 +28,13 @@ func (userHandler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
 	type Info struct {
-		Phonenumber string `json:"phonenumber" validator:"required,phonenumber"`
-		Username    string `json:"username" validator:"required,username"`
-		Password    string `json:"password" validator:"required,password"`
+		Phonenumber string `json:"phonenumber" validate:"required,phone"`
+		Username    string `json:"username" validate:"required,username"`
+		Password    string `json:"password" validate:"required,password"`
 		// FirstName   string `json:"firstname" validator:"required"`
 		// LastName    string `json:"lastname" validator:"required"`
 	}
-
+	log.Printf("%p", uh)
 	info := Validated[Info](uh.Validator, r)
 
 	info.Username = strings.ToLower(info.Username)
@@ -49,8 +50,8 @@ func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
 
 func (uh *UserHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	type Params struct {
-		Code      string `json:"code" validator:"required,len=6,numeric"`
-		SessionID string `json:"sessionid" validator:"required"`
+		Code      string `json:"code" validate:"required,len=6,numeric"`
+		SessionID string `json:"sessionid" validate:"required"`
 	}
 	params := Validated[Params](uh.Validator, r)
 	phoenenumber, username, password := uh.UserService.ValidateOTP(params.SessionID, params.Code)

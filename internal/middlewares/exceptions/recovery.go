@@ -1,4 +1,4 @@
-package middlewareexception
+package panicwall
 
 import (
 	"encoding/json"
@@ -8,14 +8,14 @@ import (
 	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
-type RecoveryMiddleware struct {
+type PanicWall struct {
 }
 
-func NewRecoveryMiddleware() *RecoveryMiddleware {
-	return &RecoveryMiddleware{}
+func NewPanicWall() *PanicWall {
+	return &PanicWall{}
 }
 
-func (recovery RecoveryMiddleware) Recovery(next http.Handler) http.Handler {
+func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
@@ -34,7 +34,7 @@ func (recovery RecoveryMiddleware) Recovery(next http.Handler) http.Handler {
 	})
 }
 
-func (recovery RecoveryMiddleware) handleRecoveredError(err *exceptions.Exception) ([]byte, int) {
+func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]byte, int) {
 	var code int
 	if err.Tag == enums.VALIDATION_ERROR {
 		code = 409

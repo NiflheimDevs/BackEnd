@@ -10,6 +10,7 @@ import (
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/handlers"
+	"github.com/niflheimdevs/backend/internal/middlewares/exceptions"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/services"
@@ -19,21 +20,25 @@ import (
 // Injectors from wire.go:
 
 func InitializeApplication(db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
-	userRepo := repositories.UserRepo{
+	userRepo := &repositories.UserRepo{
 		PG: db,
 	}
-	userCache := redis2.UserCache{
+	userCache := &redis2.UserCache{
 		DB: myRedis,
 	}
-	userService := services.UserService{
+	userService := &services.UserService{
 		UserRepo:  userRepo,
 		CacheRepo: userCache,
 	}
+	validate := handlers.NewValidator()
 	userHandler := &handlers.UserHandler{
 		UserService: userService,
+		Validator:   validate,
 	}
+	panicWall := &panicwall.PanicWall{}
 	application := &Application{
 		UserHandler: userHandler,
+		Recovery:    panicWall,
 	}
 	return application, nil
 }
@@ -44,14 +49,15 @@ var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), 
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"))
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"))
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), handlers.NewValidator)
 
 var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
-	HandlerProviderSet,
+	HandlerProviderSet, wire.Struct(new(panicwall.PanicWall), "*"),
 )
 
 type Application struct {
 	UserHandler *handlers.UserHandler
+	Recovery    *panicwall.PanicWall
 }
