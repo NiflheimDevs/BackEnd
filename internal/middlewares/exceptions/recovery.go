@@ -1,1 +1,50 @@
-package exceptions
+package middlewareexception
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/exceptions"
+)
+
+type RecoveryMiddleware struct {
+}
+
+func NewRecoveryMiddleware() *RecoveryMiddleware {
+	return &RecoveryMiddleware{}
+}
+
+func (recovery RecoveryMiddleware) Recovery(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				if err, ok := rec.(exceptions.Exception); ok {
+					json, status := recovery.handleRecoveredError(&err)
+
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(status)
+					w.Write(json)
+				}
+			} else {
+				w.WriteHeader(501)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (recovery RecoveryMiddleware) handleRecoveredError(err *exceptions.Exception) ([]byte, int) {
+	var code int
+	if err.Tag == enums.VALIDATION_ERROR {
+		code = 409
+	} else if err.Tag == enums.INTERNAL_ERROR {
+		code = 500
+	} else if err.Tag == enums.NOT_FOUND {
+		code = 404
+	} else {
+		code = 418
+	}
+	json, _ := json.Marshal(err)
+	return json, code
+}
