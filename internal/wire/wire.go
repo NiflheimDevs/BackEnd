@@ -9,6 +9,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	midauth "github.com/niflheimdevs/backend/internal/middlewares/authentication"
+	midrecovery "github.com/niflheimdevs/backend/internal/middlewares/exceptions"
 	midratelimit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	"github.com/niflheimdevs/backend/internal/services"
@@ -32,6 +33,7 @@ var HandlerProviderSet = wire.NewSet(
 var MiddlewareProviderSet = wire.NewSet(
 	midratelimit.NewRateLimit,
 	midauth.NewAuth,
+	midrecovery.NewRecoveryMiddleware,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -47,6 +49,7 @@ var ProviderSet = wire.NewSet(
 )
 
 type Middlewares struct {
+	Recovery       *midrecovery.RecoveryMiddleware
 	RateLimit      *midratelimit.RateLimit
 	Authentication *midauth.Authentication
 }

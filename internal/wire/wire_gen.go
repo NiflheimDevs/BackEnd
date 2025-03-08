@@ -12,6 +12,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	"github.com/niflheimdevs/backend/internal/middlewares/authentication"
+	"github.com/niflheimdevs/backend/internal/middlewares/exceptions"
 	"github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	"github.com/niflheimdevs/backend/internal/services"
@@ -33,9 +34,11 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Applicat
 		UserService: userService,
 		JWTService:  jwtToken,
 	}
+	recoveryMiddleware := midrecovery.NewRecoveryMiddleware()
 	rateLimit := midratelimit.NewRateLimit()
 	authentication := midauth.NewAuth(constants, jwtToken)
 	middlewares := &Middlewares{
+		Recovery:       recoveryMiddleware,
 		RateLimit:      rateLimit,
 		Authentication: authentication,
 	}
@@ -54,7 +57,7 @@ var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*")
 
 var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"))
 
-var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, wire.Struct(new(Middlewares), "*"))
+var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, midrecovery.NewRecoveryMiddleware, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 	return container.Const
@@ -68,6 +71,7 @@ var ProviderSet = wire.NewSet(
 )
 
 type Middlewares struct {
+	Recovery       *midrecovery.RecoveryMiddleware
 	RateLimit      *midratelimit.RateLimit
 	Authentication *midauth.Authentication
 }

@@ -59,3 +59,19 @@ func (userHandler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+
+func (userHandler *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	type changePasswordParam struct {
+		OldPassword string `json:"old_password" validate:"required"`
+		NewPassword string `json:"new_password" validate:"required"`
+	}
+
+	params := Validated[changePasswordParam](r)
+
+	userID := r.Context().Value("userID").(int)
+
+	userHandler.UserService.ChangePassword(userID, params.OldPassword, params.NewPassword)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+}
