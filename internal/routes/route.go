@@ -11,6 +11,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
+	mux.Use(app.Middlewares.Authentication.AuthRequired)
 
 	mux.Post("/login", app.UserHandler.Login)
 
