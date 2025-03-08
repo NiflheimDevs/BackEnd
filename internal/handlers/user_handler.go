@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/niflheimdevs/backend/internal/services/communications/sms"
@@ -31,6 +32,7 @@ func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := Validated[Info](r)
+	info.Username = strings.ToLower(info.Username)
 	uh.UserService.CheckAvailabilityForSignup(info.Phonenumber, info.Username)
 
 	code := sms.GenerateOTP()

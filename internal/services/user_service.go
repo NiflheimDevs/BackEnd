@@ -33,6 +33,7 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 	if err == nil {
 		panic(val)
 	}
+
 	val, err = us.CacheRepo.FindByUsername(username)
 	if err == nil {
 		panic(val)
