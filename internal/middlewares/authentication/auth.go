@@ -40,7 +40,7 @@ func (am *Authentication) AuthRequired(next http.Handler) http.Handler {
 		jwt_keys.SetupJWTKeys(am.Constants.JWTKeysPath)
 		claims := am.JWTService.VerifyToken(tokenString)
 
-		userID := uint(claims["sub"].(float64))
+		userID := int(claims["sub"].(float64))
 		ctx := context.WithValue(r.Context(), am.Constants.Context.UserID, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

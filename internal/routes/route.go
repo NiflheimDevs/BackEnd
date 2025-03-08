@@ -14,6 +14,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
 
 	mux.Post("/login", app.UserHandler.Login)
+	mux.Post("/change_password", app.UserHandler.ChangePassword)
 
 	return mux
 }

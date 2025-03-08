@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -68,9 +69,11 @@ func (userHandler *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Re
 
 	params := Validated[changePasswordParam](r)
 
-	userID := 3
+	userID := r.Context().Value("userID").(int)
 
 	userHandler.UserService.ChangePassword(userID, params.OldPassword, params.NewPassword)
+
+	log.Printf("%d has changed his password", userID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
