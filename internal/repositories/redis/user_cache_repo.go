@@ -71,8 +71,7 @@ func (uc *UserCache) GetUserCreds(session string) string {
 
 	val, err := uc.DB.Get(ctx, session).Result()
 	if err == redis.Nil {
-		// invalid session
-		panic(err)
+		return ""
 	}
 	return val
 }

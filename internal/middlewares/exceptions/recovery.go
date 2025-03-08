@@ -42,6 +42,8 @@ func (recovery RecoveryMiddleware) handleRecoveredError(err *exceptions.Exceptio
 		code = 500
 	} else if err.Tag == enums.NOT_FOUND {
 		code = 404
+	} else if err.Tag == enums.BAD_REQUEST {
+		code = 400
 	} else {
 		code = 418
 	}
