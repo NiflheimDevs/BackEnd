@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/exceptions"
 	jwt_keys "github.com/niflheimdevs/backend/internal/jwt"
 )
 
@@ -27,7 +29,12 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessTokenClaims)
 	accessTokenString, err := accessToken.SignedString(jwtKeys.PrivateKey)
 	if err != nil {
-		panic(err)
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.AUTH_GENERATE_TOKEN_ERROR,
+			},
+		})
 	}
 
 	refreshTokenClaims := jwt.MapClaims{
@@ -40,7 +47,12 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, refreshTokenClaims)
 	refreshTokenString, err := refreshToken.SignedString(jwtKeys.PrivateKey)
 	if err != nil {
-		panic(err)
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.AUTH_GENERATE_TOKEN_ERROR,
+			},
+		})
 	}
 
 	return accessTokenString, refreshTokenString
@@ -58,5 +70,10 @@ func (jt *JWTToken) VerifyToken(tokenString string) jwt.MapClaims {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims
 	}
-	panic(fmt.Errorf("unauthorized"))
+	panic(exceptions.Exception{
+		Tag: enums.VALIDATION_ERROR,
+		Errors: []enums.SpecificError{
+			enums.AUTH_ACCESS_DENIED,
+		},
+	})
 }
