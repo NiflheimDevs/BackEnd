@@ -32,7 +32,7 @@ const (
 	AUTH_ACCESS_DENIED       SpecificError = "AUTH_ACCESS_DENIED"
 
 	MISSING_REQUIRED_FIELD SpecificError = "MISSING_REQUIRED_FIELD"
-
+  
 	CACHE_ERROR SpecificError = "CACHE_ERROR"
 )
 
