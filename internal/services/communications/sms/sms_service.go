@@ -6,7 +6,7 @@ import (
 )
 
 func GenerateOTP() string {
-	return fmt.Sprintf("%06d", rand.Int()%1000000)
+	return fmt.Sprintf("%05d", rand.Int()%100000)
 
 }
 
