@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
@@ -30,13 +31,15 @@ func NewUserHandler(
 
 func (userHandler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	type loginParams struct {
-		Username string `json:"username" validate:"required"`
-		Password string `json:"password" validate:"required"`
+		Identifier string `json:"identifier" validate:"required"`
+		Password   string `json:"password" validate:"required"`
 	}
 
 	params := Validated[loginParams](r)
 
-	user := userHandler.UserService.AuthenticateUser(params.Username, params.Password)
+	params.Identifier = strings.ToLower(params.Identifier)
+
+	user := userHandler.UserService.AuthenticateUser(params.Identifier, params.Password)
 
 	jwt_keys.SetupJWTKeys(userHandler.Constants.JWTKeysPath)
 
