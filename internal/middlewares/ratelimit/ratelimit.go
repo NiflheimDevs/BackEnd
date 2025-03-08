@@ -1,4 +1,4 @@
-package middleware_rate_limit
+package midratelimit
 
 import (
 	"net/http"

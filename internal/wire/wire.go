@@ -8,7 +8,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
-	middleware_rate_limit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
+	midauth "github.com/niflheimdevs/backend/internal/middlewares/authentication"
+	midratelimit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	"github.com/niflheimdevs/backend/internal/services"
 )
@@ -29,7 +30,8 @@ var HandlerProviderSet = wire.NewSet(
 )
 
 var MiddlewareProviderSet = wire.NewSet(
-	middleware_rate_limit.NewRateLimit,
+	midratelimit.NewRateLimit,
+	midauth.NewAuth,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -45,7 +47,8 @@ var ProviderSet = wire.NewSet(
 )
 
 type Middlewares struct {
-	RateLimit *middleware_rate_limit.RateLimit
+	RateLimit      *midratelimit.RateLimit
+	Authentication *midauth.Authentication
 }
 
 type Application struct {
