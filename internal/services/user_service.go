@@ -22,7 +22,7 @@ func NewUserService(userRepo repositories.UserRepo) *UserService {
 func (userService *UserService) AuthenticateUser(identifier string, password string) *models.UserModel {
 	user, err := userService.UserRepo.FindUserByUsername(identifier)
 	if err == pgx.ErrNoRows {
-		user, err = userService.UserRepo.FindUserByEmail(identifier)
+		user, err = userService.UserRepo.FindUserByPhone(identifier)
 		if err == pgx.ErrNoRows {
 			//username/email not found
 			log.Print("username/email not found")

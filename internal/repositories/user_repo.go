@@ -18,17 +18,21 @@ func NewUserRepo(PG *pgxpool.Pool) *UserRepo {
 	}
 }
 
-func (repo *UserRepo) AddPassword(username string, hash []byte) {
+func (repo *UserRepo) FindUserByPhone(phone string) (*models.UserModel, error) {
+	var user models.UserModel
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "UPDATE users SET password=$1 WHERE username=$2"
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE phone = $1"
 
-	_, err := repo.PG.Exec(ctx, query, hash, username)
+	err := repo.PG.QueryRow(ctx, query, phone).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+
+	return &user, nil
 }
 
 func (repo *UserRepo) FindUserByUsername(username string) (*models.UserModel, error) {

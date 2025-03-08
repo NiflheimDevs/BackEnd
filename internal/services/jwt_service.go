@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,7 +18,7 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	jwtKeys := jwt_keys.GetJWTKeys()
 
 	accessTokenClaims := jwt.MapClaims{
-		"iss": "test",
+		"iss": "bidlancer",
 		"sub": userID,
 		"exp": time.Now().Add(time.Minute * 15).Unix(),
 		"iat": time.Now().Unix(),
@@ -30,7 +31,7 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	}
 
 	refreshTokenClaims := jwt.MapClaims{
-		"iss": "test",
+		"iss": "bidlancer",
 		"sub": userID,
 		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
 		"iat": time.Now().Unix(),
@@ -43,4 +44,19 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	}
 
 	return accessTokenString, refreshTokenString
+}
+
+func (jt *JWTToken) VerifyToken(tokenString string) jwt.MapClaims {
+	jwtKeys := jwt_keys.GetJWTKeys()
+	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
+		}
+		return jwtKeys.PublicKey, nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims
+	}
+	panic(fmt.Errorf("unauthorized"))
 }
