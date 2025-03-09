@@ -13,14 +13,14 @@ import (
 
 type UserHandler struct {
 	Constants   *bootstrap.Constants
-	UserService services.UserService
-	JWTService  services.JWTToken
+	UserService *services.UserService
+	JWTService  *services.JWTToken
 }
 
 func NewUserHandler(
 	Constants *bootstrap.Constants,
-	userService services.UserService,
-	jwtService services.JWTToken,
+	userService *services.UserService,
+	jwtService *services.JWTToken,
 ) *UserHandler {
 	return &UserHandler{
 		Constants:   Constants,

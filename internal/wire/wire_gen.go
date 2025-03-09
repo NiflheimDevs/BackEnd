@@ -22,13 +22,13 @@ import (
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Application, error) {
 	constants := ProvideConstants(container)
-	userRepo := repositories.UserRepo{
+	userRepo := &repositories.UserRepo{
 		PG: db,
 	}
-	userService := services.UserService{
+	userService := &services.UserService{
 		UserRepo: userRepo,
 	}
-	jwtToken := services.JWTToken{}
+	jwtToken := &services.JWTToken{}
 	userHandler := &handlers.UserHandler{
 		Constants:   constants,
 		UserService: userService,
@@ -36,7 +36,8 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool) (*Applicat
 	}
 	recoveryMiddleware := midrecovery.NewRecoveryMiddleware()
 	rateLimit := midratelimit.NewRateLimit()
-	authentication := midauth.NewAuth(constants, jwtToken)
+	servicesJWTToken := services.JWTToken{}
+	authentication := midauth.NewAuth(constants, servicesJWTToken)
 	middlewares := &Middlewares{
 		Recovery:       recoveryMiddleware,
 		RateLimit:      rateLimit,
