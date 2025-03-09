@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
 
@@ -135,7 +134,6 @@ func (uh *UserHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	}
 	params := Validated[Params](uh.Validator, r)
 	userID, _, _ := uh.UserService.ValidateOTP(params.SessionID, params.Code)
-	log.Println("asd")
 	session := uh.UserService.SetForgetPasswordFlag(userID)
 
 	w.Write([]byte(session))
