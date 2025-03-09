@@ -25,6 +25,7 @@ const (
 
 	OTP_INVALID                SpecificError = "OTP_INVALID"
 	OTP_EXPIRED_OR_BAD_SESSION SpecificError = "OTP_EXPIRED_OR_BAD_SESSION"
+	BAD_SESSION                SpecificError = "BAD_SESSION"
 
 	DATABASE_ERROR      SpecificError = "DATABASE_ERROR"
 	CACHE_ERROR         SpecificError = "CACHE_ERROR"
@@ -40,6 +41,8 @@ const (
 
 	MISSING_FILE SpecificError = "MISSING_FILE"
 	CAST_ERROR   SpecificError = "CAST_ERROR"
+
+	USER_NOT_FOUND SpecificError = "USER_NOT_FOUND"
 )
 
 const (
