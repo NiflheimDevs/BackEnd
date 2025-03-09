@@ -11,3 +11,10 @@ type UserModel struct {
 	Bio         string
 	Phone       string
 }
+
+type UserCacheData struct {
+	Username string
+	Phone    string
+	Password []byte
+	OTP      string
+}

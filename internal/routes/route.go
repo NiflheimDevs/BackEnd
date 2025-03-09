@@ -10,7 +10,11 @@ import (
 func Routes(app *wire.Application) http.Handler {
 	mux := chi.NewRouter()
 
-	mux.Use(app.Middlewares.Recovery.Recovery)
+	mux.Use(app.Recovery.Recovery)
+
+	mux.Post("/signup/otp", app.UserHandler.ReserveInfo)
+	mux.Post("/signup/verify", app.UserHandler.VerifyOTP)
+
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
 
