@@ -11,10 +11,6 @@ import (
 	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
-type Vaha struct {
-	MyValidator *validator.Validate
-}
-
 func NewValidator() *validator.Validate {
 	MyValidator := validator.New()
 
@@ -57,8 +53,8 @@ func passwordValidation(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
 	var exc exceptions.Exception
 	exc.Tag = enums.BAD_REQUEST
-	validateRegex(&exc, ".{,32}", password, enums.PASSWORD_TOO_LONG)
-	validateRegex(&exc, ".{8,}", password, enums.PASSWORD_TOO_SHORT)
+	validateRegex(&exc, "^.{0,32}$", password, enums.PASSWORD_TOO_LONG)
+	validateRegex(&exc, "^.{8,}$", password, enums.PASSWORD_TOO_SHORT)
 	validateRegex(&exc, "[a-z]", password, enums.PASSWORD_NO_SMALL)
 	validateRegex(&exc, "[A-Z]", password, enums.PASSWORD_NO_CAPITAL)
 	validateRegex(&exc, "[0-9]", password, enums.PASSWORD_NO_DIGIT)
@@ -73,8 +69,9 @@ func usernameValidation(fl validator.FieldLevel) bool {
 	var exc exceptions.Exception
 	exc.Tag = enums.BAD_REQUEST
 
-	validateRegex(&exc, ".{,32}", username, enums.USERNAME_INVALID)
-	validateRegex(&exc, ".{2,}", username, enums.USERNAME_INVALID)
+	validateRegex(&exc, "^.{0,32}$", username, enums.USERNAME_TOO_LONG)
+	validateRegex(&exc, "^.{2,}$", username, enums.USERNAME_TOO_SHORT)
+
 	if len(exc.Errors) > 0 {
 		panic(exc)
 	}
@@ -91,4 +88,3 @@ func phoneValidation(fl validator.FieldLevel) bool {
 	}
 	return true
 }
-

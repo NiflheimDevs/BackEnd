@@ -76,14 +76,15 @@ func (uc *UserCache) GetUserCreds(session string) string {
 	return val
 }
 
-func (uc *UserCache) ClearUserCreds(phonenumber string, username string) {
+func (uc *UserCache) ClearUserCreds(phonenumber string, username string, session string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	uc.DB.Del(ctx, "username:"+username).Err()
+	uc.DB.Del(ctx, "username:"+username)
 
-	uc.DB.Del(ctx, "phone:"+phonenumber).Err()
+	uc.DB.Del(ctx, "phone:"+phonenumber)
 
+	uc.DB.Del(ctx, session)
 }
 func (uc *UserCache) RedisPing() {
 	log.Println(uc.DB.Ping(context.Background()).Result())

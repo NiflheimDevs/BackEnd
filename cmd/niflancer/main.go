@@ -20,7 +20,7 @@ func main() {
 
 	defer db.Close()
 
-	app, err := wire.InitializeApplication(db, myRedis)
+	app, err := wire.InitializeApplication(di, db, myRedis)
 
 	if err != nil {
 		panic(err)

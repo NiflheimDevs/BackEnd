@@ -10,7 +10,3 @@ type Exception struct {
 func (e *Exception) AddError(se enums.SpecificError) {
 	e.Errors = append(e.Errors, se)
 }
-
-func (e *Exception) AddError(se enums.SpecificError) {
-	e.Errors = append(e.Errors, se)
-}
