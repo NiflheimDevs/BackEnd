@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS "message" (
   "edit_time" timestamp,
   "content" text NOT NULL,
   FOREIGN KEY ("chat_id") REFERENCES "chat" ("id"),
-  FOREIGN KEY ("sender_id") REFERENCES "user" ("id")
+  FOREIGN KEY ("sender_id") REFERENCES "users" ("id")
 );

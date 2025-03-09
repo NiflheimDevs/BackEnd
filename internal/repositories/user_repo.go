@@ -18,17 +18,80 @@ func NewUserRepo(PG *pgxpool.Pool) *UserRepo {
 	}
 }
 
+func (repo *UserRepo) UpdateUserPassword(id int, password []byte) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "UPDATE users SET password=$1 WHERE id = $2"
+
+	_, err := repo.PG.Exec(ctx, query, password, id)
+
+	return err
+}
+
+func (repo *UserRepo) FindUserByPhone(phone string) (*models.UserModel, error) {
+	var user models.UserModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE phone = $1"
+
+	err := repo.PG.QueryRow(ctx, query, phone).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (repo *UserRepo) FindUserByID(id int) (*models.UserModel, error) {
+	var user models.UserModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE id = $1"
+
+	err := repo.PG.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (repo *UserRepo) FindUserByUsername(username string) (*models.UserModel, error) {
 	var user models.UserModel
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	//query := "SELECT * FROM user WHERE username = $1"
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE username = $1"
 
-	err := repo.PG.Ping(ctx)
+	err := repo.PG.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
+
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+
+	return &user, nil
+}
+
+func (repo *UserRepo) FindUserByEmail(email string) (*models.UserModel, error) {
+	var user models.UserModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT id,username,password,firstname,lastname FROM users WHERE email = $1"
+
+	err := repo.PG.QueryRow(ctx, query, email).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &user, nil
 }

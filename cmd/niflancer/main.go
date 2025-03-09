@@ -21,7 +21,7 @@ func main() {
 
 	defer db.Close()
 
-	app, err := wire.InitializeApplication(db)
+	app, err := wire.InitializeApplication(di, db)
 	if err != nil {
 		panic(err)
 	}

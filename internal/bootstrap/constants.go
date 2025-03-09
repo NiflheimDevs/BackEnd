@@ -3,7 +3,9 @@ package bootstrap
 import "time"
 
 type Constants struct {
-	Database DBConst
+	Database    DBConst
+	JWTKeysPath string
+	Context     Context
 }
 
 type DBConst struct {
@@ -12,12 +14,20 @@ type DBConst struct {
 	MaxDbLifeTime time.Duration
 }
 
+type Context struct {
+	UserID string
+}
+
 func NewConstant() *Constants {
 	return &Constants{
-		DBConst{
+		Database: DBConst{
 			MaxOpenDbConn: 10,
 			MaxIdleDbConn: 5 * time.Minute,
 			MaxDbLifeTime: 5 * time.Minute,
+		},
+		JWTKeysPath: "../internal/jwt",
+		Context: Context{
+			UserID: "userID",
 		},
 	}
 }
