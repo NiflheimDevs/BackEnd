@@ -19,7 +19,9 @@ func main() {
 	myRedis := driver.ConncetRedis(di)
 
 	defer db.Close()
+
 	app, err := wire.InitializeApplication(db, myRedis)
+
 	if err != nil {
 		panic(err)
 	}

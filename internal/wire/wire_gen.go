@@ -9,8 +9,12 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	"github.com/niflheimdevs/backend/internal/middlewares/exceptions"
+	"github.com/niflheimdevs/backend/internal/middlewares/authentication"
+	"github.com/niflheimdevs/backend/internal/middlewares/exceptions"
+	"github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/services"
@@ -19,26 +23,40 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApplication(db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
 	userRepo := &repositories.UserRepo{
 		PG: db,
 	}
 	userCache := &redis2.UserCache{
 		DB: myRedis,
 	}
+	validate := handlers.NewValidator()
+	constants := ProvideConstants(container)
 	userService := &services.UserService{
 		UserRepo:  userRepo,
 		CacheRepo: userCache,
 	}
-	validate := handlers.NewValidator()
+	jwtToken := &services.JWTToken{}
 	userHandler := &handlers.UserHandler{
+		Constants:   constants,
 		UserService: userService,
 		Validator:   validate,
+		JWTService:  jwtToken,
+	}
+	recoveryMiddleware := midrecovery.NewRecoveryMiddleware()
+	rateLimit := midratelimit.NewRateLimit()
+	servicesJWTToken := services.JWTToken{}
+	authentication := midauth.NewAuth(constants, servicesJWTToken)
+	middlewares := &Middlewares{
+		Recovery:       recoveryMiddleware,
+		RateLimit:      rateLimit,
+		Authentication: authentication,
 	}
 	panicWall := &panicwall.PanicWall{}
 	application := &Application{
 		UserHandler: userHandler,
 		Recovery:    panicWall,
+		Middlewares: middlewares,
 	}
 	return application, nil
 }
@@ -47,17 +65,32 @@ func InitializeApplication(db *pgxpool.Pool, myRedis *redis.Client) (*Applicatio
 
 var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(redis2.UserCache), "*"))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"))
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.JWTToken), "*"))
 
 var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), handlers.NewValidator)
+
+var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, midrecovery.NewRecoveryMiddleware, wire.Struct(new(Middlewares), "*"))
+
+func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
+	return container.Const
+}
 
 var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet, wire.Struct(new(panicwall.PanicWall), "*"),
+	HandlerProviderSet,
+	MiddlewareProviderSet,
 )
+
+type Middlewares struct {
+	Recovery       *midrecovery.RecoveryMiddleware
+	RateLimit      *midratelimit.RateLimit
+	Authentication *midauth.Authentication
+}
 
 type Application struct {
 	UserHandler *handlers.UserHandler
 	Recovery    *panicwall.PanicWall
+	Middlewares *Middlewares
 }

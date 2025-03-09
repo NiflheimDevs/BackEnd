@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS "project" (
   "created_time" timestamp NOT NULL,
   "updated_time" timestamp,
   "duration" timestamp,
-  FOREIGN KEY ("owner_id") REFERENCES "user" ("id"),
+  FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id")
 );

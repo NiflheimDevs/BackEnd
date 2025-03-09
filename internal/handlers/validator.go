@@ -40,10 +40,12 @@ func Validated[T any](validate *validator.Validate, r *http.Request) T {
 			Tag:    enums.BAD_REQUEST,
 			Errors: []enums.SpecificError{enums.MISSING_REQUIRED_FIELD},
 		})
+
 	}
 
 	return params
 }
+
 func validateRegex(errors *exceptions.Exception, regex string, text string, tag enums.SpecificError) {
 	matched, _ := regexp.MatchString(regex, text)
 	if !matched {
@@ -89,3 +91,4 @@ func phoneValidation(fl validator.FieldLevel) bool {
 	}
 	return true
 }
+

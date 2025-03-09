@@ -6,8 +6,12 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
 	panicwall "github.com/niflheimdevs/backend/internal/middlewares/exceptions"
+	midauth "github.com/niflheimdevs/backend/internal/middlewares/authentication"
+	midrecovery "github.com/niflheimdevs/backend/internal/middlewares/exceptions"
+	midratelimit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	R "github.com/niflheimdevs/backend/internal/repositories/redis"
 
@@ -22,6 +26,7 @@ var RepoProviderSet = wire.NewSet(
 
 var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(services.UserService), "*"),
+	wire.Struct(new(services.JWTToken), "*"),
 )
 
 var HandlerProviderSet = wire.NewSet(
@@ -29,20 +34,40 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewValidator,
 )
 
+var MiddlewareProviderSet = wire.NewSet(
+	midratelimit.NewRateLimit,
+	midauth.NewAuth,
+	midrecovery.NewRecoveryMiddleware,
+	wire.Struct(new(Middlewares), "*"),
+)
+
+func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
+	return container.Const
+}
+
 var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
 	wire.Struct(new(panicwall.PanicWall), "*"),
+	MiddlewareProviderSet,
 )
+
+type Middlewares struct {
+	Recovery       *midrecovery.RecoveryMiddleware
+	RateLimit      *midratelimit.RateLimit
+	Authentication *midauth.Authentication
+}
 
 type Application struct {
 	UserHandler *handlers.UserHandler
 	Recovery    *panicwall.PanicWall
+  Middlewares *Middlewares
 }
 
-func InitializeApplication(db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
 	wire.Build(
+		ProvideConstants,
 		ProviderSet,
 		wire.Struct(new(Application), "*"),
 	)

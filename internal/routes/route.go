@@ -14,6 +14,12 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Post("/signup/otp", app.UserHandler.ReserveInfo)
 	mux.Post("/signup/verify", app.UserHandler.VerifyOTP)
-	mux.Get("/redis-test", app.UserHandler.RedisTest)
+
+	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
+	mux.Use(app.Middlewares.Authentication.AuthRequired)
+
+	mux.Post("/login", app.UserHandler.Login)
+	mux.Post("/change_password", app.UserHandler.ChangePassword)
+
 	return mux
 }

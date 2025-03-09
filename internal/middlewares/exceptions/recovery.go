@@ -2,6 +2,7 @@ package panicwall
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/niflheimdevs/backend/internal/enums"
@@ -19,15 +20,17 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
-				if err, ok := rec.(exceptions.Exception); ok {
+				err, ok := rec.(exceptions.Exception)
+				if ok {
 					json, status := recovery.handleRecoveredError(&err)
 
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(status)
 					w.Write(json)
+				} else {
+					w.WriteHeader(501)
 				}
-			} else {
-				w.WriteHeader(501)
+				log.Println(err)
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -44,6 +47,8 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 		code = 404
 	} else if err.Tag == enums.BAD_REQUEST {
 		code = 400
+	} else if err.Tag == enums.LIMIT_EXCEED {
+		code = 429
 	} else {
 		code = 418
 	}
