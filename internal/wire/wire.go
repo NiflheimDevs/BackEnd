@@ -8,9 +8,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
-	panicwall "github.com/niflheimdevs/backend/internal/middlewares/exceptions"
 	midauth "github.com/niflheimdevs/backend/internal/middlewares/authentication"
-	midrecovery "github.com/niflheimdevs/backend/internal/middlewares/exceptions"
+	panicwall "github.com/niflheimdevs/backend/internal/middlewares/exceptions"
 	midratelimit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	R "github.com/niflheimdevs/backend/internal/repositories/redis"
@@ -37,7 +36,7 @@ var HandlerProviderSet = wire.NewSet(
 var MiddlewareProviderSet = wire.NewSet(
 	midratelimit.NewRateLimit,
 	midauth.NewAuth,
-	midrecovery.NewRecoveryMiddleware,
+	panicwall.NewPanicWall,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -49,20 +48,19 @@ var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
-	wire.Struct(new(panicwall.PanicWall), "*"),
+	// wire.Struct(new(panicwall.PanicWall), "*"),
 	MiddlewareProviderSet,
 )
 
 type Middlewares struct {
-	Recovery       *midrecovery.RecoveryMiddleware
+	Recovery       *panicwall.PanicWall
 	RateLimit      *midratelimit.RateLimit
 	Authentication *midauth.Authentication
 }
 
 type Application struct {
 	UserHandler *handlers.UserHandler
-	Recovery    *panicwall.PanicWall
-  Middlewares *Middlewares
+	Middlewares *Middlewares
 }
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {

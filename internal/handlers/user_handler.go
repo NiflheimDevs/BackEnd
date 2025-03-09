@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
+
 	"github.com/go-playground/validator/v10"
-	"encoding/json"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
 	jwt_keys "github.com/niflheimdevs/backend/internal/jwt"
@@ -17,14 +18,14 @@ type UserHandler struct {
 	Constants   *bootstrap.Constants
 	UserService *services.UserService
 	JWTService  *services.JWTToken
-  Validator   *validator.Validate
+	Validator   *validator.Validate
 }
 
 func NewUserHandler(
 	Constants *bootstrap.Constants,
 	userService *services.UserService,
 	jwtService *services.JWTToken,
-  validator   *validator.Validate,
+	validator *validator.Validate,
 ) *UserHandler {
 	return &UserHandler{
 		Constants:   Constants,
@@ -40,7 +41,7 @@ func (userHandler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Password   string `json:"password" validate:"required"`
 	}
 
-	params := Validated[loginParams](r)
+	params := Validated[loginParams](userHandler.Validator, r)
 
 	params.Identifier = strings.ToLower(params.Identifier)
 
@@ -71,7 +72,7 @@ func (userHandler *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Re
 		NewPassword string `json:"new_password" validate:"required"`
 	}
 
-	params := Validated[changePasswordParam](r)
+	params := Validated[changePasswordParam](userHandler.Validator, r)
 
 	userID := r.Context().Value("userID").(int)
 
@@ -108,7 +109,7 @@ func (uh *UserHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	}
 	params := Validated[Params](uh.Validator, r)
 	phoenenumber, username, password := uh.UserService.ValidateOTP(params.SessionID, params.Code)
-	uh.UserService.Register(phoenenumber, username, password)
+	uh.UserService.Register(phoenenumber, username, password, params.SessionID)
 
 }
 

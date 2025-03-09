@@ -2,10 +2,11 @@ package services
 
 import (
 	"encoding/json"
+
 	"github.com/google/uuid"
-  
+
 	"github.com/jackc/pgx/v5"
-  
+
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"
@@ -24,10 +25,6 @@ func NewUserService(userRepo *repositories.UserRepo, cacheRepo *redis.UserCache)
 		UserRepo:  userRepo,
 		CacheRepo: cacheRepo,
 	}
-}
-
-func (userService *UserService) AuthenticateUser(username string, password string) (user *models.UserModel) {
-	return nil
 }
 
 // signup stage. checks if username or phonenumber is already taken.
@@ -112,15 +109,15 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 }
 
 // last stage of signup
-func (us *UserService) Register(phonenumber string, username string, password []byte) {
-	us.CacheRepo.ClearUserCreds(phonenumber, username)
+func (us *UserService) Register(phonenumber string, username string, password []byte, session string) {
+	us.CacheRepo.ClearUserCreds(phonenumber, username, session)
 
 	err := us.UserRepo.PostUser(phonenumber, username, password)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    enums.INTERNAL_ERROR,
 			Errors: []enums.SpecificError{enums.DATABASE_ERROR},
-      })
+		})
 	}
 }
 
@@ -168,7 +165,7 @@ func (userService *UserService) ChangePassword(user_id int, old_password string,
 		panic(exceptions.Exception{
 			Tag: enums.INTERNAL_ERROR,
 			Errors: []enums.SpecificError{
-				enums.SYS_DATABASE_ERROR,
+				enums.DATABASE_ERROR,
 			},
 		})
 	}
@@ -190,7 +187,7 @@ func (userService *UserService) ChangePassword(user_id int, old_password string,
 		panic(exceptions.Exception{
 			Tag: enums.INTERNAL_ERROR,
 			Errors: []enums.SpecificError{
-				enums.SYS_SERVICE_UNAVAILABLE,
+				enums.SERVICE_UNAVAILABLE,
 			},
 		})
 	}
@@ -201,7 +198,7 @@ func (userService *UserService) ChangePassword(user_id int, old_password string,
 		panic(exceptions.Exception{
 			Tag: enums.INTERNAL_ERROR,
 			Errors: []enums.SpecificError{
-				enums.SYS_DATABASE_ERROR,
+				enums.DATABASE_ERROR,
 			},
 		})
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/handlers"
-	"github.com/niflheimdevs/backend/internal/middlewares/exceptions"
 	"github.com/niflheimdevs/backend/internal/middlewares/authentication"
 	"github.com/niflheimdevs/backend/internal/middlewares/exceptions"
 	"github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
@@ -24,38 +23,36 @@ import (
 // Injectors from wire.go:
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
+	constants := ProvideConstants(container)
 	userRepo := &repositories.UserRepo{
 		PG: db,
 	}
 	userCache := &redis2.UserCache{
 		DB: myRedis,
 	}
-	validate := handlers.NewValidator()
-	constants := ProvideConstants(container)
 	userService := &services.UserService{
 		UserRepo:  userRepo,
 		CacheRepo: userCache,
 	}
 	jwtToken := &services.JWTToken{}
+	validate := handlers.NewValidator()
 	userHandler := &handlers.UserHandler{
 		Constants:   constants,
 		UserService: userService,
-		Validator:   validate,
 		JWTService:  jwtToken,
+		Validator:   validate,
 	}
-	recoveryMiddleware := midrecovery.NewRecoveryMiddleware()
+	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
 	servicesJWTToken := services.JWTToken{}
 	authentication := midauth.NewAuth(constants, servicesJWTToken)
 	middlewares := &Middlewares{
-		Recovery:       recoveryMiddleware,
+		Recovery:       panicWall,
 		RateLimit:      rateLimit,
 		Authentication: authentication,
 	}
-	panicWall := &panicwall.PanicWall{}
 	application := &Application{
 		UserHandler: userHandler,
-		Recovery:    panicWall,
 		Middlewares: middlewares,
 	}
 	return application, nil
@@ -69,7 +66,7 @@ var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*")
 
 var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), handlers.NewValidator)
 
-var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, midrecovery.NewRecoveryMiddleware, wire.Struct(new(Middlewares), "*"))
+var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 	return container.Const
@@ -78,19 +75,18 @@ func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
-	HandlerProviderSet, wire.Struct(new(panicwall.PanicWall), "*"),
 	HandlerProviderSet,
+
 	MiddlewareProviderSet,
 )
 
 type Middlewares struct {
-	Recovery       *midrecovery.RecoveryMiddleware
+	Recovery       *panicwall.PanicWall
 	RateLimit      *midratelimit.RateLimit
 	Authentication *midauth.Authentication
 }
 
 type Application struct {
 	UserHandler *handlers.UserHandler
-	Recovery    *panicwall.PanicWall
 	Middlewares *Middlewares
 }
