@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/models"
@@ -85,7 +84,4 @@ func (uc *UserCache) ClearUserCreds(phonenumber string, username string, session
 	uc.DB.Del(ctx, "phone:"+phonenumber)
 
 	uc.DB.Del(ctx, session)
-}
-func (uc *UserCache) RedisPing() {
-	log.Println(uc.DB.Ping(context.Background()).Result())
 }

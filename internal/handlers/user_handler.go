@@ -112,7 +112,3 @@ func (uh *UserHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	uh.UserService.Register(phoenenumber, username, password, params.SessionID)
 
 }
-
-func (uh *UserHandler) RedisTest(w http.ResponseWriter, r *http.Request) {
-	uh.UserService.CacheRepo.RedisPing()
-}
