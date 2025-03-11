@@ -45,7 +45,6 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 		panic(exc)
 	}
 
-	//TODO: handle sending val somehow
 	sess1, err := us.CacheRepo.FindByUsername(username)
 	if err == nil {
 		// panic(val)
