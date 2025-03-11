@@ -28,7 +28,7 @@ func NewUserService(userRepo *repositories.UserRepo, cacheRepo *redis.UserCache)
 }
 
 // signup stage. checks if username or phonenumber is already taken.
-func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username string) {
+func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username string) string {
 	var exc = exceptions.Exception{
 		Tag: enums.VALIDATION_ERROR,
 	}
@@ -46,20 +46,25 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 	}
 
 	//TODO: handle sending val somehow
-	_, err = us.CacheRepo.FindByUsername(username)
+	sess1, err := us.CacheRepo.FindByUsername(username)
 	if err == nil {
 		// panic(val)
 		exc.AddError(enums.USERNAME_TAKEN)
 	}
 
-	_, err = us.CacheRepo.FindByPhone(phonenumber)
+	sess2, err := us.CacheRepo.FindByPhone(phonenumber)
 	if err == nil {
 		exc.AddError(enums.PHONE_TAKEN)
+
+	}
+	if sess1 == sess2 {
+		return sess1
 	}
 
 	if len(exc.Errors) > 0 {
 		panic(exc)
 	}
+	return ""
 }
 
 // caches the data until otp is expired or entered.

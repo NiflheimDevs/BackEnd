@@ -51,5 +51,4 @@ const (
 	NOT_FOUND        GeneralError = "NOT_FOUND"
 	BAD_REQUEST      GeneralError = "BAD_REQUEST"
 	LIMIT_EXCEED     GeneralError = "LIMIT_EXCEED"
-	// OTPError         GeneralError = "OTPError"
 )

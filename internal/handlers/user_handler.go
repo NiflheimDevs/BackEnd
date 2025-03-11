@@ -91,14 +91,14 @@ func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
 	info := Validated[Info](uh.Validator, r)
 
 	info.Username = strings.ToLower(info.Username)
-	uh.UserService.CheckAvailabilityForSignup(info.Phonenumber, info.Username)
+	session := uh.UserService.CheckAvailabilityForSignup(info.Phonenumber, info.Username)
 
-	code := sms.GenerateOTP()
-
-	session := uh.UserService.CacheUserInfo(info.Phonenumber, info.Username, info.Password, code)
-
-	// ? placement
-	sms.SendOTP(info.Phonenumber, code)
+	if session == "" {
+		code := sms.GenerateOTP()
+		session = uh.UserService.CacheUserInfo(info.Phonenumber, info.Username, info.Password, code)
+		// ? placement
+		sms.SendOTP(info.Phonenumber, code)
+	}
 
 	w.Write([]byte(session))
 }
