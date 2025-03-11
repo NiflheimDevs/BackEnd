@@ -10,6 +10,7 @@ func GenerateOTP() string {
 
 }
 
-func SendOTP(phonenumber string) {
+// TODO: connect to actual service
+func SendOTP(phonenumber string, code string) {
 
 }

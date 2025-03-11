@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,9 +38,16 @@ func (repo *UserRepo) FindUserByPhone(phone string) (*models.UserModel, error) {
 
 	query := "SELECT id,username,password,firstname,lastname FROM users WHERE phone = $1"
 
-	err := repo.PG.QueryRow(ctx, query, phone).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
+	var firstname, lastname sql.NullString
+	err := repo.PG.QueryRow(ctx, query, phone).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
 	if err != nil {
 		return nil, err
+	}
+	if firstname.Valid {
+		user.FirstName = firstname.String
+	}
+	if lastname.Valid {
+		user.LastName = lastname.String
 	}
 
 	return &user, nil
@@ -50,15 +58,19 @@ func (repo *UserRepo) FindUserByID(id int) (*models.UserModel, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-
+	var firstname, lastname sql.NullString
 	query := "SELECT id,username,password,firstname,lastname FROM users WHERE id = $1"
 
-	err := repo.PG.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
-
+	err := repo.PG.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
 	if err != nil {
 		return nil, err
 	}
-
+	if firstname.Valid {
+		user.FirstName = firstname.String
+	}
+	if lastname.Valid {
+		user.LastName = lastname.String
+	}
 	return &user, nil
 }
 
@@ -68,12 +80,19 @@ func (repo *UserRepo) FindUserByUsername(username string) (*models.UserModel, er
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
+	var firstname, lastname sql.NullString
 	query := "SELECT id,username,password,firstname,lastname FROM users WHERE username = $1"
 
-	err := repo.PG.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
+	err := repo.PG.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
 
 	if err != nil {
 		return nil, err
+	}
+	if firstname.Valid {
+		user.FirstName = firstname.String
+	}
+	if lastname.Valid {
+		user.LastName = lastname.String
 	}
 
 	return &user, nil
@@ -85,12 +104,20 @@ func (repo *UserRepo) FindUserByEmail(email string) (*models.UserModel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
+	var firstname, lastname sql.NullString
+
 	query := "SELECT id,username,password,firstname,lastname FROM users WHERE email = $1"
 
-	err := repo.PG.QueryRow(ctx, query, email).Scan(&user.ID, &user.Username, &user.Password, &user.FirstName, &user.LastName)
-
+	err := repo.PG.QueryRow(ctx, query, email).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
 	if err != nil {
 		return nil, err
+	}
+
+	if firstname.Valid {
+		user.FirstName = firstname.String
+	}
+	if lastname.Valid {
+		user.LastName = lastname.String
 	}
 
 	return &user, nil

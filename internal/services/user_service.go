@@ -2,10 +2,10 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 
 	"github.com/google/uuid"
-
-	"github.com/jackc/pgx/v5"
 
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
@@ -28,7 +28,7 @@ func NewUserService(userRepo *repositories.UserRepo, cacheRepo *redis.UserCache)
 }
 
 // signup stage. checks if username or phonenumber is already taken.
-func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username string) {
+func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username string) string {
 	var exc = exceptions.Exception{
 		Tag: enums.VALIDATION_ERROR,
 	}
@@ -45,21 +45,25 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 		panic(exc)
 	}
 
-	//TODO: handle sending val somehow
-	_, err = us.CacheRepo.FindByUsername(username)
+	sess1, err := us.CacheRepo.FindByUsername(username)
 	if err == nil {
 		// panic(val)
 		exc.AddError(enums.USERNAME_TAKEN)
 	}
 
-	_, err = us.CacheRepo.FindByPhone(phonenumber)
+	sess2, err := us.CacheRepo.FindByPhone(phonenumber)
 	if err == nil {
 		exc.AddError(enums.PHONE_TAKEN)
+
+	}
+	if sess1 == sess2 {
+		return sess1
 	}
 
 	if len(exc.Errors) > 0 {
 		panic(exc)
 	}
+	return ""
 }
 
 // caches the data until otp is expired or entered.
@@ -73,7 +77,14 @@ func (us *UserService) CacheUserInfo(phonenumber string, username string, passwo
 
 	session := uuid.New().String()
 
-	err = us.CacheRepo.PostUserCreds(phonenumber, username, hashedPass, session, otp)
+	userdata := models.UserCacheData{
+		Phone:    phonenumber,
+		Username: username,
+		Password: hashedPass,
+		OTP:      otp,
+	}
+
+	err = us.CacheRepo.PostUserCreds(session, &userdata)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    enums.INTERNAL_ERROR,
@@ -88,8 +99,8 @@ var develop_mode = true
 
 // checks the code with cache and returns the data. returns phonenumber, username, password
 func (us *UserService) ValidateOTP(session string, otp string) (string, string, []byte) {
-	val := us.CacheRepo.GetUserCreds(session)
-	if val == "" {
+	val, err := us.CacheRepo.FindBySession(session)
+	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    enums.VALIDATION_ERROR,
 			Errors: []enums.SpecificError{enums.OTP_EXPIRED_OR_BAD_SESSION},
@@ -105,12 +116,16 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 			Errors: []enums.SpecificError{enums.OTP_INVALID},
 		})
 	}
+
+	us.CacheRepo.DeleteRow(session)
+
 	return userdata.Phone, userdata.Username, userdata.Password
 }
 
 // last stage of signup
 func (us *UserService) Register(phonenumber string, username string, password []byte, session string) {
-	us.CacheRepo.ClearUserCreds(phonenumber, username, session)
+	//? before creation in main?
+	us.CacheRepo.ClearUserCreds(phonenumber, username)
 
 	err := us.UserRepo.PostUser(phonenumber, username, password)
 	if err != nil {
@@ -121,11 +136,15 @@ func (us *UserService) Register(phonenumber string, username string, password []
 	}
 }
 
+func (us *UserService) DeleteFromRedis(key string) {
+	us.CacheRepo.DeleteRow(key)
+}
+
 func (userService *UserService) AuthenticateUser(identifier string, password string) *models.UserModel {
 	user, err := userService.UserRepo.FindUserByUsername(identifier)
-	if err == pgx.ErrNoRows {
+	if err == nil {
 		user, err = userService.UserRepo.FindUserByPhone(identifier)
-		if err == pgx.ErrNoRows {
+		if err == nil {
 			panic(exceptions.Exception{
 				Tag: enums.NOT_FOUND,
 				Errors: []enums.SpecificError{
@@ -158,7 +177,7 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 	return user
 }
 
-func (userService *UserService) ChangePassword(user_id int, old_password string, new_password string) {
+func (userService *UserService) ChangePasswordValidate(user_id int, old_password string) {
 	user, err := userService.UserRepo.FindUserByID(user_id)
 
 	if err != nil {
@@ -180,7 +199,8 @@ func (userService *UserService) ChangePassword(user_id int, old_password string,
 			},
 		})
 	}
-
+}
+func (userService *UserService) ChangePassword(user_id int, new_password string) {
 	password, err := bcrypt.GenerateFromPassword([]byte(new_password), bcrypt.DefaultCost)
 
 	if err != nil {
@@ -202,4 +222,56 @@ func (userService *UserService) ChangePassword(user_id int, old_password string,
 			},
 		})
 	}
+}
+
+// for forget password: creates uuid and otp and caches otp
+func (us *UserService) SetupOTP(phonenumber string, code string) string {
+	userdata, err := us.UserRepo.FindUserByPhone(phonenumber)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.BAD_REQUEST,
+			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
+		})
+	}
+
+	session := uuid.New().String()
+	val := models.UserCacheData{
+		Phone: fmt.Sprintf("%d", userdata.ID),
+		OTP:   code,
+	}
+
+	err = us.CacheRepo.PostSessionOTP(session, &val)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{enums.CACHE_ERROR},
+		})
+	}
+
+	return session
+}
+
+func (us *UserService) SetForgetPasswordFlag(userID string) string {
+
+	session := uuid.New().String()
+	err := us.CacheRepo.PostSessionFlag(session, userID)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{enums.CACHE_ERROR},
+		})
+	}
+	return session
+}
+
+func (us *UserService) CheckFlagForPasswordReset(session string) int {
+	val, err := us.CacheRepo.GetSessionFlag(session)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.BAD_REQUEST,
+			Errors: []enums.SpecificError{enums.BAD_SESSION},
+		})
+	}
+	userID, _ := strconv.Atoi(val)
+	return userID
 }

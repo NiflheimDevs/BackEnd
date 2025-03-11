@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/models"
@@ -19,6 +18,14 @@ func NewUserCache(DB *redis.Client) *UserCache {
 		DB: DB,
 	}
 }
+
+// ? extract method
+// func (uc *UserCache) PostRedis(key string, value interface{}, duration time.Duration) error {
+// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+// 	defer cancel()
+// 	err := uc.DB.Set(ctx, key, value, duration).Err()
+// 	return err
+// }
 
 func (uc *UserCache) FindByUsername(username string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -37,46 +44,34 @@ func (uc *UserCache) FindByPhone(phonenumber string) (string, error) {
 }
 
 // ? idk if i should break this down
-func (uc *UserCache) PostUserCreds(phonenumber string, username string, password []byte, session string, otp string) error {
+func (uc *UserCache) PostUserCreds(session string, userdata *models.UserCacheData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	err := uc.DB.Set(ctx, "username:"+username, session, time.Minute*2+time.Second*2).Err()
+	err := uc.DB.Set(ctx, "username:"+userdata.Username, session, time.Minute*2+time.Second*2).Err()
 	if err != nil {
 		return err
 	}
 
-	err = uc.DB.Set(ctx, "phone:"+phonenumber, session, time.Minute*2+time.Second*2).Err()
+	err = uc.DB.Set(ctx, "phone:"+userdata.Phone, session, time.Minute*2+time.Second*2).Err()
 	if err != nil {
 		return err
 	}
 
-	userdata := models.UserCacheData{
-		Username: username,
-		Phone:    phonenumber,
-		Password: password,
-		OTP:      otp,
-	}
-	val, _ := json.Marshal(userdata)
+	val, _ := json.Marshal(*userdata)
 	err = uc.DB.Set(ctx, session, val, time.Minute*2+time.Second*2).Err()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
-func (uc *UserCache) GetUserCreds(session string) string {
+func (uc *UserCache) FindBySession(session string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	val, err := uc.DB.Get(ctx, session).Result()
-	if err == redis.Nil {
-		return ""
-	}
-	return val
+	return val, err
 }
 
-func (uc *UserCache) ClearUserCreds(phonenumber string, username string, session string) {
+func (uc *UserCache) ClearUserCreds(phonenumber string, username string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -84,8 +79,37 @@ func (uc *UserCache) ClearUserCreds(phonenumber string, username string, session
 
 	uc.DB.Del(ctx, "phone:"+phonenumber)
 
-	uc.DB.Del(ctx, session)
 }
-func (uc *UserCache) RedisPing() {
-	log.Println(uc.DB.Ping(context.Background()).Result())
+
+func (uc *UserCache) DeleteRow(key string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	uc.DB.Del(ctx, key)
+}
+
+func (uc *UserCache) PostSessionOTP(session string, userdata *models.UserCacheData) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	val, _ := json.Marshal(*userdata)
+	err := uc.DB.Set(ctx, session, val, time.Minute*2+time.Second+2).Err()
+
+	return err
+}
+
+func (uc *UserCache) PostSessionFlag(session string, userID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := uc.DB.Set(ctx, "forget:"+session, userID, time.Minute*5).Err()
+	return err
+}
+
+func (uc *UserCache) GetSessionFlag(session string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	value, err := uc.DB.Get(ctx, "forget:"+session).Result()
+	return value, err
 }
