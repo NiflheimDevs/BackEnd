@@ -42,6 +42,7 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		JWTService:  jwtToken,
 		Validator:   validate,
 	}
+	errorHandler := &handlers.ErrorHandler{}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
 	servicesJWTToken := services.JWTToken{}
@@ -52,8 +53,9 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		Authentication: authentication,
 	}
 	application := &Application{
-		UserHandler: userHandler,
-		Middlewares: middlewares,
+		UserHandler:  userHandler,
+		ErrorHandler: errorHandler,
+		Middlewares:  middlewares,
 	}
 	return application, nil
 }
@@ -64,7 +66,7 @@ var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), 
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.JWTToken), "*"))
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), handlers.NewValidator)
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), handlers.NewValidator)
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -87,6 +89,7 @@ type Middlewares struct {
 }
 
 type Application struct {
-	UserHandler *handlers.UserHandler
-	Middlewares *Middlewares
+	UserHandler  *handlers.UserHandler
+	ErrorHandler *handlers.ErrorHandler
+	Middlewares  *Middlewares
 }

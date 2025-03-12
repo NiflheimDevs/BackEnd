@@ -32,7 +32,10 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/forget-password/reset", app.UserHandler.ForgetPassword)
 
 	mux.Post("/login", app.UserHandler.Login)
+
 	mux.Post("/change-password", app.UserHandler.ChangePassword)
+
+	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
 
 	return mux
 }
