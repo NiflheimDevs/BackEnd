@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -20,6 +21,13 @@ func Routes(app *wire.Application) http.Handler {
 		AllowPrivateNetwork: true,
 		MaxAge:              300,
 	}).Handler)
+
+	mux.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+			log.Printf("Response Headers: %v", w.Header())
+		})
+	})
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
