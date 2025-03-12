@@ -12,13 +12,13 @@ func Routes(app *wire.Application) http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(cors.New(cors.Options{
-		AllowedOrigins:      []string{"http://localhost:3000", "https://bidlancer.ir"}, // Adjust as needed
+		AllowedOrigins:      []string{"http://localhost:3000", "https://bidlancer.ir"},
 		AllowedMethods:      []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:      []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:      []string{"Link"},
 		AllowCredentials:    true,
 		AllowPrivateNetwork: true,
-		MaxAge:              300, // Cache preflight request for 5 minutes
+		MaxAge:              300,
 	}).Handler)
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
@@ -33,6 +33,10 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Post("/login", app.UserHandler.Login)
 	mux.Post("/change-password", app.UserHandler.ChangePassword)
+
+	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
+	})
 
 	return mux
 }
