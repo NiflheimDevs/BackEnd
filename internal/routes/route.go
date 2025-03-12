@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -13,19 +12,12 @@ func Routes(app *wire.Application) http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://bidlancer.ir"},
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}).Handler)
-
-	mux.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r)
-			log.Printf("Response Headers: %v", w.Header())
-		})
-	})
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
@@ -39,10 +31,6 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Post("/login", app.UserHandler.Login)
 	mux.Post("/change-password", app.UserHandler.ChangePassword)
-
-	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
-	})
 
 	return mux
 }
