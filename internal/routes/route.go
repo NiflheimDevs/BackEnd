@@ -13,13 +13,11 @@ func Routes(app *wire.Application) http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(cors.New(cors.Options{
-		AllowedOrigins:      []string{"http://localhost:3000", "https://bidlancer.ir"},
-		AllowedMethods:      []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:      []string{"Accept", "Authorization", "Content-Type"},
-		ExposedHeaders:      []string{"Link"},
-		AllowCredentials:    true,
-		AllowPrivateNetwork: true,
-		MaxAge:              300,
+		AllowedOrigins:   []string{"http://localhost:3000", "https://bidlancer.ir"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Origin", "Accept", "Authorization", "Content-Type"},
+		AllowCredentials: true,
+		MaxAge:           300,
 	}).Handler)
 
 	mux.Use(func(next http.Handler) http.Handler {
