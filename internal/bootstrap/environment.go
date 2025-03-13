@@ -25,7 +25,7 @@ type Database struct {
 }
 
 func NewEnvironment() *Env {
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("./.env")
 	if err != nil {
 		panic(err)
 	}

@@ -6,9 +6,9 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY * ./
+COPY . .
 
-RUN CGO_ENABLED=0 go build -o /application
+RUN go build -o /application ./cmd/niflancer
 
 EXPOSE 8080
 
