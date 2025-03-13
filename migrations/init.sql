@@ -1,10 +1,10 @@
 
-CREATE USER niflheim WITH PASSWORD 'niflguard';
-ALTER ROLE niflheim WITH CREATEDB;
+-- CREATE USER niflheim WITH PASSWORD 'niflguard';
+-- ALTER ROLE niflheim WITH CREATEDB;
 
-CREATE DATABASE bidlancer;
+-- CREATE DATABASE IF NOT EXISTS bidlancer;
 
-\c mydatabase;
+\c bidlancer;
 
 CREATE TABLE IF NOT EXISTS "users" (
   "id" serial PRIMARY KEY,
