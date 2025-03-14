@@ -21,8 +21,8 @@ func GenerateOTP() string {
 
 // TODO: connect to actual service
 func SendOTP(phonenumber string, code string) {
-	apikey := "OQIAPP4fRTpqWpWafX2lljoW9YBSuCmGLdFGFDZfJCfLfc97"
-	// apikey := "i9jivkYg8ONebnmtTb5ncBcOuaFoCIxsUyyTWKVcOSXaK3da"
+	// apikey := "OQIAPP4fRTpqWpWafX2lljoW9YBSuCmGLdFGFDZfJCfLfc97"
+	apikey := "i9jivkYg8ONebnmtTb5ncBcOuaFoCIxsUyyTWKVcOSXaK3da"
 	type Parameters struct {
 		Name  string `json:"name"`
 		Value string `json:"value"`
@@ -34,7 +34,7 @@ func SendOTP(phonenumber string, code string) {
 	}
 	temp := Template{
 		Phonenumber: phonenumber,
-		TemplateId:  "123456",
+		TemplateId:  "485976",
 		Parameter: []Parameters{Parameters{
 			Name:  "Code",
 			Value: code,

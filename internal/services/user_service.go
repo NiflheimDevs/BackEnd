@@ -95,7 +95,7 @@ func (us *UserService) CacheUserInfo(phonenumber string, username string, passwo
 	return session
 }
 
-var develop_mode = true
+var develop_mode = false
 
 // checks the code with cache and returns the data. returns phonenumber, username, password
 func (us *UserService) ValidateOTP(session string, otp string) (string, string, []byte) {
