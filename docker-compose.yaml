@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:17
+    container_name: postgres_container
+    platform: linux/amd64
+    restart: always
+    environment:
+      POSTGRES_USER: niflheim
+      POSTGRES_PASSWORD: niflguard
+      POSTGRES_DB: bidlancer
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:latest
+    container_name: redis_container
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --save 60 1 --loglevel warning
+
+  app:
+    build: .
+    image: ghcr.io/niflheimdevs/backend
+    container_name: application
+    restart: always
+    depends_on:
+      - db
+      - redis
+    env_file:
+      ./.env
+    ports:
+      - "8080:8080"
+    links:
+      - db
+
+volumes:
+  pgdata:
+  redisdata:
