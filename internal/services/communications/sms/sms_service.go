@@ -19,7 +19,6 @@ func GenerateOTP() string {
 
 }
 
-// TODO: connect to actual service
 func SendOTP(phonenumber string, code string) {
 	// apikey := "OQIAPP4fRTpqWpWafX2lljoW9YBSuCmGLdFGFDZfJCfLfc97"
 	apikey := "i9jivkYg8ONebnmtTb5ncBcOuaFoCIxsUyyTWKVcOSXaK3da"
@@ -42,15 +41,11 @@ func SendOTP(phonenumber string, code string) {
 	}
 	marshalled, _ := json.Marshal(temp)
 	bodyReader := bytes.NewReader(marshalled)
-	req, err := http.NewRequest(http.MethodPost, "https://api.sms.ir/v1/send/verify", bodyReader)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-		})
-	}
+	req, _ := http.NewRequest(http.MethodPost, "https://api.sms.ir/v1/send/verify", bodyReader)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/plain")
 	req.Header.Set("x-api-key", apikey)
+
 	client := http.Client{
 		Timeout: 30 * time.Second,
 	}
