@@ -1,0 +1,154 @@
+
+-- CREATE USER niflheim WITH PASSWORD 'niflguard';
+-- ALTER ROLE niflheim WITH CREATEDB;
+
+CREATE DATABASE IF NOT EXISTS bidlancer;
+
+\c bidlancer;
+
+CREATE TABLE IF NOT EXISTS "users" (
+  "id" serial PRIMARY KEY,
+  "firstname" varchar,
+  "lastname" varchar,
+  "username" varchar NOT NULL UNIQUE,
+  "password" bytea NOT NULL,
+  "email" varchar,
+  "is_verified" bool DEFAULT FALSE,
+  "bio" text,
+  "phone" varchar NOT NULL,
+  "photo" varchar,
+  "resume" varchar,
+  "wallet" numeric DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "team" (
+  "id" serial PRIMARY KEY,
+  "title" varchar,
+  "description" text
+);
+
+CREATE TABLE IF NOT EXISTS "bid" (
+  "id" serial PRIMARY KEY,
+  "team_id" int NOT NULL,
+  "project_id" int NOT NULL,
+  "value" numeric NOT NULL,
+  "expected_time" timestamp NOT NULL,
+  "created_time" timestamp NOT NULL,
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "project" (
+  "id" serial PRIMARY KEY,
+  "owner_id" int NOT NULL,
+  "title" text NOT NULL,
+  "description" text,
+  "selected_bid_id" int UNIQUE,
+  "created_time" timestamp NOT NULL,
+  "updated_time" timestamp,
+  "duration" timestamp,
+  FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
+  FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id")
+);
+
+ALTER TABLE bid
+ADD FOREIGN KEY ("project_id")
+REFERENCES "project" ("id");
+
+CREATE TABLE IF NOT EXISTS "chat" (
+  "id" serial PRIMARY KEY,
+  "title" varchar,
+  "description" text
+);
+
+CREATE TABLE IF NOT EXISTS "comment" (
+  "id" serial PRIMARY KEY,
+  "project_id" int NOT NULL,
+  "bid_id" int NOT NULL,
+  "content" text,
+  "rating" int NOT NULL,
+  FOREIGN KEY ("project_id") REFERENCES "project" ("id"),
+  FOREIGN KEY ("bid_id") REFERENCES "bid" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "external_transaction" (
+  "id" int PRIMARY KEY,
+  "user_id" int NOT NULL,
+  "type" int NOT NULL,
+  "amount" numeric NOT NULL,
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "internal_transaction" (
+  "id" serial PRIMARY KEY,
+  "from_user_id" int NOT NULL,
+  "to_user_id" int NOT NULL,
+  "amount" numeric NOT NULL,
+  FOREIGN KEY ("to_user_id") REFERENCES "users" ("id"),
+  FOREIGN KEY ("from_user_id") REFERENCES "users" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "message" (
+  "id" serial PRIMARY KEY,
+  "chat_id" int NOT NULL,
+  "sender_id" int,
+  "sent_time" timestamp DEFAULT CURRENT_TIMESTAMP,
+  "edit_time" timestamp,
+  "content" text NOT NULL,
+  FOREIGN KEY ("chat_id") REFERENCES "chat" ("id"),
+  FOREIGN KEY ("sender_id") REFERENCES "users" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "permission" (
+  "id" serial PRIMARY KEY,
+  "name" varchar NOT NULL,
+  "description" text
+);
+
+CREATE TABLE IF NOT EXISTS "role" (
+  "id" int PRIMARY KEY,
+  "name" varchar NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "role_permission" (
+  "role_id" int NOT NULL,
+  "permission_id" int NOT NULL,
+  FOREIGN KEY ("role_id") REFERENCES "role" ("id"),
+  FOREIGN KEY ("permission_id") REFERENCES "permission" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "tag" (
+  "id" serial PRIMARY KEY,
+  "name" varchar NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "users_chat" (
+  "chat_id" int NOT NULL,
+  "user_id" int NOT NULL,
+  "role_id" int NOT NULL,
+  FOREIGN KEY ("chat_id") REFERENCES "chat" ("id"),
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "users_project_tag" (
+  "project_user_id" int NOT NULL,
+  "tag_id" int NOT NULL,
+  "type" int NOT NULL,
+  FOREIGN KEY ("tag_id") REFERENCES "tag" ("id"),
+  FOREIGN KEY ("project_user_id") REFERENCES "project" ("id"),
+  FOREIGN KEY ("project_user_id") REFERENCES "users" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "users_role" (
+  "user_id" int NOT NULL,
+  "role_id" int NOT NULL,
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
+  FOREIGN KEY ("role_id") REFERENCES "role" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "users_team" (
+  "user_id" int NOT NULL,
+  "team_id" int NOT NULL,
+  "position" varchar,
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id")
+);
