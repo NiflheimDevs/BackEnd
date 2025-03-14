@@ -41,7 +41,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "docker-compose.yml"
-          target: "/root/backend"
+          target: "/home/niflheim/Desktop/Backend"
 
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.8
@@ -50,7 +50,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd /root/backend
+            cd /home/niflheim/Desktop/Backend
             echo "${{ secrets.ENV_FILE }}" > .env
             chmod 644 .env
             
