@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:17
     container_name: postgres_container
+    platform: linux/amd64
     restart: always
     environment:
       POSTGRES_USER: niflheim
@@ -25,20 +26,14 @@ services:
 
   app:
     build: .
+    image: ghcr.io/niflheimdevs/backend
     container_name: application
     restart: always
     depends_on:
       - db
       - redis
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: niflheim
-      DB_PASSWORD: niflguard
-      DB_NAME: bidlancer
-      DB_SSLMODE: disable
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+    env_file:
+      ./.env
     ports:
       - "8080:8080"
     links:

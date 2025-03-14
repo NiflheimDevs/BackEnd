@@ -2,7 +2,7 @@
 -- CREATE USER niflheim WITH PASSWORD 'niflguard';
 -- ALTER ROLE niflheim WITH CREATEDB;
 
--- CREATE DATABASE IF NOT EXISTS bidlancer;
+CREATE DATABASE IF NOT EXISTS bidlancer;
 
 \c bidlancer;
 
