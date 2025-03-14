@@ -1,9 +1,6 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - Feat/docker
   pull_request:
     branches: 
       - develop
