@@ -43,7 +43,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "docker-compose.yml"
+          source: "docker-compose.yaml"
           target: "/home/niflheim/Desktop/Backend"
 
       - name: Deploy
