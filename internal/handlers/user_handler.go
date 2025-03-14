@@ -110,7 +110,18 @@ func (uh *UserHandler) SignupWithOtp(w http.ResponseWriter, r *http.Request) {
 	}
 	params := Validated[Params](uh.Validator, r)
 	phonenumber, username, password := uh.UserService.ValidateOTP(params.SessionID, params.Code)
-	uh.UserService.Register(phonenumber, username, password, params.SessionID)
+	userid := uh.UserService.Register(phonenumber, username, password, params.SessionID)
+
+	type Tokens struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	var tokens Tokens
+	tokens.AccessToken, tokens.RefreshToken = uh.JWTService.GenerateToken(userid)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tokens)
 
 }
 
