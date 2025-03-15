@@ -3,7 +3,9 @@ package services
 import (
 	"crypto/rsa"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,6 +20,10 @@ type JWT struct {
 }
 
 func NewJWT(Const *bootstrap.Constants) *JWT {
+
+	haha, _ := exec.Command("ls").CombinedOutput()
+	log.Println(string(haha))
+
 	return &JWT{
 		PrivateKey: loadPrivateKey(Const.JWTKeysPath + "/privateKey.pem"),
 		PublicKey:  loadPublicKey(Const.JWTKeysPath + "/publicKey.pem"),
