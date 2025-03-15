@@ -29,6 +29,8 @@ RUN mkdir -p ./internal/jwt
 COPY ./internal/jwt/privateKey.pem ./internal/jwt/
 COPY ./internal/jwt/publicKey.pem ./internal/jwt/
 
+RUN ls -la ./internal/jwt
+
 COPY --from=builder /app/main .
 
 COPY .env .
