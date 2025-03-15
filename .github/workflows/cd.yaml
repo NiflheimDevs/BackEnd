@@ -2,9 +2,6 @@ name: CD
 
 on:
   
-  push:
-    branches: 
-      - Feat/docker
   pull_request:
     branches: 
       - develop
@@ -27,11 +24,6 @@ jobs:
             mkdir ./internal/jwt
             echo "${{ secrets.PRIVATEJWTKEY }}" > ./internal/jwt/privateKey.pem
             echo "${{ secrets.PUBLICJWTKEY }}" > ./internal/jwt/publicKey.pem
-            ls -la ./internal/jwt/
-            pwd
-            ls -l
-            
-        
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
