@@ -2,7 +2,12 @@
 -- CREATE USER niflheim WITH PASSWORD 'niflguard';
 -- ALTER ROLE niflheim WITH CREATEDB;
 
-CREATE DATABASE IF NOT EXISTS bidlancer;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'bidlancer') THEN
+        CREATE DATABASE bidlancer;
+    END IF;
+END $$;
 
 \c bidlancer;
 

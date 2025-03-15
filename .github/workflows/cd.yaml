@@ -1,6 +1,7 @@
 name: CD
 
 on:
+  
   pull_request:
     branches: 
       - develop
@@ -17,7 +18,12 @@ jobs:
       - name: Write .env file
         run: | 
             echo "${{ secrets.ENV_FILE }}" > .env
-        
+      
+      - name: Write .pem files
+        run: |
+            mkdir ./internal/jwt
+            echo "${{ secrets.PRIVATEJWTKEY }}" > ./internal/jwt/privateKey.pem
+            echo "${{ secrets.PUBLICJWTKEY }}" > ./internal/jwt/publicKey.pem
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -41,7 +47,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "docker-compose.yaml"
-          target: "/home/niflheim/Desktop/Backend"
+          target: "/home/niflheim/Desktop/backend"
 
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.8
@@ -54,6 +60,7 @@ jobs:
             echo "${{ secrets.ENV_FILE }}" > .env
             chmod 644 .env
             
+            docker container prune
             docker compose pull
             docker compose down --remove-orphans
             docker compose up -d

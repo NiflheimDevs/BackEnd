@@ -18,7 +18,13 @@ FROM alpine:3.19
 
 RUN apk add --no-cache ca-certificates tzdata
 
+
 WORKDIR /app
+
+RUN mkdir -p ./internal/jwt
+
+COPY ./internal/jwt/privateKey.pem ./internal/jwt/
+COPY ./internal/jwt/publicKey.pem ./internal/jwt/
 
 COPY --from=builder /app/main .
 
