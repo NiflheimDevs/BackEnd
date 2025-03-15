@@ -32,10 +32,10 @@ COPY ./internal/jwt/publicKey.pem ./internal/jwt/
 
 RUN chmod 777 ./internal/jwt/privateKey.pem
 RUN chmod 777 ./internal/jwt/publicKey.pem
+RUN ls -la ./internal/jwt
 RUN cat ./internal/jwt/publicKey
 
 
-RUN ls -la ./internal/jwt
 RUN pwd
 
 COPY --from=builder /app/main .
