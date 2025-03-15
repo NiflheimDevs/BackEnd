@@ -1,24 +1,54 @@
 package services
 
 import (
+	"crypto/rsa"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	jwt_keys "github.com/niflheimdevs/backend/internal/jwt"
 )
 
-type JWTToken struct{}
-
-func NewJWTToken() *JWTToken {
-	return &JWTToken{}
+type JWT struct {
+	PrivateKey *rsa.PrivateKey
+	PublicKey  *rsa.PublicKey
 }
 
-func (jt *JWTToken) GenerateToken(userID int) (string, string) {
-	jwtKeys := jwt_keys.GetJWTKeys()
+func NewJWT(Const *bootstrap.Constants) *JWT {
+	return &JWT{
+		PrivateKey: loadPrivateKey(Const.JWTKeysPath + "/privateKey.pem"),
+		PublicKey:  loadPublicKey(Const.JWTKeysPath + "/publicKey.pem"),
+	}
+}
 
+func loadPrivateKey(keyPath string) *rsa.PrivateKey {
+	privateKeyBytes, err := os.ReadFile(keyPath)
+	if err != nil {
+		panic(err)
+	}
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+	if err != nil {
+		panic(err)
+	}
+	return privateKey
+}
+
+func loadPublicKey(keyPath string) *rsa.PublicKey {
+	publicKeyBytes, err := os.ReadFile(keyPath)
+	if err != nil {
+		panic(err)
+	}
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyBytes)
+	if err != nil {
+		panic(err)
+	}
+	return publicKey
+}
+
+func (j *JWT) GenerateToken(userID int) (string, string) {
 	accessTokenClaims := jwt.MapClaims{
 		"iss": "bidlancer",
 		"sub": userID,
@@ -27,7 +57,7 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessTokenClaims)
-	accessTokenString, err := accessToken.SignedString(jwtKeys.PrivateKey)
+	accessTokenString, err := accessToken.SignedString(j.PrivateKey)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: enums.INTERNAL_ERROR,
@@ -45,7 +75,7 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, refreshTokenClaims)
-	refreshTokenString, err := refreshToken.SignedString(jwtKeys.PrivateKey)
+	refreshTokenString, err := refreshToken.SignedString(j.PrivateKey)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: enums.INTERNAL_ERROR,
@@ -58,13 +88,12 @@ func (jt *JWTToken) GenerateToken(userID int) (string, string) {
 	return accessTokenString, refreshTokenString
 }
 
-func (jt *JWTToken) VerifyToken(tokenString string) jwt.MapClaims {
-	jwtKeys := jwt_keys.GetJWTKeys()
+func (j *JWT) VerifyToken(tokenString string) jwt.MapClaims {
 	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
 		}
-		return jwtKeys.PublicKey, nil
+		return j.PublicKey, nil
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
