@@ -68,6 +68,7 @@ jobs:
             echo "${{ secrets.ENV_FILE }}" > .env
             chmod 644 .env
             
+            docker container prune
             docker compose pull
             docker compose down --remove-orphans
             docker compose up -d
