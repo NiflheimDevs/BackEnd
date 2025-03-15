@@ -27,6 +27,7 @@ jobs:
             mkdir ./internal/jwt
             echo "${{ secrets.PRIVATEJWTKEY }}" > ./internal/jwt/privateKey.pem
             echo "${{ secrets.PUBLICJWTKEY }}" > ./internal/jwt/publicKey.pem
+            ls -la ./internal/jwt/
         
         
       - name: Set up Docker Buildx
@@ -51,7 +52,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "docker-compose.yaml"
-          target: "/home/niflheim/Desktop/Backend"
+          target: "/home/niflheim/Desktop/backend"
 
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.8
