@@ -17,6 +17,11 @@ jobs:
       - name: Write .env file
         run: | 
             echo "${{ secrets.ENV_FILE }}" > .env
+      
+      - name: Write .pem files
+        run: |
+            echo "${{ secrets.PRIVATEJWTKEY }}" > ./internal/jwt/privateKey.pem
+            echo "${{ secrets.PUBLICJWTKEY }}" > ./internal/jwt/publicKey.pem
         
         
       - name: Set up Docker Buildx
