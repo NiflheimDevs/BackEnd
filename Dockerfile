@@ -12,6 +12,9 @@ RUN go mod download
 
 COPY . .
 
+COPY ./internal/jwt/privateKey.pem ./internal/jwt/
+COPY ./internal/jwt/publicKey.pem ./internal/jwt/
+
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o main ./cmd/niflancer
 
 FROM alpine:3.19
