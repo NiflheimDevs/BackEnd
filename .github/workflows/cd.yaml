@@ -24,6 +24,7 @@ jobs:
       
       - name: Write .pem files
         run: |
+            mkdir ./internal/jwt
             echo "${{ secrets.PRIVATEJWTKEY }}" > ./internal/jwt/privateKey.pem
             echo "${{ secrets.PUBLICJWTKEY }}" > ./internal/jwt/publicKey.pem
         
