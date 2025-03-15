@@ -34,18 +34,17 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		UserRepo:  userRepo,
 		CacheRepo: userCache,
 	}
-	jwtToken := &services.JWTToken{}
+	jwt := services.NewJWT(constants)
 	validate := handlers.NewValidator()
 	userHandler := &handlers.UserHandler{
 		Constants:   constants,
 		UserService: userService,
-		JWTService:  jwtToken,
+		JWTService:  jwt,
 		Validator:   validate,
 	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
-	servicesJWTToken := services.JWTToken{}
-	authentication := midauth.NewAuth(constants, servicesJWTToken)
+	authentication := midauth.NewAuth(constants, jwt)
 	middlewares := &Middlewares{
 		Recovery:       panicWall,
 		RateLimit:      rateLimit,
@@ -62,7 +61,7 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 
 var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(redis2.UserCache), "*"))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.JWTToken), "*"))
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), services.NewJWT, ProvideConstants)
 
 var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), handlers.NewValidator)
 
@@ -76,7 +75,6 @@ var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
-
 	MiddlewareProviderSet,
 )
 
