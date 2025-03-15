@@ -23,8 +23,15 @@ WORKDIR /app
 
 RUN mkdir -p ./internal/jwt
 
+RUN chmod 777 ./internal/jwt 
+RUN chmod 777 ./internal
+
 COPY ./internal/jwt/privateKey.pem ./internal/jwt/
 COPY ./internal/jwt/publicKey.pem ./internal/jwt/
+
+
+RUN chmod 777 ./internal/jwt/privateKey.pem
+RUN chmod 777 ./internal/jwt/publicKey.pem
 
 RUN ls -la ./internal/jwt
 RUN pwd
