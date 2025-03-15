@@ -24,10 +24,13 @@ jobs:
       
       - name: Write .pem files
         run: |
-            mkdir ./internal/jwt
+            mkdir -p /app/internal/jwt
             echo "${{ secrets.PRIVATEJWTKEY }}" > ./internal/jwt/privateKey.pem
             echo "${{ secrets.PUBLICJWTKEY }}" > ./internal/jwt/publicKey.pem
             ls -la ./internal/jwt/
+            pwd
+            ls -l
+            
         
         
       - name: Set up Docker Buildx
