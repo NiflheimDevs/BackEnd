@@ -8,6 +8,7 @@ fi
 
 # Decode the private key and save it to the privateKey.pem file
 echo "$JWT_PRIVATE" | base64 -d > internal/jwt/privateKey.pem
+
 if [ $? -ne 0 ]; then
   echo "Error: Failed to decode JWT_PRIVATE."
   exit 1
@@ -16,6 +17,7 @@ echo "Decoded JWT_PRIVATE and saved to internal/jwt/privateKey.pem."
 
 # Decode the public key and save it to the publicKey.pem file
 echo "$JWT_PUBLIC" | base64 -d > internal/jwt/publicKey.pem
+
 if [ $? -ne 0 ]; then
   echo "Error: Failed to decode JWT_PUBLIC."
   exit 1
