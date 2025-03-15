@@ -21,7 +21,7 @@ type JWT struct {
 
 func NewJWT(Const *bootstrap.Constants) *JWT {
 
-	haha, _ := exec.Command("ls", "-la", "./internal").CombinedOutput()
+	haha, _ := exec.Command("pwd").CombinedOutput()
 	log.Println(string(haha))
 
 	haha, _ = exec.Command("ls", "-la", "./internal/jwt").CombinedOutput()
