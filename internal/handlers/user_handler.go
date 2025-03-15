@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
-	jwt_keys "github.com/niflheimdevs/backend/internal/jwt"
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/niflheimdevs/backend/internal/services/communications/sms"
 )
@@ -16,14 +15,14 @@ import (
 type UserHandler struct {
 	Constants   *bootstrap.Constants
 	UserService *services.UserService
-	JWTService  *services.JWTToken
+	JWTService  *services.JWT
 	Validator   *validator.Validate
 }
 
 func NewUserHandler(
 	Constants *bootstrap.Constants,
 	userService *services.UserService,
-	jwtService *services.JWTToken,
+	jwtService *services.JWT,
 	validator *validator.Validate,
 ) *UserHandler {
 	return &UserHandler{
@@ -45,8 +44,6 @@ func (userHandler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	params.Identifier = strings.ToLower(params.Identifier)
 
 	user := userHandler.UserService.AuthenticateUser(params.Identifier, params.Password)
-
-	jwt_keys.SetupJWTKeys(userHandler.Constants.JWTKeysPath)
 
 	accessToken, refreshToken := userHandler.JWTService.GenerateToken(user.ID)
 
@@ -110,7 +107,18 @@ func (uh *UserHandler) SignupWithOtp(w http.ResponseWriter, r *http.Request) {
 	}
 	params := Validated[Params](uh.Validator, r)
 	phonenumber, username, password := uh.UserService.ValidateOTP(params.SessionID, params.Code)
-	uh.UserService.Register(phonenumber, username, password, params.SessionID)
+	userid := uh.UserService.Register(phonenumber, username, password, params.SessionID)
+
+	type Tokens struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	var tokens Tokens
+	tokens.AccessToken, tokens.RefreshToken = uh.JWTService.GenerateToken(userid)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tokens)
 
 }
 

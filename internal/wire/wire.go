@@ -25,12 +25,15 @@ var RepoProviderSet = wire.NewSet(
 
 var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(services.UserService), "*"),
-	wire.Struct(new(services.JWTToken), "*"),
+	services.NewJWT,
+	ProvideConstants,
+	// wire.Struct(new(services.JWT), "*"),
 )
 
 var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.UserHandler), "*"),
 	handlers.NewValidator,
+	// services.NewJWT,
 )
 
 var MiddlewareProviderSet = wire.NewSet(
@@ -48,7 +51,6 @@ var ProviderSet = wire.NewSet(
 	RepoProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
-	// wire.Struct(new(panicwall.PanicWall), "*"),
 	MiddlewareProviderSet,
 )
 
@@ -65,7 +67,6 @@ type Application struct {
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
 	wire.Build(
-		ProvideConstants,
 		ProviderSet,
 		wire.Struct(new(Application), "*"),
 	)

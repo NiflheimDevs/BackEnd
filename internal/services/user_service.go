@@ -123,17 +123,18 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 }
 
 // last stage of signup
-func (us *UserService) Register(phonenumber string, username string, password []byte, session string) {
+func (us *UserService) Register(phonenumber string, username string, password []byte, session string) int {
 	//? before creation in main?
 	us.CacheRepo.ClearUserCreds(phonenumber, username)
 
-	err := us.UserRepo.PostUser(phonenumber, username, password)
+	userid, err := us.UserRepo.PostUser(phonenumber, username, password)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    enums.INTERNAL_ERROR,
 			Errors: []enums.SpecificError{enums.DATABASE_ERROR},
 		})
 	}
+	return userid
 }
 
 func (us *UserService) DeleteFromRedis(key string) {

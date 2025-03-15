@@ -123,15 +123,18 @@ func (repo *UserRepo) FindUserByEmail(email string) (*models.UserModel, error) {
 	return &user, nil
 }
 
-func (repo *UserRepo) PostUser(phonenumber string, username string, password []byte) error {
+func (repo *UserRepo) PostUser(phonenumber string, username string, password []byte) (int, error) {
+	var userid int
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := `
 	INSERT INTO users 
 	(phone , username, password)
-	VALUES ($1 , $2 , $3)`
+	VALUES ($1 , $2 , $3)
+	RETURNING id`
 
-	_, err := repo.PG.Exec(ctx, query, phonenumber, username, password)
-	return err
+	err := repo.PG.QueryRow(ctx, query, phonenumber, username, password).Scan(&userid)
+	return userid, err
 }
