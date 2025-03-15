@@ -24,6 +24,9 @@ func NewJWT(Const *bootstrap.Constants) *JWT {
 	haha, _ := exec.Command("ls").CombinedOutput()
 	log.Println(string(haha))
 
+	haha, _ = exec.Command("ls", "-la", "./internal").CombinedOutput()
+	log.Println(string(haha))
+
 	return &JWT{
 		PrivateKey: loadPrivateKey(Const.JWTKeysPath + "/privateKey.pem"),
 		PublicKey:  loadPublicKey(Const.JWTKeysPath + "/publicKey.pem"),
