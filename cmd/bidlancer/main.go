@@ -25,6 +25,7 @@ func main() {
 	defer rdb.Close()
 
 	app, err := wire.InitializeApplication(di, pdb, rdb)
+
 	if err != nil {
 		panic(err)
 	}
