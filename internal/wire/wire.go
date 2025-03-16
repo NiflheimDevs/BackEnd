@@ -32,6 +32,7 @@ var ServiceProviderSet = wire.NewSet(
 
 var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.UserHandler), "*"),
+	wire.Struct(new(handlers.ErrorHandler), "*"),
 	handlers.NewValidator,
 	// services.NewJWT,
 )
@@ -61,8 +62,9 @@ type Middlewares struct {
 }
 
 type Application struct {
-	UserHandler *handlers.UserHandler
-	Middlewares *Middlewares
+	UserHandler  *handlers.UserHandler
+	ErrorHandler *handlers.ErrorHandler
+	Middlewares  *Middlewares
 }
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
