@@ -38,8 +38,6 @@ services:
       - "8080:8080"
     links:
       - db
-    volumes:
-      - ./internal/jwt:/app/internal/jwt
 
 volumes:
   pgdata:
