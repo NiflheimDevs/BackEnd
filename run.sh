@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cd ./scripts && ./start.sh
+go run ./cmd/bidlancer/main.go
