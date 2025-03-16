@@ -56,7 +56,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd /home/niflheim/Desktop/Backend
+            cd /home/niflheim/Desktop/backend
             echo "${{ secrets.ENV_FILE }}" > .env
             chmod 644 .env
             
