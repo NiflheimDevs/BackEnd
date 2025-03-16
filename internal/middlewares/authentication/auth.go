@@ -5,18 +5,17 @@ import (
 	"net/http"
 
 	"github.com/niflheimdevs/backend/internal/bootstrap"
-	jwt_keys "github.com/niflheimdevs/backend/internal/jwt"
 	"github.com/niflheimdevs/backend/internal/services"
 )
 
 type Authentication struct {
 	Constants  *bootstrap.Constants
-	JWTService services.JWTToken
+	JWTService *services.JWT
 }
 
 func NewAuth(
 	Constants *bootstrap.Constants,
-	JWTService services.JWTToken,
+	JWTService *services.JWT,
 ) *Authentication {
 	return &Authentication{
 		Constants:  Constants,
@@ -37,7 +36,6 @@ func (am *Authentication) AuthRequired(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		jwt_keys.SetupJWTKeys(am.Constants.JWTKeysPath)
 		claims := am.JWTService.VerifyToken(tokenString)
 
 		userID := int(claims["sub"].(float64))
