@@ -56,6 +56,7 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 	} else {
 		code = 418
 	}
+
 	json, _ := json.Marshal(err)
 	return json, code
 }
