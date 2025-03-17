@@ -41,6 +41,8 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 	var code int
 	if err.Tag == enums.VALIDATION_ERROR {
 		code = 409
+	} else if err.Tag == enums.AUTHENTICATION_ERROR {
+		code = 403
 	} else if err.Tag == enums.INTERNAL_ERROR {
 		code = 500
 	} else if err.Tag == enums.NOT_FOUND {

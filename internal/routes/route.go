@@ -38,7 +38,10 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/forget-password/reset", app.UserHandler.ForgetPassword)
 
 	mux.Post("/login", app.UserHandler.Login)
+
 	mux.Post("/change-password", app.UserHandler.ChangePassword)
+
+	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
