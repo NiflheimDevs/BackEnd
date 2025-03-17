@@ -11,8 +11,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./pgdata:/var/lib/postgresql/data
-      # - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:latest
@@ -38,6 +38,7 @@ services:
       - "8080:8080"
     links:
       - db
+      - redis
 
 
 volumes:
