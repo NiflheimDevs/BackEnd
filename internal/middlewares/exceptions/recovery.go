@@ -49,6 +49,8 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 		code = 400
 	} else if err.Tag == enums.LIMIT_EXCEED {
 		code = 429
+	} else if err.Tag == enums.UNAUTHORIZED {
+		code = 401
 	} else {
 		code = 418
 	}
