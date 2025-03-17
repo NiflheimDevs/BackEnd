@@ -6,6 +6,7 @@ type Constants struct {
 	Database    DBConst
 	JWTKeysPath string
 	Context     Context
+	Project     Project
 }
 
 type DBConst struct {
@@ -18,6 +19,10 @@ type Context struct {
 	UserID string
 }
 
+type Project struct {
+	LastTime time.Duration
+}
+
 func NewConstant() *Constants {
 	return &Constants{
 		Database: DBConst{
@@ -28,6 +33,9 @@ func NewConstant() *Constants {
 		JWTKeysPath: "./internal/jwt",
 		Context: Context{
 			UserID: "userID",
+		},
+		Project: Project{
+			LastTime: 7 * 24 * time.Hour,
 		},
 	}
 }
