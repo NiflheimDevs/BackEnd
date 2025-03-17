@@ -26,11 +26,12 @@ func NewAuth(
 func (am *Authentication) AuthRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var userID int
-		authHeader := r.Header.Get("access_token")
-		if authHeader == "" {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || len(authHeader) < 7 || authHeader[:7] != "Bearer " {
 			userID = -2
 		} else {
-			claims := am.JWTService.VerifyToken(authHeader)
+			tokenString := authHeader[7:]
+			claims := am.JWTService.VerifyToken(tokenString)
 			if claims == nil {
 				userID = -1
 			} else {
