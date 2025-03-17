@@ -25,20 +25,19 @@ func NewAuth(
 
 func (am *Authentication) AuthRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var userID int
 		authHeader := r.Header.Get("access_token")
 		if authHeader == "" {
-			next.ServeHTTP(w, r)
-			return
-		}
+			userID = -2
+		} else {
+			claims := am.JWTService.VerifyToken(authHeader)
+			if claims == nil {
+				userID = -1
+			} else {
 
-		tokenString := authHeader
-		if tokenString == "" {
-			next.ServeHTTP(w, r)
-			return
+				userID = int(claims["sub"].(float64))
+			}
 		}
-		claims := am.JWTService.VerifyToken(tokenString)
-
-		userID := int(claims["sub"].(float64))
 		ctx := context.WithValue(r.Context(), am.Constants.Context.UserID, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
