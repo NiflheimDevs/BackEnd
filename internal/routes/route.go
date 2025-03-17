@@ -5,20 +5,21 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/niflheimdevs/backend/internal/wire"
-	"github.com/rs/cors"
 )
 
 func Routes(app *wire.Application) http.Handler {
 	mux := chi.NewRouter()
 
-	mux.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://bidlancer.ir"},
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Origin", "Accept", "Authorization", "Content-Type"},
-		AllowCredentials: true,
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
 		MaxAge:           300,
-	}).Handler)
+	}))
 
 	mux.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
