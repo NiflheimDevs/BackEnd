@@ -63,3 +63,25 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 		})
 	}
 }
+
+func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
+	type updateProjectParams struct {
+		Title       string `json:"title" validate:"required"`
+		Description string `json:"description" validate:"required"`
+		Tag         string `json:"tag" validate:"required"`
+	}
+
+	UserID := r.Context().Value("UserID").(int)
+
+	ProjectID := r.Context().Value("ProjectID").(int)
+
+	params := Validated[updateProjectParams](projectHandler.Validator, r)
+
+	var tags []int
+
+	json.Unmarshal([]byte(params.Tag), &tags)
+
+	projectHandler.ProjectService.UpdateProject(ProjectID, UserID, params.Title, params.Description, tags)
+
+	w.WriteHeader(http.StatusNoContent)
+}

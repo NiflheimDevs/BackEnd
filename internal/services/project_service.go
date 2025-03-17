@@ -50,3 +50,37 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 
 	return project_id
 }
+
+func (projectService *ProjectService) UpdateProject(projectID, UserID int, title, description string, tag []int) {
+	err := projectService.ProjectRepo.UpdateProject(projectID, UserID, title, description)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	err = projectService.ProjectRepo.DeleteProjectTags(projectID)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	for _, tag_id := range tag {
+		err = projectService.ProjectRepo.AddProjectTag(projectID, tag_id)
+		if err != nil {
+			panic(exceptions.Exception{
+				Tag: enums.INTERNAL_ERROR,
+				Errors: []enums.SpecificError{
+					enums.DATABASE_ERROR,
+				},
+			})
+		}
+	}
+}

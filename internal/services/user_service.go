@@ -143,9 +143,9 @@ func (us *UserService) DeleteFromRedis(key string) {
 
 func (userService *UserService) AuthenticateUser(identifier string, password string) *models.UserModel {
 	user, err := userService.UserRepo.FindUserByUsername(identifier)
-	if err == nil {
+	if err != nil {
 		user, err = userService.UserRepo.FindUserByPhone(identifier)
-		if err == nil {
+		if err != nil {
 			panic(exceptions.Exception{
 				Tag: enums.NOT_FOUND,
 				Errors: []enums.SpecificError{
@@ -153,15 +153,6 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 				},
 			})
 		}
-	}
-
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USERNAME_PASSWORD_WRONG,
-			},
-		})
 	}
 
 	err = bcrypt.CompareHashAndPassword(user.Password, []byte(password))
