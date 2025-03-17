@@ -17,6 +17,7 @@ func Routes(app *wire.Application) http.Handler {
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders: []string{"Link"},
+		MaxAge:         300,
 	}))
 
 	mux.Use(func(next http.Handler) http.Handler {
