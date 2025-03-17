@@ -179,6 +179,15 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 }
 
 func (userService *UserService) ChangePasswordValidate(user_id int, old_password string) {
+	if user_id == 0 {
+		panic(exceptions.Exception{
+			Tag: enums.AUTHENTICATION_ERROR,
+			Errors: []enums.SpecificError{
+				enums.AUTH_INVALID_CREDENTIALS,
+			},
+		})
+	}
+
 	user, err := userService.UserRepo.FindUserByID(user_id)
 
 	if err != nil {

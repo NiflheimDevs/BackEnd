@@ -30,6 +30,8 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
 
+	mux.Post("/login", app.UserHandler.Login)
+
 	mux.Post("/signup/send-otp", app.UserHandler.ReserveInfo)
 	mux.Post("/signup/verify", app.UserHandler.SignupWithOtp)
 
@@ -37,9 +39,11 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/forget-password/verify", app.UserHandler.VerifyOTP)
 	mux.Post("/forget-password/reset", app.UserHandler.ForgetPassword)
 
-	mux.Post("/login", app.UserHandler.Login)
-
 	mux.Post("/change-password", app.UserHandler.ChangePassword)
+
+	mux.Get("/tags", app.GeneralHandler.GetTags)
+
+	mux.Post("/projects/create", app.ProjectHandler.CreateProject)
 
 	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
 
