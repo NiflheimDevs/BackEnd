@@ -39,6 +39,7 @@ services:
     links:
       - db
 
+
 volumes:
   pgdata:
   redisdata:
