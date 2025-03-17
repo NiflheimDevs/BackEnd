@@ -8,6 +8,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
+	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/niflheimdevs/backend/internal/services/communications/sms"
 )
@@ -58,7 +60,10 @@ func (userHandler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(userDTO); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		panic(exceptions.Exception{
+			Tag:    enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{enums.CAST_ERROR},
+		})
 	}
 }
 
@@ -75,7 +80,6 @@ func (userHandler *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Re
 	userHandler.UserService.ChangePasswordValidate(userID, params.OldPassword)
 	userHandler.UserService.ChangePassword(userID, params.NewPassword)
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -158,4 +162,6 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 	userID := uh.UserService.CheckFlagForPasswordReset(changePassword.SessionID)
 
 	uh.UserService.ChangePassword(userID, changePassword.NewPassword)
+
+	w.WriteHeader(http.StatusOK)
 }
