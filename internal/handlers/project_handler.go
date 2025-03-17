@@ -37,18 +37,14 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 	type createProjectParams struct {
 		Title       string `json:"title" validate:"required"`
 		Description string `json:"description" validate:"required"`
-		Tag         string `json:"tag" validate:"required"`
+		Tags        []int  `json:"tags" validate:"required"`
 	}
 
 	UserID := r.Context().Value("UserID").(int)
 
 	params := Validated[createProjectParams](projectHandler.Validator, r)
 
-	var tags []int
-
-	json.Unmarshal([]byte(params.Tag), &tags)
-
-	project := projectHandler.ProjectService.CreateProject(UserID, params.Title, params.Description, tags)
+	project := projectHandler.ProjectService.CreateProject(UserID, params.Title, params.Description, params.Tags)
 
 	dto := dto.CreateProjectDTO{
 		ProjectID: project,

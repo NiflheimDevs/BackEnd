@@ -22,6 +22,7 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("Request Headers: %v", r.Header)
 			next.ServeHTTP(w, r)
 			log.Printf("Response Headers: %v", w.Header())
 		})
