@@ -40,7 +40,6 @@ services:
       - db
       - redis
 
-
 volumes:
   pgdata:
   redisdata:
