@@ -292,15 +292,23 @@ func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
 			},
 		})
 	}
-	rowsEffected, err := us.UserRepo.UpdateUserData(userData)
 
-	// userid in jwt did not exist
-	if rowsEffected == 0 && err == nil {
+	user, err := us.UserRepo.FindUserByID(userData.ID)
+
+	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
 		})
 	}
+	if !user.Is_verified && user.Email != userData.Email {
+		panic(exceptions.Exception{
+			Tag:    enums.VALIDATION_ERROR,
+			Errors: []enums.SpecificError{enums.EMAIL_NOT_VERIFIED},
+		})
+	}
+
+	_, err = us.UserRepo.UpdateUserData(userData)
 
 	if err == nil {
 		return

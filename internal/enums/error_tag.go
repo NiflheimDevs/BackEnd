@@ -4,8 +4,9 @@ type GeneralError string
 type SpecificError string
 
 const (
-	EMAIL_TAKEN   SpecificError = "EMAIL_TAKEN"
-	EMAIL_INVALID SpecificError = "EMAIL_INVALID"
+	EMAIL_TAKEN        SpecificError = "EMAIL_TAKEN"
+	EMAIL_INVALID      SpecificError = "EMAIL_INVALID"
+	EMAIL_NOT_VERIFIED SpecificError = "EMAIL_NOT_VERIFIED"
 
 	USERNAME_TAKEN     SpecificError = "USERNAME_TAKEN"
 	USERNAME_TOO_SHORT SpecificError = "USERNAME_TOO_SHORT"
