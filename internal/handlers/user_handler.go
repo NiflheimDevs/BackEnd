@@ -75,7 +75,7 @@ func (userHandler *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Re
 
 	params := Validated[changePasswordParam](userHandler.Validator, r)
 
-	userID := r.Context().Value("userID").(int)
+	userID := r.Context().Value(userHandler.Constants.Context.UserID).(int)
 
 	userHandler.UserService.ChangePasswordValidate(userID, params.OldPassword)
 	userHandler.UserService.ChangePassword(userID, params.NewPassword)
@@ -165,3 +165,22 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// update start
+func (uh *UserHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request) {
+	type Photo struct {
+		Data []byte `json:"data" validate:"required"`
+	}
+}
+
+func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+	params := Validated[dto.UpdateUserDTO](uh.Validator, r)
+	params.ID = userid
+
+	uh.UserService.UpdateUserData(&params)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// update end

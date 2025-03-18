@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	dto "github.com/niflheimdevs/backend/internal/dto/users"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"
@@ -276,3 +277,53 @@ func (us *UserService) CheckFlagForPasswordReset(session string) int {
 	userID, _ := strconv.Atoi(val)
 	return userID
 }
+
+// update start
+func (us *UserService) ProcessPhoto(Data []byte) {
+
+}
+
+func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
+	if userData.ID < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+	rowsEffected, err := us.UserRepo.UpdateUserData(userData)
+
+	// userid in jwt did not exist
+	if rowsEffected == 0 && err == nil {
+		panic(exceptions.Exception{
+			Tag:    enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
+		})
+	}
+
+	if err == nil {
+		return
+	}
+
+	validErrs := exceptions.Exception{
+		Tag: enums.VALIDATION_ERROR,
+	}
+	_, err = us.UserRepo.FindUserByEmail(userData.Email)
+	if err != nil {
+		validErrs.AddError(enums.EMAIL_TAKEN)
+	}
+	_, err = us.UserRepo.FindUserByUsername(userData.Username)
+	if err != nil {
+		validErrs.AddError(enums.USERNAME_TAKEN)
+	}
+	if len(validErrs.Errors) > 0 {
+		panic(validErrs)
+	}
+
+	panic(exceptions.Exception{
+		Tag: enums.INTERNAL_ERROR,
+	})
+}
+
+//update end

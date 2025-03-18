@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	dto "github.com/niflheimdevs/backend/internal/dto/users"
 	"github.com/niflheimdevs/backend/internal/models"
 )
 
@@ -137,4 +138,17 @@ func (repo *UserRepo) PostUser(phonenumber string, username string, password []b
 
 	err := repo.PG.QueryRow(ctx, query, phonenumber, username, password).Scan(&userid)
 	return userid, err
+}
+
+func (repo *UserRepo) UpdateUserData(userData *dto.UpdateUserDTO) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	UPDATE users
+	SET firstname = $2 , lastname = $3 , username = $4 , email = $5
+	WHERE id = $1`
+
+	res, err := repo.PG.Exec(ctx, query, userData.ID, userData.FirstName, userData.LastName, userData.Username, userData.Email)
+	return res.RowsAffected(), err
 }
