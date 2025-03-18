@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
 	"github.com/niflheimdevs/backend/internal/models"
@@ -20,6 +21,26 @@ func NewUserRepo(PG *pgxpool.Pool) *UserRepo {
 	}
 }
 
+func fillUserModel(row pgx.Row) (*models.UserModel, error) {
+	var user models.UserModel
+
+	var firstname, lastname, email sql.NullString
+	err := row.Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname, &email, &user.Is_verified, &user.Phone, &user.Wallet)
+	if err != nil {
+		return nil, err
+	}
+	if firstname.Valid {
+		user.FirstName = firstname.String
+	}
+	if lastname.Valid {
+		user.LastName = lastname.String
+	}
+	if email.Valid {
+		user.Email = email.String
+	}
+	return &user, nil
+}
+
 func (repo *UserRepo) UpdateUserPassword(id int, password []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -32,96 +53,48 @@ func (repo *UserRepo) UpdateUserPassword(id int, password []byte) error {
 }
 
 func (repo *UserRepo) FindUserByPhone(phone string) (*models.UserModel, error) {
-	var user models.UserModel
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,username,password,firstname,lastname FROM users WHERE phone = $1"
+	query := "SELECT id,username,password,firstname,lastname,email,is_verified,phone,wallet FROM users WHERE phone = $1"
 
-	var firstname, lastname sql.NullString
-	err := repo.PG.QueryRow(ctx, query, phone).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
-	if err != nil {
-		return nil, err
-	}
-	if firstname.Valid {
-		user.FirstName = firstname.String
-	}
-	if lastname.Valid {
-		user.LastName = lastname.String
-	}
+	row := repo.PG.QueryRow(ctx, query, phone)
 
-	return &user, nil
+	return fillUserModel(row)
 }
 
 func (repo *UserRepo) FindUserByID(id int) (*models.UserModel, error) {
-	var user models.UserModel
-
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	var firstname, lastname sql.NullString
-	query := "SELECT id,username,password,firstname,lastname FROM users WHERE id = $1"
+	query := "SELECT id,username,password,firstname,lastname,email,is_verified,phone,wallet FROM users WHERE id = $1"
 
-	err := repo.PG.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
-	if err != nil {
-		return nil, err
-	}
-	if firstname.Valid {
-		user.FirstName = firstname.String
-	}
-	if lastname.Valid {
-		user.LastName = lastname.String
-	}
-	return &user, nil
+	row := repo.PG.QueryRow(ctx, query, id)
+
+	return fillUserModel(row)
+
 }
 
 func (repo *UserRepo) FindUserByUsername(username string) (*models.UserModel, error) {
-	var user models.UserModel
-
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var firstname, lastname sql.NullString
-	query := "SELECT id,username,password,firstname,lastname FROM users WHERE username = $1"
+	query := "SELECT id,username,password,firstname,lastname,email,is_verified,phone,wallet FROM users WHERE username = $1"
 
-	err := repo.PG.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
+	row := repo.PG.QueryRow(ctx, query, username)
 
-	if err != nil {
-		return nil, err
-	}
-	if firstname.Valid {
-		user.FirstName = firstname.String
-	}
-	if lastname.Valid {
-		user.LastName = lastname.String
-	}
-
-	return &user, nil
+	return fillUserModel(row)
 }
 
 func (repo *UserRepo) FindUserByEmail(email string) (*models.UserModel, error) {
-	var user models.UserModel
-
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var firstname, lastname sql.NullString
+	query := "SELECT id,username,password,firstname,lastname,email,is_verified,phone,wallet FROM users WHERE email = $1"
 
-	query := "SELECT id,username,password,firstname,lastname FROM users WHERE email = $1"
+	row := repo.PG.QueryRow(ctx, query, email)
 
-	err := repo.PG.QueryRow(ctx, query, email).Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname)
-	if err != nil {
-		return nil, err
-	}
-
-	if firstname.Valid {
-		user.FirstName = firstname.String
-	}
-	if lastname.Valid {
-		user.LastName = lastname.String
-	}
-
-	return &user, nil
+	return fillUserModel(row)
 }
 
 func (repo *UserRepo) PostUser(phonenumber string, username string, password []byte) (int, error) {
@@ -146,7 +119,7 @@ func (repo *UserRepo) UpdateUserData(userData *dto.UpdateUserDTO) (int64, error)
 
 	query := `
 	UPDATE users
-	SET firstname = $2 , lastname = $3 , username = $4 , email = $5
+	SET firstname = $2 , lastname = $3 , username = $4 , email = $5 , is_verified = false
 	WHERE id = $1`
 
 	res, err := repo.PG.Exec(ctx, query, userData.ID, userData.FirstName, userData.LastName, userData.Username, userData.Email)

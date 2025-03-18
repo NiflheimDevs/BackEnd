@@ -10,6 +10,7 @@ type UserModel struct {
 	Is_verified bool
 	Bio         string
 	Phone       string
+	Wallet      float64
 }
 
 type UserCacheData struct {
