@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/driver"
 	"github.com/niflheimdevs/backend/internal/routes"
@@ -24,7 +25,6 @@ func main() {
 	defer rdb.Close()
 
 	app, err := wire.InitializeApplication(di, pdb, rdb)
-
 	if err != nil {
 		panic(err)
 	}
