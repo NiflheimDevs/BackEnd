@@ -100,7 +100,7 @@ func (j *JWT) VerifyToken(tokenString string) jwt.MapClaims {
 		return claims
 	}
 	panic(exceptions.Exception{
-		Tag: enums.VALIDATION_ERROR,
+		Tag: enums.AUTHENTICATION_ERROR,
 		Errors: []enums.SpecificError{
 			enums.AUTH_ACCESS_DENIED,
 		},

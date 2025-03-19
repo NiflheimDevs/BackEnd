@@ -43,6 +43,28 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		Validator:   validate,
 	}
 	errorHandler := &handlers.ErrorHandler{}
+	projectRepo := &repositories.ProjectRepo{
+		PG: db,
+	}
+	projectService := &services.ProjectService{
+		ProjectRepo: projectRepo,
+		Constants:   constants,
+	}
+	projectHandler := &handlers.ProjectHandler{
+		Constants:      constants,
+		ProjectService: projectService,
+		JWTService:     jwt,
+		Validator:      validate,
+	}
+	generalRepo := &repositories.GeneralRepo{
+		PG: db,
+	}
+	generalService := &services.GeneralService{
+		GeneralRepo: generalRepo,
+	}
+	generalHandler := &handlers.GeneralHandler{
+		GeneralService: generalService,
+	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
 	authentication := midauth.NewAuth(constants, jwt)
@@ -52,20 +74,22 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		Authentication: authentication,
 	}
 	application := &Application{
-		UserHandler:  userHandler,
-		ErrorHandler: errorHandler,
-		Middlewares:  middlewares,
+		UserHandler:    userHandler,
+		ErrorHandler:   errorHandler,
+		ProjectHandler: projectHandler,
+		GeneralHandler: generalHandler,
+		Middlewares:    middlewares,
 	}
 	return application, nil
 }
 
 // wire.go:
 
-var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(redis2.UserCache), "*"))
+var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(repositories.ProjectRepo), "*"), wire.Struct(new(repositories.GeneralRepo), "*"), wire.Struct(new(redis2.UserCache), "*"))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), services.NewJWT, ProvideConstants)
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.ProjectService), "*"), wire.Struct(new(services.GeneralService), "*"), services.NewJWT, ProvideConstants)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), handlers.NewValidator)
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), handlers.NewValidator)
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -87,7 +111,9 @@ type Middlewares struct {
 }
 
 type Application struct {
-	UserHandler  *handlers.UserHandler
-	ErrorHandler *handlers.ErrorHandler
-	Middlewares  *Middlewares
+	UserHandler    *handlers.UserHandler
+	ErrorHandler   *handlers.ErrorHandler
+	ProjectHandler *handlers.ProjectHandler
+	GeneralHandler *handlers.GeneralHandler
+	Middlewares    *Middlewares
 }

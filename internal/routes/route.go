@@ -22,13 +22,17 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("Request Headers: %v", r.Header)
 			next.ServeHTTP(w, r)
 			log.Printf("Response Headers: %v", w.Header())
 		})
 	})
+
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
+
+	mux.Post("/login", app.UserHandler.Login)
 
 	mux.Post("/signup/send-otp", app.UserHandler.ReserveInfo)
 	mux.Post("/signup/verify", app.UserHandler.SignupWithOtp)
@@ -37,9 +41,13 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/forget-password/verify", app.UserHandler.VerifyOTP)
 	mux.Post("/forget-password/reset", app.UserHandler.ForgetPassword)
 
-	mux.Post("/login", app.UserHandler.Login)
-
 	mux.Post("/change-password", app.UserHandler.ChangePassword)
+
+	mux.Get("/tags", app.GeneralHandler.GetTags)
+
+	mux.Get("/projects/{project_id}", app.ProjectHandler.GetProject)
+	mux.Post("/projects/create", app.ProjectHandler.CreateProject)
+	mux.Put("/projects/{project_id}", app.ProjectHandler.UpdateProject)
 
 	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
 

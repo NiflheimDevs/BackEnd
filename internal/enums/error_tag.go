@@ -42,7 +42,10 @@ const (
 	MISSING_FILE SpecificError = "MISSING_FILE"
 	CAST_ERROR   SpecificError = "CAST_ERROR"
 
-	USER_NOT_FOUND SpecificError = "USER_NOT_FOUND"
+	USER_NOT_FOUND    SpecificError = "USER_NOT_FOUND"
+	PROJECT_NOT_FOUND SpecificError = "PROJECT_NOT_FOUND"
+
+	USER_NOT_OWNER SpecificError = "USER_NOT_OWNER"
 )
 
 const (
