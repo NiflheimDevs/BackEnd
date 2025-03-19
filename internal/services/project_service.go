@@ -44,7 +44,7 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 	return project
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, tag []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description string, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.AUTHENTICATION_ERROR,
@@ -57,15 +57,15 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
 	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, duration)
 
-	for _, tag_id := range tag {
+	for _, tag_id := range tags {
 		projectService.ProjectRepo.AddProjectTag(project_id, tag_id)
 	}
 
 	return project_id
 }
 
-func (projectService *ProjectService) UpdateProject(projectID, UserID int, title, description string, tag []int) {
-	if UserID == -1 || UserID == -2 {
+func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, tags []int) {
+	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.AUTHENTICATION_ERROR,
 			Errors: []enums.SpecificError{
@@ -85,7 +85,7 @@ func (projectService *ProjectService) UpdateProject(projectID, UserID int, title
 		})
 	}
 
-	if project.OwnerID != UserID {
+	if project.OwnerID != userID {
 		panic(exceptions.Exception{
 			Tag: enums.BAD_REQUEST,
 			Errors: []enums.SpecificError{
@@ -94,11 +94,29 @@ func (projectService *ProjectService) UpdateProject(projectID, UserID int, title
 		})
 	}
 
-	projectService.ProjectRepo.UpdateProject(projectID, UserID, title, description)
+	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description)
 
-	projectService.ProjectRepo.DeleteProjectTags(projectID)
+	existingTags := projectService.ProjectRepo.GetProjectTag(projectID)
 
-	for _, tag_id := range tag {
-		projectService.ProjectRepo.AddProjectTag(projectID, tag_id)
+	existingTagSet := make(map[int]bool)
+	for _, tag := range existingTags {
+		existingTagSet[tag.ID] = true
+	}
+
+	newTagSet := make(map[int]bool)
+	for _, tag := range tags {
+		newTagSet[tag] = true
+	}
+
+	for _, tag := range tags {
+		if !existingTagSet[tag] {
+			projectService.ProjectRepo.AddProjectTag(projectID, tag)
+		}
+	}
+
+	for _, tag := range existingTags {
+		if !newTagSet[tag.ID] {
+			projectService.ProjectRepo.DeleteProjectTags(projectID, tag.ID)
+		}
 	}
 }

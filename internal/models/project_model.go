@@ -6,4 +6,5 @@ type ProjectModel struct {
 	Title       string
 	Description string
 	Tags        []TagModel
+	Duration    string
 }

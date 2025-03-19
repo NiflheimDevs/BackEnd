@@ -2,9 +2,9 @@ package repositories
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
@@ -29,11 +29,16 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description FROM project WHERE id = $1"
+	query := "SELECT id,owner_id,title,description,duration FROM project WHERE id = $1"
 
-	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description)
+	var duration time.Time
+	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &duration)
 
-	log.Print(err)
+	if err == pgx.ErrNoRows {
+		return nil, err
+	}
+
+	project.Duration = duration.Format("2006-01-02 15:04:05")
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -133,13 +138,13 @@ func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) {
 	}
 }
 
-func (repo *ProjectRepo) DeleteProjectTags(projectID int) {
+func (repo *ProjectRepo) DeleteProjectTags(projectID, tagID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM users_project_tag WHERE project_user_id = $1 AND type = 2"
+	query := "DELETE FROM users_project_tag WHERE project_user_id = $1 AND tag_id = $2 AND type = 2"
 
-	_, err := repo.PG.Exec(ctx, query, projectID)
+	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -155,9 +160,11 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "UPDATE project SET title = $1, description = $2 WHERE id = $3 and owner_id = $4"
+	now := time.Now().Format("2006-01-02 15:04:05")
 
-	_, err := repo.PG.Exec(ctx, query, title, description, projectID, UserID)
+	query := "UPDATE project SET title = $1, description = $2, updated_time=$3 WHERE id = $4 and owner_id = $5"
+
+	_, err := repo.PG.Exec(ctx, query, title, description, now, projectID, UserID)
 
 	if err != nil {
 		panic(exceptions.Exception{

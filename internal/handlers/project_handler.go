@@ -22,13 +22,13 @@ type ProjectHandler struct {
 }
 
 func NewProjectHandler(
-	Constants *bootstrap.Constants,
+	constants *bootstrap.Constants,
 	projectService *services.ProjectService,
 	jwtService *services.JWT,
 	validator *validator.Validate,
 ) *ProjectHandler {
 	return &ProjectHandler{
-		Constants:      Constants,
+		Constants:      constants,
 		ProjectService: projectService,
 		JWTService:     jwtService,
 		Validator:      validator,
@@ -37,9 +37,9 @@ func NewProjectHandler(
 
 func (projectHandler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 	projectIDString := chi.URLParam(r, "project_id")
-	ProjectID, _ := strconv.Atoi(projectIDString)
+	projectID, _ := strconv.Atoi(projectIDString)
 
-	project := projectHandler.ProjectService.GetProject(ProjectID)
+	project := projectHandler.ProjectService.GetProject(projectID)
 
 	projectDTO := dto.Project{
 		ProjectID:   project.ID,
@@ -47,6 +47,7 @@ func (projectHandler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.
 		Title:       project.Title,
 		Description: project.Description,
 		Tags:        project.Tags,
+		Duration:    project.Duration,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -68,9 +69,9 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 	params := Validated[createProjectParams](projectHandler.Validator, r)
 
-	UserID := r.Context().Value("userID").(int)
+	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
-	project := projectHandler.ProjectService.CreateProject(UserID, params.Title, params.Description, params.Tags)
+	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Tags)
 
 	dto := dto.CreateProjectDTO{
 		ProjectID: project,
@@ -95,12 +96,12 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 
 	params := Validated[updateProjectParams](projectHandler.Validator, r)
 
-	UserID := r.Context().Value("userID").(int)
+	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
 	projectIDString := chi.URLParam(r, "project_id")
-	ProjectID, _ := strconv.Atoi(projectIDString)
+	projectID, _ := strconv.Atoi(projectIDString)
 
-	projectHandler.ProjectService.UpdateProject(ProjectID, UserID, params.Title, params.Description, params.Tags)
+	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, params.Tags)
 
 	w.WriteHeader(http.StatusNoContent)
 }
