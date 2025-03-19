@@ -32,6 +32,8 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-chi/cors v1.2.1 // indirect
+	github.com/pixiv/go-libjpeg v0.0.0-20190822045933-3da21a74767d
+	golang.org/x/image v0.25.0
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 )

@@ -167,11 +167,6 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // update start
-func (uh *UserHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request) {
-	type Photo struct {
-		Data []byte `json:"data" validate:"required"`
-	}
-}
 
 func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)

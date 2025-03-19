@@ -279,9 +279,6 @@ func (us *UserService) CheckFlagForPasswordReset(session string) int {
 }
 
 // update start
-func (us *UserService) ProcessPhoto(Data []byte) {
-
-}
 
 func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
 	if userData.ID < 0 {

@@ -44,6 +44,8 @@ const (
 	CAST_ERROR   SpecificError = "CAST_ERROR"
 
 	USER_NOT_FOUND SpecificError = "USER_NOT_FOUND"
+
+	FORMAT_NOT_SUPPORTED SpecificError = "FORMAT_NOT_SUPPORTED"
 )
 
 const (
@@ -53,5 +55,6 @@ const (
 	NOT_FOUND            GeneralError = "NOT_FOUND"
 	BAD_REQUEST          GeneralError = "BAD_REQUEST"
 	LIMIT_EXCEED         GeneralError = "LIMIT_EXCEED"
+	UNPROCESSABLE        GeneralError = "UNPROCESSABLE"
 	AUTHENTICATION_ERROR GeneralError = "AUTHENTICATION_ERROR"
 )
