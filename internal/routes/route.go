@@ -44,6 +44,7 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Get("/tags", app.GeneralHandler.GetTags)
 
+	mux.Get("/projects/{project_id}", app.ProjectHandler.GetProject)
 	mux.Post("/projects/create", app.ProjectHandler.CreateProject)
 	mux.Put("/projects/{project_id}", app.ProjectHandler.UpdateProject)
 

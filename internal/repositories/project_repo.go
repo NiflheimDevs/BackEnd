@@ -2,10 +2,14 @@ package repositories
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/models"
 )
 
 type ProjectRepo struct {
@@ -20,7 +24,33 @@ func NewProjectRepo(
 	}
 }
 
-func (repo *ProjectRepo) CreateProject(userID int, title, description, duration string) (int, error) {
+func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error) {
+	var project models.ProjectModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT id,owner_id,title,description FROM project WHERE id = $1"
+
+	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description)
+
+	if err == pgx.ErrNoRows {
+		return nil, errors.New("project not found")
+	}
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return &project, nil
+}
+
+func (repo *ProjectRepo) CreateProject(userID int, title, description, duration string) int {
 	var project_id int
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -30,10 +60,19 @@ func (repo *ProjectRepo) CreateProject(userID int, title, description, duration 
 
 	err := repo.PG.QueryRow(ctx, query, userID, title, description, duration).Scan(&project_id)
 
-	return project_id, err
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return project_id
 }
 
-func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) error {
+func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -41,10 +80,17 @@ func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) error {
 
 	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
 
-	return err
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
 }
 
-func (repo *ProjectRepo) DeleteProjectTags(projectID int) error {
+func (repo *ProjectRepo) DeleteProjectTags(projectID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -52,7 +98,14 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID int) error {
 
 	_, err := repo.PG.Exec(ctx, query, projectID)
 
-	return err
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
 }
 
 func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description string) error {
@@ -63,9 +116,18 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 
 	result, err := repo.PG.Exec(ctx, query, title, description, projectID, UserID)
 
-	if result.RowsAffected() == 0 {
-		return fmt.Errorf("user is not the owner of the project")
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
 	}
 
-	return err
+	if result.RowsAffected() == 0 {
+		return errors.New("")
+	}
+
+	return nil
 }

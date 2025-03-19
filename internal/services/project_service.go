@@ -6,6 +6,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/models"
 	"github.com/niflheimdevs/backend/internal/repositories"
 )
 
@@ -24,63 +25,55 @@ func NewProjectService(
 	}
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, tag []int) int {
-	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02")
-	project_id, err := projectService.ProjectRepo.CreateProject(userID, title, description, duration)
+func (projectService *ProjectService) GetProject(projectID int) *models.ProjectModel {
+	project, err := projectService.ProjectRepo.GetProject(projectID)
+
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
+			Tag: enums.NOT_FOUND,
 			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+				enums.PROJECT_NOT_FOUND,
 			},
 		})
 	}
 
+	return project
+}
+
+func (projectService *ProjectService) CreateProject(userID int, title, description string, tag []int) int {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: enums.AUTHENTICATION_ERROR,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02")
+	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, duration)
+
 	for _, tag_id := range tag {
-		err = projectService.ProjectRepo.AddProjectTag(project_id, tag_id)
-		if err != nil {
-			panic(exceptions.Exception{
-				Tag: enums.INTERNAL_ERROR,
-				Errors: []enums.SpecificError{
-					enums.DATABASE_ERROR,
-				},
-			})
-		}
+		projectService.ProjectRepo.AddProjectTag(project_id, tag_id)
 	}
 
 	return project_id
 }
 
 func (projectService *ProjectService) UpdateProject(projectID, UserID int, title, description string, tag []int) {
-	err := projectService.ProjectRepo.UpdateProject(projectID, UserID, title, description)
-	if err != nil {
+	if UserID == -1 || UserID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
+			Tag: enums.AUTHENTICATION_ERROR,
 			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+				enums.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
+	//err := projectService.ProjectRepo.UpdateProject(projectID, UserID, title, description)
 
-	err = projectService.ProjectRepo.DeleteProjectTags(projectID)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
-			},
-		})
-	}
+	projectService.ProjectRepo.DeleteProjectTags(projectID)
 
 	for _, tag_id := range tag {
-		err = projectService.ProjectRepo.AddProjectTag(projectID, tag_id)
-		if err != nil {
-			panic(exceptions.Exception{
-				Tag: enums.INTERNAL_ERROR,
-				Errors: []enums.SpecificError{
-					enums.DATABASE_ERROR,
-				},
-			})
-		}
+		projectService.ProjectRepo.AddProjectTag(projectID, tag_id)
 	}
 }

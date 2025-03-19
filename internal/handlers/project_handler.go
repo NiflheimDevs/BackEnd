@@ -33,6 +33,27 @@ func NewProjectHandler(
 	}
 }
 
+func (projectHandler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
+	ProjectID := r.Context().Value("project_id").(int)
+	project := projectHandler.ProjectService.GetProject(ProjectID)
+
+	projectDTO := dto.Project{
+		ProjectID:   project.ID,
+		OwnerID:     project.OwnerID,
+		Title:       project.Title,
+		Description: project.Description,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(projectDTO); err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{enums.CAST_ERROR},
+		})
+	}
+}
+
 func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	type createProjectParams struct {
 		Title       string `json:"title" validate:"required"`
