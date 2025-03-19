@@ -9,3 +9,7 @@ type Project struct {
 	Description string            `json:"description"`
 	Tags        []models.TagModel `json:"tags"`
 }
+
+type CreateProjectDTO struct {
+	ProjectID int
+}
