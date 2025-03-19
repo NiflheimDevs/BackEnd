@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	dto "github.com/niflheimdevs/backend/internal/dto/projects"
@@ -34,7 +36,8 @@ func NewProjectHandler(
 }
 
 func (projectHandler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
-	ProjectID := r.Context().Value("project_id").(int)
+	ProjectIDString := chi.URLParam(r, "project_id")
+	ProjectID, _ := strconv.Atoi(ProjectIDString)
 	project := projectHandler.ProjectService.GetProject(ProjectID)
 
 	projectDTO := dto.Project{
@@ -42,6 +45,7 @@ func (projectHandler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.
 		OwnerID:     project.OwnerID,
 		Title:       project.Title,
 		Description: project.Description,
+		Tags:        project.Tags,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -61,9 +65,9 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 		Tags        []int  `json:"tags" validate:"required"`
 	}
 
-	UserID := r.Context().Value("UserID").(int)
-
 	params := Validated[createProjectParams](projectHandler.Validator, r)
+
+	UserID := r.Context().Value("userID").(int)
 
 	project := projectHandler.ProjectService.CreateProject(UserID, params.Title, params.Description, params.Tags)
 
@@ -88,11 +92,11 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 		Tag         string `json:"tag" validate:"required"`
 	}
 
+	params := Validated[updateProjectParams](projectHandler.Validator, r)
+
 	UserID := r.Context().Value("UserID").(int)
 
 	ProjectID := r.Context().Value("ProjectID").(int)
-
-	params := Validated[updateProjectParams](projectHandler.Validator, r)
 
 	var tags []int
 

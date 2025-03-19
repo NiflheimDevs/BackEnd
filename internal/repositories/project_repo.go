@@ -56,9 +56,11 @@ func (repo *ProjectRepo) CreateProject(userID int, title, description, duration 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "INSERT INTO project (owner_id, title, description, duration) VALUES ($1, $2, $3, $4) RETURNING id"
+	now := time.Now().Format("2006-01-02 15:04:05")
 
-	err := repo.PG.QueryRow(ctx, query, userID, title, description, duration).Scan(&project_id)
+	query := "INSERT INTO project (owner_id, title, description, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+
+	err := repo.PG.QueryRow(ctx, query, userID, title, description, duration, now, now).Scan(&project_id)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -70,6 +72,50 @@ func (repo *ProjectRepo) CreateProject(userID int, title, description, duration 
 	}
 
 	return project_id
+}
+
+func (repo *ProjectRepo) GetProjectTag(projectID int) []models.TagModel {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var tags []models.TagModel
+
+	query := "SELECT t.id, t.name FROM users_project_tag upt JOIN tag t ON upt.tag_id = t.id WHERE upt.project_user_id = $1 AND upt.type = 2"
+
+	rows, err := repo.PG.Query(ctx, query, projectID)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tag models.TagModel
+		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
+			panic(exceptions.Exception{
+				Tag: enums.INTERNAL_ERROR,
+				Errors: []enums.SpecificError{
+					enums.DATABASE_ERROR,
+				},
+			})
+		}
+		tags = append(tags, tag)
+	}
+
+	if err := rows.Err(); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return tags
 }
 
 func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) {
@@ -94,7 +140,7 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM users_project_tag WHERE project_user_id = $1"
+	query := "DELETE FROM users_project_tag WHERE project_user_id = $1 AND type = 2"
 
 	_, err := repo.PG.Exec(ctx, query, projectID)
 

@@ -27,6 +27,7 @@ func Routes(app *wire.Application) http.Handler {
 			log.Printf("Response Headers: %v", w.Header())
 		})
 	})
+
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)

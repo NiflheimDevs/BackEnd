@@ -37,6 +37,10 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 		})
 	}
 
+	tags := projectService.ProjectRepo.GetProjectTag(projectID)
+
+	project.Tags = tags
+
 	return project
 }
 
@@ -50,7 +54,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 		})
 	}
 
-	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02")
+	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
 	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, duration)
 
 	for _, tag_id := range tag {
