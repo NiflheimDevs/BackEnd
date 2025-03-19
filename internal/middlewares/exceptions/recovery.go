@@ -29,6 +29,11 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 					w.Write(json)
 				} else {
 					w.WriteHeader(501)
+					errorResponse := map[string]interface{}{
+						"error": rec,
+					}
+					jsonResponse, _ := json.Marshal(errorResponse)
+					w.Write(jsonResponse)
 				}
 				log.Println(err)
 			}

@@ -2,10 +2,9 @@ package repositories
 
 import (
 	"context"
-	"errors"
+	"log"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
@@ -34,9 +33,7 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 
 	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description)
 
-	if err == pgx.ErrNoRows {
-		return nil, errors.New("project not found")
-	}
+	log.Print(err)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -154,13 +151,13 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID int) {
 	}
 }
 
-func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description string) error {
+func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := "UPDATE project SET title = $1, description = $2 WHERE id = $3 and owner_id = $4"
 
-	result, err := repo.PG.Exec(ctx, query, title, description, projectID, UserID)
+	_, err := repo.PG.Exec(ctx, query, title, description, projectID, UserID)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -170,10 +167,4 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 			},
 		})
 	}
-
-	if result.RowsAffected() == 0 {
-		return errors.New("")
-	}
-
-	return nil
 }

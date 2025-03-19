@@ -73,7 +73,28 @@ func (projectService *ProjectService) UpdateProject(projectID, UserID int, title
 			},
 		})
 	}
-	//err := projectService.ProjectRepo.UpdateProject(projectID, UserID, title, description)
+
+	project, err := projectService.ProjectRepo.GetProject(projectID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.NOT_FOUND,
+			Errors: []enums.SpecificError{
+				enums.PROJECT_NOT_FOUND,
+			},
+		})
+	}
+
+	if project.OwnerID != UserID {
+		panic(exceptions.Exception{
+			Tag: enums.BAD_REQUEST,
+			Errors: []enums.SpecificError{
+				enums.USER_NOT_OWNER,
+			},
+		})
+	}
+
+	projectService.ProjectRepo.UpdateProject(projectID, UserID, title, description)
 
 	projectService.ProjectRepo.DeleteProjectTags(projectID)
 

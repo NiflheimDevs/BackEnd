@@ -36,8 +36,9 @@ func NewProjectHandler(
 }
 
 func (projectHandler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
-	ProjectIDString := chi.URLParam(r, "project_id")
-	ProjectID, _ := strconv.Atoi(ProjectIDString)
+	projectIDString := chi.URLParam(r, "project_id")
+	ProjectID, _ := strconv.Atoi(projectIDString)
+
 	project := projectHandler.ProjectService.GetProject(ProjectID)
 
 	projectDTO := dto.Project{
@@ -89,20 +90,17 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 	type updateProjectParams struct {
 		Title       string `json:"title" validate:"required"`
 		Description string `json:"description" validate:"required"`
-		Tag         string `json:"tag" validate:"required"`
+		Tags        []int  `json:"tags" validate:"required"`
 	}
 
 	params := Validated[updateProjectParams](projectHandler.Validator, r)
 
-	UserID := r.Context().Value("UserID").(int)
+	UserID := r.Context().Value("userID").(int)
 
-	ProjectID := r.Context().Value("ProjectID").(int)
+	projectIDString := chi.URLParam(r, "project_id")
+	ProjectID, _ := strconv.Atoi(projectIDString)
 
-	var tags []int
-
-	json.Unmarshal([]byte(params.Tag), &tags)
-
-	projectHandler.ProjectService.UpdateProject(ProjectID, UserID, params.Title, params.Description, tags)
+	projectHandler.ProjectService.UpdateProject(ProjectID, UserID, params.Title, params.Description, params.Tags)
 
 	w.WriteHeader(http.StatusNoContent)
 }
