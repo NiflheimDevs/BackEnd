@@ -52,7 +52,7 @@ func (j *JWT) GenerateToken(userID int) (string, string) {
 	accessTokenClaims := jwt.MapClaims{
 		"iss": "bidlancer",
 		"sub": userID,
-		"exp": time.Now().Add(time.Minute * 15).Unix(),
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 		"iat": time.Now().Unix(),
 	}
 
