@@ -1,4 +1,4 @@
 .env
-
+storage/*
 privateKey.pem
 publicKey.pem
