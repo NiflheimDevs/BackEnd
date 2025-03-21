@@ -56,7 +56,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	outputName := fmt.Sprintf("userprofile%d_low.webp", userid)
-	fs.FileStorage.SotorageFile(webpBuffer.Bytes(), outputName)
+	fs.FileStorage.StorageFile(webpBuffer.Bytes(), outputName)
 
 	options := &jpeg.EncoderOptions{
 		Quality:         85,
@@ -70,6 +70,36 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	outputName = fmt.Sprintf("userprofile%d_high.jpeg", userid)
-	fs.FileStorage.SotorageFile(jpegBuffer.Bytes(), outputName)
+	fs.FileStorage.StorageFile(jpegBuffer.Bytes(), outputName)
 	return outputName
+}
+
+func (fs *FileService) DeleteProfilePhoto(userid int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	target := fmt.Sprintf("userprofile%d_low.webp", userid)
+	err := fs.FileStorage.DeleteFile(target)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.UNPROCESSABLE,
+			Errors: []enums.SpecificError{enums.MISSING_FILE},
+		})
+	}
+
+	target = fmt.Sprintf("userprofile%d_high.jpeg", userid)
+
+	err = fs.FileStorage.DeleteFile(target)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.UNPROCESSABLE,
+			Errors: []enums.SpecificError{enums.MISSING_FILE},
+		})
+	}
 }

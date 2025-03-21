@@ -75,8 +75,14 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(photoPath)
 }
 
-func (fh *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
+func (fh *FileHandler) DeleteProfilePhoto(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
+	fh.FileService.DeleteProfilePhoto(userid)
+	w.WriteHeader(http.StatusOK)
+}
 
+func (fh *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
+	// automatically generates 404 if file not found (based on the document)
 	http.StripPrefix("/storage/", http.FileServer(http.Dir(fh.Constants.StorageDir))).ServeHTTP(w, r)
 
 }
