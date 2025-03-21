@@ -2,10 +2,13 @@ package services
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 
+	"github.com/chai2010/webp"
+	"github.com/nfnt/resize"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/repositories/storage"
@@ -23,7 +26,7 @@ func NewFileService(fileStorage *storage.FileStorage) *FileService {
 	}
 }
 
-func (fs *FileService) UploadProfilePhoto(data []byte, userid int) {
+func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -43,18 +46,30 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) {
 			},
 		})
 	}
-	var outputBuffer bytes.Buffer
+	var webpBuffer, jpegBuffer bytes.Buffer
+	resizedImg := resize.Resize(512, 512, img, resize.Lanczos2)
+
+	err = webp.Encode(&webpBuffer, resizedImg, &webp.Options{Lossless: false, Quality: 85})
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.UNPROCESSABLE,
+		})
+	}
+	outputName := fmt.Sprintf("userprofile%d_low.webp", userid)
+	fs.FileStorage.SotorageFile(webpBuffer.Bytes(), outputName)
 
 	options := &jpeg.EncoderOptions{
 		Quality:         85,
 		ProgressiveMode: true,
 	}
 
-	err = jpeg.Encode(&outputBuffer, img, options)
+	err = jpeg.Encode(&jpegBuffer, img, options)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: enums.UNPROCESSABLE,
 		})
 	}
-
+	outputName = fmt.Sprintf("userprofile%d_high.jpeg", userid)
+	fs.FileStorage.SotorageFile(jpegBuffer.Bytes(), outputName)
+	return outputName
 }

@@ -41,6 +41,9 @@ func Routes(app *wire.Application) http.Handler {
 	})
 
 	mux.Put("/user/update-info", app.UserHandler.UpdateUserData)
+	mux.Post("/user/profile", app.FileHandler.UploadProfilePhoto)
+
+	mux.Get("/storage/*", app.FileHandler.GetFile)
 
 	return mux
 }
