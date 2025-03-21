@@ -53,6 +53,8 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 		code = 429
 	} else if err.Tag == enums.UNAUTHORIZED {
 		code = 401
+	} else if err.Tag == enums.UNPROCESSABLE {
+		code = 422
 	} else {
 		code = 418
 	}
