@@ -171,6 +171,7 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
 	params := Validated[dto.UpdateUserDTO](uh.Validator, r)
+	params.Username = strings.ToLower(params.Username)
 	params.ID = userid
 
 	uh.UserService.UpdateUserData(&params)
