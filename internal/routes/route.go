@@ -43,6 +43,8 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/user/update-info", app.UserHandler.UpdateUserData)
 	mux.Post("/user/profile", app.FileHandler.UploadProfilePhoto)
 	mux.Delete("/user/profile", app.FileHandler.DeleteProfilePhoto)
+	mux.Put("/user/change-phone/send-otp", app.UserHandler.UpdatePhoneSendOTP)
+	mux.Put("/user/change-phone/verify", app.UserHandler.ChangePassword)
 
 	mux.Get("/storage/*", app.FileHandler.GetFile)
 
