@@ -13,6 +13,7 @@ import (
 	midratelimit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	R "github.com/niflheimdevs/backend/internal/repositories/redis"
+	"github.com/niflheimdevs/backend/internal/repositories/storage"
 
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/redis/go-redis/v9"
@@ -21,10 +22,12 @@ import (
 var RepoProviderSet = wire.NewSet(
 	wire.Struct(new(repositories.UserRepo), "*"),
 	wire.Struct(new(R.UserCache), "*"),
+	wire.Struct(new(storage.FileStorage), "*"),
 )
 
 var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(services.UserService), "*"),
+	wire.Struct(new(services.FileService), "*"),
 	services.NewJWT,
 	ProvideConstants,
 	// wire.Struct(new(services.JWT), "*"),
@@ -32,9 +35,9 @@ var ServiceProviderSet = wire.NewSet(
 
 var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.UserHandler), "*"),
+	wire.Struct(new(handlers.FileHandler), "*"),
 	wire.Struct(new(handlers.ErrorHandler), "*"),
 	handlers.NewValidator,
-	// services.NewJWT,
 )
 
 var MiddlewareProviderSet = wire.NewSet(
@@ -63,6 +66,7 @@ type Middlewares struct {
 
 type Application struct {
 	UserHandler  *handlers.UserHandler
+	FileHandler  *handlers.FileHandler
 	ErrorHandler *handlers.ErrorHandler
 	Middlewares  *Middlewares
 }

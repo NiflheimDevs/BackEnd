@@ -16,6 +16,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
+	"github.com/niflheimdevs/backend/internal/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/redis/go-redis/v9"
 )
@@ -42,6 +43,18 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		JWTService:  jwt,
 		Validator:   validate,
 	}
+	fileStorage := &storage.FileStorage{
+		Constants: constants,
+	}
+	fileService := &services.FileService{
+		FileStorage: fileStorage,
+	}
+	fileHandler := &handlers.FileHandler{
+		FileService: fileService,
+		Validator:   validate,
+		JWTService:  jwt,
+		Constants:   constants,
+	}
 	errorHandler := &handlers.ErrorHandler{}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
@@ -53,6 +66,7 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 	}
 	application := &Application{
 		UserHandler:  userHandler,
+		FileHandler:  fileHandler,
 		ErrorHandler: errorHandler,
 		Middlewares:  middlewares,
 	}
@@ -61,11 +75,11 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 
 // wire.go:
 
-var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(redis2.UserCache), "*"))
+var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(redis2.UserCache), "*"), wire.Struct(new(storage.FileStorage), "*"))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), services.NewJWT, ProvideConstants)
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.FileService), "*"), services.NewJWT, ProvideConstants)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), handlers.NewValidator)
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), handlers.NewValidator)
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -88,6 +102,7 @@ type Middlewares struct {
 
 type Application struct {
 	UserHandler  *handlers.UserHandler
+	FileHandler  *handlers.FileHandler
 	ErrorHandler *handlers.ErrorHandler
 	Middlewares  *Middlewares
 }
