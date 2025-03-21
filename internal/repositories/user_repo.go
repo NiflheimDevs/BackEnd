@@ -8,6 +8,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
+	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"
 )
 
@@ -124,4 +126,22 @@ func (repo *UserRepo) UpdateUserData(userData *dto.UpdateUserDTO) (int64, error)
 
 	res, err := repo.PG.Exec(ctx, query, userData.ID, userData.FirstName, userData.LastName, userData.Username, userData.Email)
 	return res.RowsAffected(), err
+}
+
+func (repo *UserRepo) UpdatePhone(phonenumber string, userid string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	UPDATE users
+	SET phone = $2
+	WHERE id = $1`
+
+	_, err := repo.PG.Exec(ctx, query, userid, phonenumber)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+		})
+	}
 }

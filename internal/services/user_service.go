@@ -111,7 +111,7 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 		})
 	}
 
-	us.CacheRepo.DeleteRow(session)
+	us.CacheRepo.DeleteRedis(session)
 
 	return userdata.Phone, userdata.Username, userdata.Password
 }
@@ -129,10 +129,6 @@ func (us *UserService) Register(phonenumber string, username string, password []
 		})
 	}
 	return userid
-}
-
-func (us *UserService) DeleteFromRedis(key string) {
-	us.CacheRepo.DeleteRow(key)
 }
 
 func (userService *UserService) AuthenticateUser(identifier string, password string) *models.UserModel {
@@ -224,7 +220,7 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 	userdata, err := us.UserRepo.FindUserByPhone(phonenumber)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.BAD_REQUEST,
+			Tag:    enums.UNPROCESSABLE,
 			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
 		})
 	}
@@ -311,15 +307,14 @@ func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
 	})
 }
 
-func (us *UserService) UpdatePhoneSendOTP(phone string, userid int) {
+func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string) string {
 	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag:    enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{enums.AUTH_ACCESS_DENIED},
 		})
 	}
-
-	_, err := us.UserRepo.FindUserByPhone(phone)
+	_, err := us.CacheRepo.FindByPhone(phone)
 	if err == nil {
 		panic(exceptions.Exception{
 			Tag:    enums.VALIDATION_ERROR,
@@ -327,17 +322,30 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int) {
 		})
 	}
 
-	_, err = us.CacheRepo.FindByPhone(phone)
+	_, err = us.UserRepo.FindUserByPhone(phone)
 	if err == nil {
 		panic(exceptions.Exception{
 			Tag:    enums.VALIDATION_ERROR,
 			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
 		})
 	}
+
+	session := uuid.New().String()
+	val := models.UserCacheData{
+		Phone:    phone,
+		Username: fmt.Sprintf("%d", userid),
+		OTP:      code,
+	}
+
+	us.CacheRepo.PostPhone(phone, session)
+	us.CacheRepo.PostSessionOTP(session, &val)
+
+	return session
 }
 
-func (us *UserService) UpdatePhoneVerify(code string, userid int) {
+func (us *UserService) UpdatePhone(phone string, userid string) {
 
+	us.UserRepo.UpdatePhone(phone, userid)
 }
 
 //update end

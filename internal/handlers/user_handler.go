@@ -178,4 +178,35 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (uh *UserHandler) UpdatePhoneSendOTP(w http.ResponseWriter, r *http.Request) {
+	type NewPhone struct {
+		NewPhone string `json:"phone" validate:"required,phone"`
+	}
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+	params := Validated[NewPhone](uh.Validator, r)
+
+	code := sms.GenerateOTP()
+	session := uh.UserService.UpdatePhoneSendOTP(params.NewPhone, userid, code)
+	sms.SendOTP(params.NewPhone, code)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(session))
+}
+
+func (uh *UserHandler) UpdatePhoneVerify(w http.ResponseWriter, r *http.Request) {
+	type Params struct {
+		Code      string `json:"code" validate:"required,len=5,numeric"`
+		SessionID string `json:"sessionid" validate:"required"`
+	}
+
+	params := Validated[Params](uh.Validator, r)
+
+	phone, userid, _ := uh.UserService.ValidateOTP(params.SessionID, params.Code)
+
+	uh.UserService.UpdatePhone(phone, userid)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // update end

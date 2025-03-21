@@ -21,6 +21,7 @@ func NewUserCache(DB *redis.Client) *UserCache {
 }
 
 // ? should i make constant or functions for setting or giving the keys?
+// duplicate code but idk if i SHOULD fix it (reduces performance). the most efficient code is not readable! FCC
 
 func (uc *UserCache) PostRedis(key string, value interface{}, duration time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -84,4 +85,8 @@ func (uc *UserCache) PostSessionFlag(session string, userID string) {
 
 func (uc *UserCache) GetSessionFlag(session string) (string, error) {
 	return uc.GetRedis("forget:" + session)
+}
+
+func (uc *UserCache) PostPhone(phone string, session string) {
+	uc.PostRedis("phone:"+phone, session, time.Minute*2+time.Second*2)
 }
