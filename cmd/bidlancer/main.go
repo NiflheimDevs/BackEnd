@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -17,7 +18,13 @@ import (
 const port = ":8080"
 
 func main() {
+
 	var di = bootstrap.Get()
+
+	err := os.MkdirAll(di.Const.StorageDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 
 	pdb, rdb := createConnections(di)
 
