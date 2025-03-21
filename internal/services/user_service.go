@@ -48,7 +48,6 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 
 	sess1, err := us.CacheRepo.FindByUsername(username)
 	if err == nil {
-		// panic(val)
 		exc.AddError(enums.USERNAME_TAKEN)
 	}
 
@@ -85,13 +84,7 @@ func (us *UserService) CacheUserInfo(phonenumber string, username string, passwo
 		OTP:      otp,
 	}
 
-	err = us.CacheRepo.PostUserCreds(session, &userdata)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CACHE_ERROR},
-		})
-	}
+	us.CacheRepo.PostUserCreds(session, &userdata)
 
 	return session
 }
@@ -242,27 +235,14 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 		OTP:   code,
 	}
 
-	err = us.CacheRepo.PostSessionOTP(session, &val)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CACHE_ERROR},
-		})
-	}
+	us.CacheRepo.PostSessionOTP(session, &val)
 
 	return session
 }
 
 func (us *UserService) SetForgetPasswordFlag(userID string) string {
-
 	session := uuid.New().String()
-	err := us.CacheRepo.PostSessionFlag(session, userID)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CACHE_ERROR},
-		})
-	}
+	us.CacheRepo.PostSessionFlag(session, userID)
 	return session
 }
 
@@ -329,6 +309,35 @@ func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
 	panic(exceptions.Exception{
 		Tag: enums.INTERNAL_ERROR,
 	})
+}
+
+func (us *UserService) UpdatePhoneSendOTP(phone string, userid int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag:    enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{enums.AUTH_ACCESS_DENIED},
+		})
+	}
+
+	_, err := us.UserRepo.FindUserByPhone(phone)
+	if err == nil {
+		panic(exceptions.Exception{
+			Tag:    enums.VALIDATION_ERROR,
+			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
+		})
+	}
+
+	_, err = us.CacheRepo.FindByPhone(phone)
+	if err == nil {
+		panic(exceptions.Exception{
+			Tag:    enums.VALIDATION_ERROR,
+			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
+		})
+	}
+}
+
+func (us *UserService) UpdatePhoneVerify(code string, userid int) {
+
 }
 
 //update end

@@ -1,5 +1,6 @@
 package redis
 
+//requires redis version >= 6 otherwise most package calls will result in syntax error
 import (
 	"context"
 	"encoding/json"
@@ -44,23 +45,16 @@ func (uc *UserCache) FindByPhone(phonenumber string) (string, error) {
 }
 
 // ? idk if i should break this down
-func (uc *UserCache) PostUserCreds(session string, userdata *models.UserCacheData) error {
+func (uc *UserCache) PostUserCreds(session string, userdata *models.UserCacheData) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	err := uc.DB.Set(ctx, "username:"+userdata.Username, session, time.Minute*2+time.Second*2).Err()
-	if err != nil {
-		return err
-	}
+	uc.DB.Set(ctx, "username:"+userdata.Username, session, time.Minute*2+time.Second*2).Err()
 
-	err = uc.DB.Set(ctx, "phone:"+userdata.Phone, session, time.Minute*2+time.Second*2).Err()
-	if err != nil {
-		return err
-	}
+	uc.DB.Set(ctx, "phone:"+userdata.Phone, session, time.Minute*2+time.Second*2).Err()
 
 	val, _ := json.Marshal(*userdata)
-	err = uc.DB.Set(ctx, session, val, time.Minute*2+time.Second*2).Err()
+	uc.DB.Set(ctx, session, val, time.Minute*2+time.Second*2).Err()
 
-	return err
 }
 
 func (uc *UserCache) FindBySession(session string) (string, error) {
@@ -88,22 +82,19 @@ func (uc *UserCache) DeleteRow(key string) {
 	uc.DB.Del(ctx, key)
 }
 
-func (uc *UserCache) PostSessionOTP(session string, userdata *models.UserCacheData) error {
+func (uc *UserCache) PostSessionOTP(session string, userdata *models.UserCacheData) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	val, _ := json.Marshal(*userdata)
-	err := uc.DB.Set(ctx, session, val, time.Minute*2+time.Second+2).Err()
-
-	return err
+	uc.DB.Set(ctx, session, val, time.Minute*2+time.Second+2).Err()
 }
 
-func (uc *UserCache) PostSessionFlag(session string, userID string) error {
+func (uc *UserCache) PostSessionFlag(session string, userID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := uc.DB.Set(ctx, "forget:"+session, userID, time.Minute*5).Err()
-	return err
+	uc.DB.Set(ctx, "forget:"+session, userID, time.Minute*5).Err()
 }
 
 func (uc *UserCache) GetSessionFlag(session string) (string, error) {
