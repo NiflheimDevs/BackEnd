@@ -46,6 +46,7 @@ const (
 	USER_NOT_FOUND SpecificError = "USER_NOT_FOUND"
 
 	FORMAT_NOT_SUPPORTED SpecificError = "FORMAT_NOT_SUPPORTED"
+	FILE_TOO_LARGE       SpecificError = "FILE_TOO_LARGE"
 )
 
 const (
