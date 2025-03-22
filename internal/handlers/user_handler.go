@@ -166,8 +166,6 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// update start
-
 func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
 	params := Validated[dto.UpdateUserDTO](uh.Validator, r)
@@ -210,4 +208,14 @@ func (uh *UserHandler) UpdatePhoneVerify(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 }
 
-// update end
+func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (uh *UserHandler) GetMyInfo(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (uh *UserHandler) GetCareerHistory(w http.ResponseWriter, r *http.Request) {
+
+}

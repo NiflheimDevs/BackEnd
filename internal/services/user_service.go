@@ -254,8 +254,6 @@ func (us *UserService) CheckFlagForPasswordReset(session string) int {
 	return userID
 }
 
-// update start
-
 func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
 	if userData.ID < 0 {
 		panic(exceptions.Exception{
@@ -344,8 +342,5 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 }
 
 func (us *UserService) UpdatePhone(phone string, userid string) {
-
 	us.UserRepo.UpdatePhone(phone, userid)
 }
-
-//update end
