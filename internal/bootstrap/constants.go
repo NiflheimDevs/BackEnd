@@ -8,6 +8,7 @@ type Constants struct {
 	Context     Context
 	IPAddr      string
 	StorageDir  string
+	Project     Project
 }
 
 type DBConst struct {
@@ -18,6 +19,10 @@ type DBConst struct {
 
 type Context struct {
 	UserID string
+}
+
+type Project struct {
+	LastTime time.Duration
 }
 
 func NewConstant() *Constants {
@@ -33,5 +38,8 @@ func NewConstant() *Constants {
 		},
 		IPAddr:     "http://103.75.196.227:8080",
 		StorageDir: "./storage/",
+		Project: Project{
+			LastTime: 7 * 24 * time.Hour,
+		},
 	}
 }

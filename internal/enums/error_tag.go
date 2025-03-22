@@ -47,15 +47,18 @@ const (
 
 	FORMAT_NOT_SUPPORTED SpecificError = "FORMAT_NOT_SUPPORTED"
 	FILE_TOO_LARGE       SpecificError = "FILE_TOO_LARGE"
+
+	PROJECT_NOT_FOUND SpecificError = "PROJECT_NOT_FOUND"
+
+	USER_NOT_OWNER SpecificError = "USER_NOT_OWNER"
 )
 
 const (
-	VALIDATION_ERROR     GeneralError = "VALIDATION_ERROR"
-	UNAUTHORIZED         GeneralError = "UNAUTHORIZED"
-	INTERNAL_ERROR       GeneralError = "INTERNAL_ERROR"
-	NOT_FOUND            GeneralError = "NOT_FOUND"
-	BAD_REQUEST          GeneralError = "BAD_REQUEST"
-	LIMIT_EXCEED         GeneralError = "LIMIT_EXCEED"
-	UNPROCESSABLE        GeneralError = "UNPROCESSABLE"
-	AUTHENTICATION_ERROR GeneralError = "AUTHENTICATION_ERROR"
+	UNAUTHORIZED     GeneralError = "UNAUTHORIZED"
+	VALIDATION_ERROR GeneralError = "VALIDATION_ERROR"
+	INTERNAL_ERROR   GeneralError = "INTERNAL_ERROR"
+	NOT_FOUND        GeneralError = "NOT_FOUND"
+	BAD_REQUEST      GeneralError = "BAD_REQUEST"
+	LIMIT_EXCEED     GeneralError = "LIMIT_EXCEED"
+	UNPROCESSABLE    GeneralError = "UNPROCESSABLE"
 )

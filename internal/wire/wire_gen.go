@@ -25,6 +25,20 @@ import (
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
 	constants := ProvideConstants(container)
+	fileStorage := &storage.FileStorage{
+		Constants: constants,
+	}
+	fileService := &services.FileService{
+		FileStorage: fileStorage,
+	}
+	validate := handlers.NewValidator()
+	jwt := services.NewJWT(constants)
+	fileHandler := &handlers.FileHandler{
+		FileService: fileService,
+		Validator:   validate,
+		JWTService:  jwt,
+		Constants:   constants,
+	}
 	userRepo := &repositories.UserRepo{
 		PG: db,
 	}
@@ -35,27 +49,35 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		UserRepo:  userRepo,
 		CacheRepo: userCache,
 	}
-	jwt := services.NewJWT(constants)
-	validate := handlers.NewValidator()
 	userHandler := &handlers.UserHandler{
 		Constants:   constants,
 		UserService: userService,
 		JWTService:  jwt,
 		Validator:   validate,
 	}
-	fileStorage := &storage.FileStorage{
-		Constants: constants,
+	errorHandler := &handlers.ErrorHandler{}
+	projectRepo := &repositories.ProjectRepo{
+		PG: db,
 	}
-	fileService := &services.FileService{
-		FileStorage: fileStorage,
-	}
-	fileHandler := &handlers.FileHandler{
-		FileService: fileService,
-		Validator:   validate,
-		JWTService:  jwt,
+	projectService := &services.ProjectService{
+		ProjectRepo: projectRepo,
 		Constants:   constants,
 	}
-	errorHandler := &handlers.ErrorHandler{}
+	projectHandler := &handlers.ProjectHandler{
+		Constants:      constants,
+		ProjectService: projectService,
+		JWTService:     jwt,
+		Validator:      validate,
+	}
+	generalRepo := &repositories.GeneralRepo{
+		PG: db,
+	}
+	generalService := &services.GeneralService{
+		GeneralRepo: generalRepo,
+	}
+	generalHandler := &handlers.GeneralHandler{
+		GeneralService: generalService,
+	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
 	authentication := midauth.NewAuth(constants, jwt)
@@ -65,21 +87,23 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		Authentication: authentication,
 	}
 	application := &Application{
-		UserHandler:  userHandler,
-		FileHandler:  fileHandler,
-		ErrorHandler: errorHandler,
-		Middlewares:  middlewares,
+		FileHandler:    fileHandler,
+		UserHandler:    userHandler,
+		ErrorHandler:   errorHandler,
+		ProjectHandler: projectHandler,
+		GeneralHandler: generalHandler,
+		Middlewares:    middlewares,
 	}
 	return application, nil
 }
 
 // wire.go:
 
-var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(redis2.UserCache), "*"), wire.Struct(new(storage.FileStorage), "*"))
+var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(repositories.ProjectRepo), "*"), wire.Struct(new(repositories.GeneralRepo), "*"), wire.Struct(new(redis2.UserCache), "*"), wire.Struct(new(storage.FileStorage), "*"))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.FileService), "*"), services.NewJWT, ProvideConstants)
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.FileService), "*"), wire.Struct(new(services.ProjectService), "*"), wire.Struct(new(services.GeneralService), "*"), services.NewJWT, ProvideConstants)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), handlers.NewValidator)
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), handlers.NewValidator)
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -101,8 +125,10 @@ type Middlewares struct {
 }
 
 type Application struct {
-	UserHandler  *handlers.UserHandler
-	FileHandler  *handlers.FileHandler
-	ErrorHandler *handlers.ErrorHandler
-	Middlewares  *Middlewares
+	FileHandler    *handlers.FileHandler
+	UserHandler    *handlers.UserHandler
+	ErrorHandler   *handlers.ErrorHandler
+	ProjectHandler *handlers.ProjectHandler
+	GeneralHandler *handlers.GeneralHandler
+	Middlewares    *Middlewares
 }

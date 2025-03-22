@@ -21,6 +21,8 @@ import (
 
 var RepoProviderSet = wire.NewSet(
 	wire.Struct(new(repositories.UserRepo), "*"),
+	wire.Struct(new(repositories.ProjectRepo), "*"),
+	wire.Struct(new(repositories.GeneralRepo), "*"),
 	wire.Struct(new(R.UserCache), "*"),
 	wire.Struct(new(storage.FileStorage), "*"),
 )
@@ -28,15 +30,18 @@ var RepoProviderSet = wire.NewSet(
 var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(services.UserService), "*"),
 	wire.Struct(new(services.FileService), "*"),
+	wire.Struct(new(services.ProjectService), "*"),
+	wire.Struct(new(services.GeneralService), "*"),
 	services.NewJWT,
 	ProvideConstants,
-	// wire.Struct(new(services.JWT), "*"),
 )
 
 var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.UserHandler), "*"),
 	wire.Struct(new(handlers.FileHandler), "*"),
 	wire.Struct(new(handlers.ErrorHandler), "*"),
+	wire.Struct(new(handlers.ProjectHandler), "*"),
+	wire.Struct(new(handlers.GeneralHandler), "*"),
 	handlers.NewValidator,
 )
 
@@ -65,10 +70,12 @@ type Middlewares struct {
 }
 
 type Application struct {
-	UserHandler  *handlers.UserHandler
-	FileHandler  *handlers.FileHandler
-	ErrorHandler *handlers.ErrorHandler
-	Middlewares  *Middlewares
+	FileHandler    *handlers.FileHandler
+	UserHandler    *handlers.UserHandler
+	ErrorHandler   *handlers.ErrorHandler
+	ProjectHandler *handlers.ProjectHandler
+	GeneralHandler *handlers.GeneralHandler
+	Middlewares    *Middlewares
 }
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {

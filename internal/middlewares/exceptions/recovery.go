@@ -29,6 +29,11 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 					w.Write(json)
 				} else {
 					w.WriteHeader(501)
+					errorResponse := map[string]interface{}{
+						"error": rec,
+					}
+					jsonResponse, _ := json.Marshal(errorResponse)
+					w.Write(jsonResponse)
 				}
 				log.Println(err)
 			}
@@ -41,8 +46,6 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 	var code int
 	if err.Tag == enums.VALIDATION_ERROR {
 		code = 409
-	} else if err.Tag == enums.AUTHENTICATION_ERROR {
-		code = 403
 	} else if err.Tag == enums.INTERNAL_ERROR {
 		code = 500
 	} else if err.Tag == enums.NOT_FOUND {

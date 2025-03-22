@@ -160,9 +160,9 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 }
 
 func (userService *UserService) ChangePasswordValidate(user_id int, old_password string) {
-	if user_id == -1 {
+	if user_id < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.AUTHENTICATION_ERROR,
+			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
 				enums.AUTH_INVALID_CREDENTIALS,
 			},
