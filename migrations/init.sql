@@ -21,8 +21,6 @@ CREATE TABLE IF NOT EXISTS "users" (
   "is_verified" bool DEFAULT FALSE,
   "bio" text,
   "phone" varchar NOT NULL,
-  "photo" varchar,
-  "resume" varchar,
   "wallet" numeric DEFAULT 0
 );
 
@@ -48,8 +46,8 @@ CREATE TABLE IF NOT EXISTS "project" (
   "title" text NOT NULL,
   "description" text,
   "selected_bid_id" int UNIQUE,
-  "created_time" timestamp NOT NULL,
-  "updated_time" timestamp,
+  "created_time" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_time" timestamp DEFAULT CURRENT_TIMESTAMP,
   "duration" timestamp,
   FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id")
@@ -75,19 +73,13 @@ CREATE TABLE IF NOT EXISTS "comment" (
   FOREIGN KEY ("bid_id") REFERENCES "bid" ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "external_transaction" (
-  "id" int PRIMARY KEY,
-  "user_id" int NOT NULL,
-  "type" int NOT NULL,
-  "amount" numeric NOT NULL,
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
-);
-
-CREATE TABLE IF NOT EXISTS "internal_transaction" (
+CREATE TABLE IF NOT EXISTS "transaction" (
   "id" serial PRIMARY KEY,
   "from_user_id" int NOT NULL,
   "to_user_id" int NOT NULL,
   "amount" numeric NOT NULL,
+  "date" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "description" text,
   FOREIGN KEY ("to_user_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("from_user_id") REFERENCES "users" ("id")
 );
@@ -114,6 +106,18 @@ CREATE TABLE IF NOT EXISTS "role" (
   "name" varchar NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "career" (
+    "id" serial PRIMARY KEY,
+    "user_id" int NOT NULL,
+    "company" varchar NOT NULL,
+    "start_date" timestamp NOT NULL,
+    "end_date" timestamp,
+    "role" varchar NOT NULL,
+    "website" varchar,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
+    CHECK ("end_date" IS NULL OR "start_date" < "end_date")
+);
+
 CREATE TABLE IF NOT EXISTS "role_permission" (
   "role_id" int NOT NULL,
   "permission_id" int NOT NULL,
@@ -134,13 +138,21 @@ CREATE TABLE IF NOT EXISTS "users_chat" (
   FOREIGN KEY ("user_id") REFERENCES "users" ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "users_project_tag" (
-  "project_user_id" int NOT NULL,
+CREATE TABLE IF NOT EXISTS "project_tag" (
+  "project_id" int NOT NULL,
+  "tag_id" int NOT NULL,
+  FOREIGN KEY ("tag_id") REFERENCES "tag" ("id"),
+  FOREIGN KEY ("project_id") REFERENCES "project" ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "users_career_tag" (
+  "career_user_id" int NOT NULL,
   "tag_id" int NOT NULL,
   "type" int NOT NULL,
+  "level" int,
   FOREIGN KEY ("tag_id") REFERENCES "tag" ("id"),
-  FOREIGN KEY ("project_user_id") REFERENCES "project" ("id"),
-  FOREIGN KEY ("project_user_id") REFERENCES "users" ("id")
+  FOREIGN KEY ("career_user_id") REFERENCES "career" ("id"),
+  FOREIGN KEY ("career_user_id") REFERENCES "users" ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "users_role" (
@@ -157,3 +169,4 @@ CREATE TABLE IF NOT EXISTS "users_team" (
   FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("team_id") REFERENCES "team" ("id")
 );
+
