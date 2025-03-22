@@ -26,6 +26,15 @@ func NewFileService(fileStorage *storage.FileStorage) *FileService {
 	}
 }
 
+func (fs *FileService) GetUserProfileName(userid int, wantHighQual bool) string {
+	if !wantHighQual {
+		return fmt.Sprintf("userprofile%d_low.webp", userid)
+	} else {
+		return fmt.Sprintf("userprofile%d_high.jpeg", userid)
+	}
+
+}
+
 func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	if userid < 0 {
 		panic(exceptions.Exception{
@@ -55,7 +64,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 			Tag: enums.UNPROCESSABLE,
 		})
 	}
-	outputName := fmt.Sprintf("userprofile%d_low.webp", userid)
+	outputName := fs.GetUserProfileName(userid, false)
 	fs.FileStorage.StorageFile(webpBuffer.Bytes(), outputName)
 
 	options := &jpeg.EncoderOptions{
@@ -69,7 +78,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 			Tag: enums.UNPROCESSABLE,
 		})
 	}
-	outputName = fmt.Sprintf("userprofile%d_high.jpeg", userid)
+	outputName = fs.GetUserProfileName(userid, true)
 	fs.FileStorage.StorageFile(jpegBuffer.Bytes(), outputName)
 	return outputName
 }
@@ -84,7 +93,7 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 		})
 	}
 
-	target := fmt.Sprintf("userprofile%d_low.webp", userid)
+	target := fs.GetUserProfileName(userid, false)
 	err := fs.FileStorage.DeleteFile(target)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -93,7 +102,7 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 		})
 	}
 
-	target = fmt.Sprintf("userprofile%d_high.jpeg", userid)
+	target = fs.GetUserProfileName(userid, true)
 
 	err = fs.FileStorage.DeleteFile(target)
 	if err != nil {
