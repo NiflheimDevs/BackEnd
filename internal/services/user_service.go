@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/niflheimdevs/backend/internal/bootstrap"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
@@ -17,14 +18,23 @@ import (
 )
 
 type UserService struct {
-	UserRepo  *repositories.UserRepo
-	CacheRepo *redis.UserCache
+	UserRepo    *repositories.UserRepo
+	CacheRepo   *redis.UserCache
+	Constants   *bootstrap.Constants
+	FileService *FileService
 }
 
-func NewUserService(userRepo *repositories.UserRepo, cacheRepo *redis.UserCache) *UserService {
+func NewUserService(
+	userRepo *repositories.UserRepo,
+	cacheRepo *redis.UserCache,
+	constants *bootstrap.Constants,
+	fileService *FileService,
+) *UserService {
 	return &UserService{
-		UserRepo:  userRepo,
-		CacheRepo: cacheRepo,
+		UserRepo:    userRepo,
+		CacheRepo:   cacheRepo,
+		Constants:   constants,
+		FileService: fileService,
 	}
 }
 
@@ -343,4 +353,31 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 
 func (us *UserService) UpdatePhone(phone string, userid string) {
 	us.UserRepo.UpdatePhone(phone, userid)
+}
+
+func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfileDTO {
+	targetInfo, err := us.UserRepo.FindUserByID(targetUserid)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.NOT_FOUND,
+			Errors: []enums.SpecificError{
+				enums.USER_NOT_FOUND,
+			},
+		})
+	}
+
+	response := dto.UserProfileDTO{
+		Phone:          targetInfo.Phone,
+		FirstName:      targetInfo.FirstName,
+		LastName:       targetInfo.LastName,
+		Bio:            targetInfo.Bio,
+		Username:       targetInfo.Username,
+		ProfilePicture: fmt.Sprintf("%s/%s%s", us.Constants.IPAddr, us.Constants.StorageDir, us.FileService.GetUserProfileName(targetUserid, true)),
+	}
+	if userid == targetUserid {
+		response.Email = targetInfo.Email
+		response.Is_verified = targetInfo.Is_verified
+	}
+
+	return &response
 }

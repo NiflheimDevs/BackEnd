@@ -18,6 +18,7 @@ import (
 	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/services"
+	"github.com/niflheimdevs/backend/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -46,14 +47,25 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		DB: myRedis,
 	}
 	userService := &services.UserService{
-		UserRepo:  userRepo,
-		CacheRepo: userCache,
+		UserRepo:    userRepo,
+		CacheRepo:   userCache,
+		Constants:   constants,
+		FileService: fileService,
+	}
+	utilsUtils := utils.NewUtils()
+	generalRepo := &repositories.GeneralRepo{
+		PG: db,
+	}
+	generalService := &services.GeneralService{
+		GeneralRepo: generalRepo,
 	}
 	userHandler := &handlers.UserHandler{
-		Constants:   constants,
-		UserService: userService,
-		JWTService:  jwt,
-		Validator:   validate,
+		Constants:      constants,
+		UserService:    userService,
+		JWTService:     jwt,
+		Validator:      validate,
+		Utils:          utilsUtils,
+		GeneralService: generalService,
 	}
 	errorHandler := &handlers.ErrorHandler{}
 	projectRepo := &repositories.ProjectRepo{
@@ -68,12 +80,6 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		ProjectService: projectService,
 		JWTService:     jwt,
 		Validator:      validate,
-	}
-	generalRepo := &repositories.GeneralRepo{
-		PG: db,
-	}
-	generalService := &services.GeneralService{
-		GeneralRepo: generalRepo,
 	}
 	generalHandler := &handlers.GeneralHandler{
 		GeneralService: generalService,
@@ -103,7 +109,7 @@ var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), 
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.FileService), "*"), wire.Struct(new(services.ProjectService), "*"), wire.Struct(new(services.GeneralService), "*"), services.NewJWT, ProvideConstants)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), handlers.NewValidator)
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), handlers.NewValidator, utils.NewUtils)
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 

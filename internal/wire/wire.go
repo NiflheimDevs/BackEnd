@@ -14,6 +14,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/repositories"
 	R "github.com/niflheimdevs/backend/internal/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/utils"
 
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/redis/go-redis/v9"
@@ -43,6 +44,7 @@ var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.ProjectHandler), "*"),
 	wire.Struct(new(handlers.GeneralHandler), "*"),
 	handlers.NewValidator,
+	utils.NewUtils,
 )
 
 var MiddlewareProviderSet = wire.NewSet(

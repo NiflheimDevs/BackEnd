@@ -63,6 +63,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/user/update-phone/verify", app.UserHandler.UpdatePhoneVerify)
 
 	mux.Get("/storage/*", app.FileHandler.GetFile)
+	mux.Get("/user/{id}", app.UserHandler.GetUserInfo)
 
 	return mux
 }

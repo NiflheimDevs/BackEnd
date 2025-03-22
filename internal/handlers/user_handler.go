@@ -3,8 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	dto "github.com/niflheimdevs/backend/internal/dto/users"
@@ -12,13 +14,16 @@ import (
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/niflheimdevs/backend/internal/services/communications/sms"
+	"github.com/niflheimdevs/backend/internal/utils"
 )
 
 type UserHandler struct {
-	Constants   *bootstrap.Constants
-	UserService *services.UserService
-	JWTService  *services.JWT
-	Validator   *validator.Validate
+	Constants      *bootstrap.Constants
+	UserService    *services.UserService
+	JWTService     *services.JWT
+	Validator      *validator.Validate
+	Utils          *utils.Utils
+	GeneralService *services.GeneralService
 }
 
 func NewUserHandler(
@@ -26,12 +31,16 @@ func NewUserHandler(
 	userService *services.UserService,
 	jwtService *services.JWT,
 	validator *validator.Validate,
+	utils *utils.Utils,
+	generalService *services.GeneralService,
 ) *UserHandler {
 	return &UserHandler{
-		Constants:   Constants,
-		UserService: userService,
-		Validator:   validator,
-		JWTService:  jwtService,
+		Constants:      Constants,
+		UserService:    userService,
+		Validator:      validator,
+		JWTService:     jwtService,
+		GeneralService: generalService,
+		Utils:          utils,
 	}
 }
 
@@ -209,13 +218,28 @@ func (uh *UserHandler) UpdatePhoneVerify(w http.ResponseWriter, r *http.Request)
 }
 
 func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	useridString := chi.URLParam(r, "id")
+	targetUserid, err := strconv.Atoi(useridString)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.BAD_REQUEST,
+		})
+	}
+	userid := r.Context().Value(uh.Constants.Context.UserID).(int)
+	includes := r.URL.Query()["include"]
+	response := make(map[string]interface{})
 
-}
+	if uh.Utils.Contains(includes, "info") {
+		response["info"] = uh.UserService.GetUserInfo(targetUserid, userid)
+	}
+	if uh.Utils.Contains(includes, "career") {
+		response["career"] = uh.GeneralService.GetCareerForUser(targetUserid)
+	}
+	if uh.Utils.Contains(includes, "tag") {
+		response["tag"] = uh.GeneralService.GetTagsForUser(targetUserid)
+	}
 
-func (uh *UserHandler) GetMyInfo(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func (uh *UserHandler) GetCareerHistory(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
