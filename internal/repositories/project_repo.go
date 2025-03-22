@@ -175,3 +175,20 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 		})
 	}
 }
+
+func (repo *ProjectRepo) DeleteProject(projectID int) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "DELETE FROM project WHERE id = $1"
+	_, err := repo.PG.Exec(ctx, query, projectID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+}

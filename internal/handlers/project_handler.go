@@ -105,3 +105,14 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (projectHandler *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
+
+	projectIDString := chi.URLParam(r, "project_id")
+	projectID, _ := strconv.Atoi(projectIDString)
+
+	projectHandler.ProjectService.DeleteProject(userID, projectID)
+
+	w.WriteHeader(http.StatusNoContent)
+}
