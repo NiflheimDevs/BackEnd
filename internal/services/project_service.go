@@ -120,3 +120,42 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 		}
 	}
 }
+
+func (projectService *ProjectService) DeleteProject(userID, projectID int) {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: enums.AUTHENTICATION_ERROR,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	project, err := projectService.ProjectRepo.GetProject(projectID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.NOT_FOUND,
+			Errors: []enums.SpecificError{
+				enums.PROJECT_NOT_FOUND,
+			},
+		})
+	}
+
+	if project.OwnerID != userID {
+		panic(exceptions.Exception{
+			Tag: enums.BAD_REQUEST,
+			Errors: []enums.SpecificError{
+				enums.USER_NOT_OWNER,
+			},
+		})
+	}
+
+	tags := projectService.ProjectRepo.GetProjectTag(projectID)
+
+	for _, tag := range tags {
+		projectService.ProjectRepo.DeleteProjectTags(projectID, tag.ID)
+	}
+
+	projectService.ProjectRepo.DeleteProject(projectID)
+}
