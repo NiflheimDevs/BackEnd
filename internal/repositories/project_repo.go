@@ -52,6 +52,47 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	return &project, nil
 }
 
+func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.ProjectModel {
+	var projects []models.ProjectModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT id,owner_id,title,description,duration FROM project WHERE owner_id = $1 OFFSET $2 LIMIT $3"
+
+	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer result.Close()
+
+	for result.Next() {
+		var project models.ProjectModel
+		var duration time.Time
+		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &duration); err != nil {
+			panic(exceptions.Exception{
+				Tag: enums.INTERNAL_ERROR,
+				Errors: []enums.SpecificError{
+					enums.DATABASE_ERROR,
+				},
+			})
+		}
+		project.Duration = duration.Format("2006-01-02 15:04:05")
+		tag := repo.GetProjectTag(project.ID)
+		project.Tags = tag
+		projects = append(projects, project)
+	}
+
+	return projects
+}
+
 func (repo *ProjectRepo) CreateProject(userID int, title, description, duration string) int {
 	var project_id int
 
