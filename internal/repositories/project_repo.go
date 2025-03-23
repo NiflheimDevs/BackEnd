@@ -123,7 +123,7 @@ func (repo *ProjectRepo) GetProjectTag(projectID int) []models.TagModel {
 
 	var tags []models.TagModel
 
-	query := "SELECT t.id, t.name FROM users_project_tag upt JOIN tag t ON upt.tag_id = t.id WHERE upt.project_user_id = $1 AND upt.type = 2"
+	query := "SELECT t.id, t.name FROM project_tag pt JOIN tag t ON pt.tag_id = t.id WHERE pt.project_id = $1"
 
 	rows, err := repo.PG.Query(ctx, query, projectID)
 	if err != nil {
@@ -165,7 +165,7 @@ func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "INSERT INTO users_project_tag (project_user_id, tag_id, type) VALUES ($1, $2, 2)"
+	query := "INSERT INTO project_tag (project_id, tag_id) VALUES ($1, $2)"
 
 	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
 
@@ -183,7 +183,7 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID, tagID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM users_project_tag WHERE project_user_id = $1 AND tag_id = $2 AND type = 2"
+	query := "DELETE FROM project_tag WHERE project_id = $1 AND tag_id = $2"
 
 	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
 

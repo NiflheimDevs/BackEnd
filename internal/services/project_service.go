@@ -47,7 +47,7 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 func (projectService *ProjectService) GetUserProjects(userID, offset, limit int) []models.ProjectModel {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.AUTHENTICATION_ERROR,
+			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
 				enums.AUTH_ACCESS_DENIED,
 			},
