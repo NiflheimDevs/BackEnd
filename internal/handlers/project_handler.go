@@ -38,7 +38,11 @@ func NewProjectHandler(
 func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
-	projects := projectHandler.ProjectService.GetUserProjects(userID)
+	query := r.URL.Query()
+	offset, _ := strconv.Atoi(query.Get("offset"))
+	limit, _ := strconv.Atoi(query.Get("limit"))
+
+	projects := projectHandler.ProjectService.GetUserProjects(userID, offset, limit)
 
 	var projectsDTO []dto.Project
 

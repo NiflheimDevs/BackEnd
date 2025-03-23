@@ -44,7 +44,7 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 	return project
 }
 
-func (projectService *ProjectService) GetUserProjects(userID int) []models.ProjectModel {
+func (projectService *ProjectService) GetUserProjects(userID, offset, limit int) []models.ProjectModel {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.AUTHENTICATION_ERROR,
@@ -54,7 +54,7 @@ func (projectService *ProjectService) GetUserProjects(userID int) []models.Proje
 		})
 	}
 
-	projects := projectService.ProjectRepo.GetUserProject(userID)
+	projects := projectService.ProjectRepo.GetUserProject(userID, offset, limit)
 
 	return projects
 }

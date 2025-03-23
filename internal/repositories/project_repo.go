@@ -52,15 +52,15 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	return &project, nil
 }
 
-func (repo *ProjectRepo) GetUserProject(userID int) []models.ProjectModel {
+func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.ProjectModel {
 	var projects []models.ProjectModel
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,duration FROM project WHERE owner_id = $1"
+	query := "SELECT id,owner_id,title,description,duration FROM project WHERE owner_id = $1 OFFSET $2 LIMIT $3"
 
-	result, err := repo.PG.Query(ctx, query, userID)
+	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
 
 	if err != nil {
 		panic(exceptions.Exception{
