@@ -264,8 +264,8 @@ func (us *UserService) CheckFlagForPasswordReset(session string) int {
 	return userID
 }
 
-func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
-	if userData.ID < 0 {
+func (us *UserService) UpdateUserData(userid int, userData *dto.UpdateUserDTO) {
+	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
@@ -274,45 +274,61 @@ func (us *UserService) UpdateUserData(userData *dto.UpdateUserDTO) {
 		})
 	}
 
-	user, err := us.UserRepo.FindUserByID(userData.ID)
-
+	_, err := us.UserRepo.UpdateUserData(userid, userData)
 	if err != nil {
+
 		panic(exceptions.Exception{
-			Tag:    enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
+			Tag: enums.INTERNAL_ERROR,
 		})
 	}
-	if !user.Is_verified && user.Email != userData.Email {
+}
+
+func (us *UserService) UpdateEmail(userid int, email string) {
+	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag:    enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{enums.EMAIL_NOT_VERIFIED},
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
-
-	_, err = us.UserRepo.UpdateUserData(userData)
-
-	if err == nil {
-		return
-	}
-
-	validErrs := exceptions.Exception{
-		Tag: enums.VALIDATION_ERROR,
-	}
-	_, err = us.UserRepo.FindUserByEmail(userData.Email)
+	effected, err := us.UserRepo.UpdateEmail(userid, email)
 	if err != nil {
-		validErrs.AddError(enums.EMAIL_TAKEN)
+		panic(exceptions.Exception{
+			Tag:    enums.UNPROCESSABLE,
+			Errors: []enums.SpecificError{enums.EMAIL_TAKEN},
+		})
 	}
-	_, err = us.UserRepo.FindUserByUsername(userData.Username)
-	if err != nil {
-		validErrs.AddError(enums.USERNAME_TAKEN)
-	}
-	if len(validErrs.Errors) > 0 {
-		panic(validErrs)
-	}
+	if effected == 0 {
+		user, _ := us.UserRepo.FindUserByEmail(email)
+		if user != nil {
+			if user.ID != userid {
 
-	panic(exceptions.Exception{
-		Tag: enums.INTERNAL_ERROR,
-	})
+				panic(exceptions.Exception{
+					Tag:    enums.UNPROCESSABLE,
+					Errors: []enums.SpecificError{enums.EMAIL_NOT_VERIFIED},
+				})
+			}
+		}
+	}
+}
+
+func (us *UserService) UpdateUsername(userid int, username string) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+	_, err := us.UserRepo.UpdateUsername(userid, username)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.UNPROCESSABLE,
+			Errors: []enums.SpecificError{enums.USERNAME_TAKEN},
+		})
+	}
 }
 
 func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string) string {

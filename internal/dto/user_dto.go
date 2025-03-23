@@ -22,8 +22,5 @@ type UserProfileDTO struct {
 type UpdateUserDTO struct {
 	FirstName string `json:"firstname" validate:"required"`
 	LastName  string `json:"lastname" validate:"required"`
-	Username  string `json:"username" validate:"required,username"`
-	Email     string `json:"email" validate:"required,email"`
 	Bio       string `json:"bio" validate:"required"`
-	ID        int
 }

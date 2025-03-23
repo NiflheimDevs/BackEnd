@@ -178,10 +178,41 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
 	params := Validated[dto.UpdateUserDTO](uh.Validator, r)
-	params.Username = strings.ToLower(params.Username)
-	params.ID = userid
 
-	uh.UserService.UpdateUserData(&params)
+	uh.UserService.UpdateUserData(userid, &params)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (uh *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
+	type Param struct {
+		Username string `json:"username" validate:"required,username"`
+	}
+
+	param := Validated[Param](uh.Validator, r)
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+
+	param.Username = strings.ToLower(param.Username)
+
+	uh.UserService.UpdateUsername(userid, param.Username)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (uh *UserHandler) UpdateEmail(w http.ResponseWriter, r *http.Request) {
+
+	type Param struct {
+		Email string `json:"email" validate:"required,email"`
+	}
+
+	param := Validated[Param](uh.Validator, r)
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+
+	param.Email = strings.ToLower(param.Email)
+
+	uh.UserService.UpdateEmail(userid, param.Email)
 
 	w.WriteHeader(http.StatusOK)
 }

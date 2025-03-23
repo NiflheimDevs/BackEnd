@@ -57,6 +57,8 @@ func Routes(app *wire.Application) http.Handler {
 	})
 
 	mux.Put("/user/update-info", app.UserHandler.UpdateUserData)
+	mux.Put("/user/update-username", app.UserHandler.UpdateUsername)
+	mux.Put("/user/update-email", app.UserHandler.UpdateEmail)
 	mux.Post("/user/profile", app.FileHandler.UploadProfilePhoto)
 	mux.Delete("/user/profile", app.FileHandler.DeleteProfilePhoto)
 	mux.Put("/user/update-phone/send-otp", app.UserHandler.UpdatePhoneSendOTP)

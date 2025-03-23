@@ -115,16 +115,43 @@ func (repo *UserRepo) PostUser(phonenumber string, username string, password []b
 	return userid, err
 }
 
-func (repo *UserRepo) UpdateUserData(userData *dto.UpdateUserDTO) (int64, error) {
+func (repo *UserRepo) UpdateUserData(userid int, userData *dto.UpdateUserDTO) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := `
 	UPDATE users
-	SET firstname = $2 , lastname = $3 , username = $4 , email = $5 , is_verified = false
+	SET firstname = $2 , lastname = $3, bio = $4
 	WHERE id = $1`
 
-	res, err := repo.PG.Exec(ctx, query, userData.ID, userData.FirstName, userData.LastName, userData.Username, userData.Email)
+	res, err := repo.PG.Exec(ctx, query, userid, userData.FirstName, userData.LastName, userData.Bio)
+	return res.RowsAffected(), err
+}
+
+func (repo *UserRepo) UpdateUsername(userid int, newUsername string) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	UPDATE users
+	SET username = $2
+	WHERE id = $1`
+
+	res, err := repo.PG.Exec(ctx, query, userid, newUsername)
+	return res.RowsAffected(), err
+}
+
+func (repo *UserRepo) UpdateEmail(userid int, email string) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	UPDATE users
+	SET email = $2, is_verified = false
+	WHERE id = $1 AND is_verified = true`
+
+	res, err := repo.PG.Exec(ctx, query, userid, email)
+	//? better error handling for internal errors?
 	return res.RowsAffected(), err
 }
 
