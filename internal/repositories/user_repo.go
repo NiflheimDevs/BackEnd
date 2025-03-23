@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	dto "github.com/niflheimdevs/backend/internal/dto/users"
+	"github.com/niflheimdevs/backend/internal/dto"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"

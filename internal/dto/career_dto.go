@@ -8,7 +8,7 @@ import (
 
 type SendCareersDTO struct {
 	Careers []models.CareerModel `json:"careers"`
-	Tags    [][]models.TagModel  `json:"tags"`
+	Tags    [][]GetTagDto        `json:"tags"`
 }
 
 type PostCareerDTO struct {

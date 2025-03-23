@@ -3,7 +3,7 @@ package services
 import (
 	"encoding/json"
 
-	dto "github.com/niflheimdevs/backend/internal/dto/careers"
+	"github.com/niflheimdevs/backend/internal/dto"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"
@@ -53,7 +53,7 @@ func (gs *GeneralService) GetCareerForUser(userid int) *dto.SendCareersDTO {
 	}
 
 	res.Careers = careers
-	var tags []models.TagModel
+	var tags []dto.GetTagDto
 
 	for i := 0; i < len(careers); i++ {
 		tags, err = gs.GeneralRepo.GetTagsForUserOrCareer(careers[i].ID, false)
@@ -68,7 +68,7 @@ func (gs *GeneralService) GetCareerForUser(userid int) *dto.SendCareersDTO {
 	return &res
 }
 
-func (gs *GeneralService) GetTagsForUser(userid int) []models.TagModel {
+func (gs *GeneralService) GetTagsForUser(userid int) []dto.GetTagDto {
 	res, err := gs.GeneralRepo.GetTagsForUserOrCareer(userid, true)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -95,4 +95,15 @@ func (gs *GeneralService) AddCareer(userid int, params *dto.PostCareerDTO) *mode
 		})
 	}
 
+	career, err := gs.GeneralRepo.PostCareer(userid, params)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.VALIDATION_ERROR,
+		})
+	}
+	for i := 0; i < len(params.Tags); i++ {
+		gs.GeneralRepo.AddTagToUserOrCareer(career.ID, params.Tags[i], 0, false)
+	}
+
+	return career
 }

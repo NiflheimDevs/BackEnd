@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
-	dto "github.com/niflheimdevs/backend/internal/dto/projects"
+	"github.com/niflheimdevs/backend/internal/dto"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/services"

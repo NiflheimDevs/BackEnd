@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/niflheimdevs/backend/internal/bootstrap"
-	dto "github.com/niflheimdevs/backend/internal/dto/users"
+	"github.com/niflheimdevs/backend/internal/dto"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"
