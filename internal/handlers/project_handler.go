@@ -35,7 +35,35 @@ func NewProjectHandler(
 	}
 }
 
-func (projectHandler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
+func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
+
+	projects := projectHandler.ProjectService.GetUserProjects(userID)
+
+	var projectsDTO []dto.Project
+
+	for _, project := range projects {
+		projectsDTO = append(projectsDTO, dto.Project{
+			ProjectID:   project.ID,
+			OwnerID:     project.OwnerID,
+			Title:       project.Title,
+			Description: project.Description,
+			Tags:        project.Tags,
+			Duration:    project.Duration,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(projectsDTO); err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{enums.CAST_ERROR},
+		})
+	}
+}
+
+func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, r *http.Request) {
 	projectIDString := chi.URLParam(r, "project_id")
 	projectID, _ := strconv.Atoi(projectIDString)
 

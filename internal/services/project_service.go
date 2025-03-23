@@ -44,6 +44,21 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 	return project
 }
 
+func (projectService *ProjectService) GetUserProjects(userID int) []models.ProjectModel {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: enums.AUTHENTICATION_ERROR,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	projects := projectService.ProjectRepo.GetUserProject(userID)
+
+	return projects
+}
+
 func (projectService *ProjectService) CreateProject(userID int, title, description string, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
