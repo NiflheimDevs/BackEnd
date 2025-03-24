@@ -51,6 +51,8 @@ const (
 	PROJECT_NOT_FOUND SpecificError = "PROJECT_NOT_FOUND"
 
 	USER_NOT_OWNER SpecificError = "USER_NOT_OWNER"
+
+	INSUFFICIENT_BALANCE SpecificError = "INSUFFICIENT_BALANCE"
 )
 
 const (
@@ -61,4 +63,5 @@ const (
 	BAD_REQUEST      GeneralError = "BAD_REQUEST"
 	LIMIT_EXCEED     GeneralError = "LIMIT_EXCEED"
 	UNPROCESSABLE    GeneralError = "UNPROCESSABLE"
+	FORBIDDEN        GeneralError = "FORBIDDEN"
 )
