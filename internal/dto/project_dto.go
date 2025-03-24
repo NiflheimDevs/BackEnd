@@ -7,6 +7,7 @@ type Project struct {
 	OwnerID     int               `json:"Owner_id"`
 	Title       string            `json:"title"`
 	Description string            `json:"description"`
+	Label       string            `json:"label"`
 	Tags        []models.TagModel `json:"tags"`
 	FirstName   string            `json:"first_name"`
 	LastName    string            `json:"last_name"`

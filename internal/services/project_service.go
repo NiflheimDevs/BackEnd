@@ -59,7 +59,7 @@ func (projectService *ProjectService) GetUserProjects(userID, offset, limit int)
 	return projects
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, tags []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description, label string, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -70,7 +70,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	}
 
 	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
-	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, duration)
+	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, label, duration)
 
 	for _, tag_id := range tags {
 		projectService.ProjectRepo.AddProjectTag(project_id, tag_id)
@@ -79,7 +79,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	return project_id
 }
 
-func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, tags []int) {
+func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description, label string, tags []int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -109,7 +109,7 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 		})
 	}
 
-	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description)
+	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description, label)
 
 	existingTags := projectService.ProjectRepo.GetProjectTag(projectID)
 
