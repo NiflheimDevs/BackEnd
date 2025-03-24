@@ -274,3 +274,11 @@ func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+func (uh *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(uh.Constants.Context.UserID).(int)
+
+	uh.UserService.DeleteUser(userid)
+
+	w.WriteHeader(http.StatusOK)
+}

@@ -397,3 +397,18 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 
 	return &response
 }
+
+func (us *UserService) DeleteUser(userid int) {
+	//TODO: delete user
+	// deletes: tag (trigger), career+, tag for career(trigger), userrole+
+	// change identity: post, comment, bid, message,chatuser, transaction
+	// handle refresh token
+
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+		})
+	}
+
+	us.UserRepo.DeleteUser(userid)
+}

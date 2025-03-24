@@ -6,4 +6,10 @@
 
 - duplicate code in user_cache_repo
 
+- general layers?!
+
+- help
+
+- validator: white space check for username and ...
+
 #Saman

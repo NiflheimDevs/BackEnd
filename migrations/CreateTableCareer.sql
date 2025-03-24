@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS "career" (
     "end_date" timestamp,
     "role" varchar NOT NULL,
     "website" varchar,
-    FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
+    FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE,
     CHECK ("end_date" IS NULL OR "start_date" < "end_date")
 );
