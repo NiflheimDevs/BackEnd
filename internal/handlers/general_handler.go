@@ -46,12 +46,31 @@ func (handler *GeneralHandler) GetTags(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (gh *GeneralHandler) CreateCareer(w http.ResponseWriter, r *http.Request) {
+func (gh *GeneralHandler) UpdateCareer(w http.ResponseWriter, r *http.Request) {
+	type PutCareerDTO struct {
+		Careers []dto.CareerDTO `json:"careers" validate:"required,dive"`
+	}
 	userid := r.Context().Value(gh.Constants.Context.UserID).(int)
 
-	params := Validated[dto.PostCareerDTO](gh.Validator, r)
+	params := Validated[PutCareerDTO](gh.Validator, r)
 
-	res := gh.GeneralService.AddCareer(userid, &params)
+	res := gh.GeneralService.UpdateCareer(userid, params.Careers)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
+func (gh *GeneralHandler) UpdateUserTag(w http.ResponseWriter, r *http.Request) {
+	type PutTags struct {
+		Tags []dto.RecieveTagDTO `json:"careers" validate:"required,dive"`
+	}
+
+	userid := r.Context().Value(gh.Constants.Context.UserID).(int)
+
+	params := Validated[PutTags](gh.Validator, r)
+
+	res := gh.GeneralService.UpdateTagsForCareerOrUser(userid, params.Tags, true)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

@@ -13,7 +13,6 @@ import (
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/repositories/storage"
 	"github.com/pixiv/go-libjpeg/jpeg"
-	_ "golang.org/x/image/webp"
 )
 
 type FileService struct {
@@ -59,6 +58,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	resizedImg := resize.Resize(512, 512, img, resize.Lanczos2)
 
 	err = webp.Encode(&webpBuffer, resizedImg, &webp.Options{Lossless: false, Quality: 85})
+
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: enums.UNPROCESSABLE,

@@ -1,6 +1,6 @@
 
--- CREATE USER niflheim WITH PASSWORD 'niflguard';
--- ALTER ROLE niflheim WITH CREATEDB;
+CREATE USER niflheim WITH PASSWORD 'niflguard';
+ALTER ROLE niflheim WITH CREATEDB;
 
 DO $$
 BEGIN

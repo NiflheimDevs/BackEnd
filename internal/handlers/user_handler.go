@@ -264,7 +264,7 @@ func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		response["info"] = uh.UserService.GetUserInfo(targetUserid, userid)
 	}
 	if uh.Utils.Contains(includes, "career") {
-		response["career"] = uh.GeneralService.GetCareerForUser(targetUserid)
+		response["career"] = uh.GeneralService.GetCareerForUser(userid, targetUserid)
 	}
 	if uh.Utils.Contains(includes, "tag") {
 		response["tag"] = uh.GeneralService.GetTagsForUser(targetUserid)
