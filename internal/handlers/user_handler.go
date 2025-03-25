@@ -89,7 +89,7 @@ func (userHandler *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Re
 	userHandler.UserService.ChangePasswordValidate(userID, params.OldPassword)
 	userHandler.UserService.ChangePassword(userID, params.NewPassword)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +110,7 @@ func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
 		sms.SendOTP(info.Phonenumber, code)
 	}
 
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(session))
 }
 
@@ -172,7 +173,7 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 
 	uh.UserService.ChangePassword(userID, changePassword.NewPassword)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +182,7 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 
 	uh.UserService.UpdateUserData(userid, &params)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (uh *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +198,7 @@ func (uh *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
 
 	uh.UserService.UpdateUsername(userid, param.Username)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (uh *UserHandler) UpdateEmail(w http.ResponseWriter, r *http.Request) {
@@ -214,7 +215,7 @@ func (uh *UserHandler) UpdateEmail(w http.ResponseWriter, r *http.Request) {
 
 	uh.UserService.UpdateEmail(userid, param.Email)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (uh *UserHandler) UpdatePhoneSendOTP(w http.ResponseWriter, r *http.Request) {
@@ -245,7 +246,7 @@ func (uh *UserHandler) UpdatePhoneVerify(w http.ResponseWriter, r *http.Request)
 
 	uh.UserService.UpdatePhone(phone, userid)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
@@ -280,5 +281,5 @@ func (uh *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	uh.UserService.DeleteUser(userid)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }

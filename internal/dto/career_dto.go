@@ -7,13 +7,13 @@ import (
 )
 
 type SendCareerDTO struct {
-	ID        int
-	Company   string
-	StartDate time.Time
-	EndDate   time.Time
-	Role      string
-	Website   string
-	Tags      []GetTagDto
+	ID        int         `json:"id"`
+	Company   string      `json:"company"`
+	StartDate time.Time   `json:"start_date"`
+	EndDate   time.Time   `json:"end_date"`
+	Role      string      `json:"role"`
+	Website   string      `json:"website"`
+	Tags      []GetTagDto `json:"tags"`
 }
 
 type CareerDTO struct {

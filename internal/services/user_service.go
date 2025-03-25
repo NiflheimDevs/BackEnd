@@ -230,7 +230,7 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 	userdata, err := us.UserRepo.FindUserByPhone(phonenumber)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.UNPROCESSABLE,
+			Tag:    enums.NOT_FOUND,
 			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
 		})
 	}
