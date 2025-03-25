@@ -124,7 +124,7 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	type updateProjectParams struct {
-		Title       string   `json:"title" validate:"required"`
+		Title       string   `json:"title" validate:"required,max=50"`
 		Description string   `json:"description" validate:"required"`
 		Tags        []int    `json:"tags" validate:"required"`
 		Label       []string `json:"label"`
