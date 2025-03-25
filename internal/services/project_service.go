@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/bootstrap"
@@ -37,6 +38,17 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 		})
 	}
 
+	var labels []string
+	if err := json.Unmarshal([]byte(project.Label[0]), &labels); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.CAST_ERROR,
+			},
+		})
+	}
+	project.Label = labels
+
 	tags := projectService.ProjectRepo.GetProjectTag(projectID)
 
 	project.Tags = tags
@@ -56,10 +68,23 @@ func (projectService *ProjectService) GetUserProjects(userID, offset, limit int)
 
 	projects := projectService.ProjectRepo.GetUserProject(userID, offset, limit)
 
+	for i := range projects {
+		var labels []string
+		if err := json.Unmarshal([]byte(projects[i].Label[0]), &labels); err != nil {
+			panic(exceptions.Exception{
+				Tag: enums.INTERNAL_ERROR,
+				Errors: []enums.SpecificError{
+					enums.CAST_ERROR,
+				},
+			})
+		}
+		projects[i].Label = labels
+	}
+
 	return projects
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, tags []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description string, label []string, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -69,8 +94,11 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 		})
 	}
 
+	labelsJSON, _ := json.Marshal(label)
+	labels := string(labelsJSON)
+
 	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
-	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, duration)
+	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, labels, duration)
 
 	for _, tag_id := range tags {
 		projectService.ProjectRepo.AddProjectTag(project_id, tag_id)
@@ -79,7 +107,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	return project_id
 }
 
-func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, tags []int) {
+func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label []string, tags []int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -109,7 +137,10 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 		})
 	}
 
-	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description)
+	labelsJSON, _ := json.Marshal(label)
+	labels := string(labelsJSON)
+
+	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description, labels)
 
 	existingTags := projectService.ProjectRepo.GetProjectTag(projectID)
 

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS "project" (
   "owner_id" int NOT NULL,
   "title" text NOT NULL,
   "description" text,
+  "label" text,
   "selected_bid_id" int UNIQUE,
   "created_time" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_time" timestamp DEFAULT CURRENT_TIMESTAMP,

@@ -52,6 +52,7 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 			OwnerID:     project.OwnerID,
 			Title:       project.Title,
 			Description: project.Description,
+			Label:       project.Label,
 			Tags:        project.Tags,
 			Duration:    project.Duration,
 		})
@@ -78,6 +79,7 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		OwnerID:     project.OwnerID,
 		Title:       project.Title,
 		Description: project.Description,
+		Label:       project.Label,
 		Tags:        project.Tags,
 		Duration:    project.Duration,
 	}
@@ -94,16 +96,17 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 
 func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	type createProjectParams struct {
-		Title       string `json:"title" validate:"required"`
-		Description string `json:"description" validate:"required"`
-		Tags        []int  `json:"tags" validate:"required"`
+		Title       string   `json:"title" validate:"required"`
+		Description string   `json:"description" validate:"required"`
+		Tags        []int    `json:"tags" validate:"required"`
+		Label       []string `json:"label"`
 	}
 
 	params := Validated[createProjectParams](projectHandler.Validator, r)
 
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
-	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Tags)
+	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, params.Tags)
 
 	dto := dto.CreateProjectDTO{
 		ProjectID: project,
@@ -121,9 +124,10 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	type updateProjectParams struct {
-		Title       string `json:"title" validate:"required"`
-		Description string `json:"description" validate:"required"`
-		Tags        []int  `json:"tags" validate:"required"`
+		Title       string   `json:"title" validate:"required,max=50"`
+		Description string   `json:"description" validate:"required"`
+		Tags        []int    `json:"tags" validate:"required"`
+		Label       []string `json:"label"`
 	}
 
 	params := Validated[updateProjectParams](projectHandler.Validator, r)
@@ -133,7 +137,7 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 	projectIDString := chi.URLParam(r, "project_id")
 	projectID, _ := strconv.Atoi(projectIDString)
 
-	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, params.Tags)
+	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, params.Label, params.Tags)
 
 	w.WriteHeader(http.StatusNoContent)
 }

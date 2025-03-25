@@ -29,10 +29,10 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,duration FROM project WHERE id = $1"
+	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE id = $1"
 
 	var duration time.Time
-	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &duration)
+	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &duration)
 
 	if err == pgx.ErrNoRows {
 		return nil, err
@@ -58,7 +58,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,duration FROM project WHERE owner_id = $1 OFFSET $2 LIMIT $3"
+	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE owner_id = $1 OFFSET $2 LIMIT $3"
 
 	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
 
@@ -76,7 +76,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	for result.Next() {
 		var project models.ProjectModel
 		var duration time.Time
-		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &duration); err != nil {
+		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &duration); err != nil {
 			panic(exceptions.Exception{
 				Tag: enums.INTERNAL_ERROR,
 				Errors: []enums.SpecificError{
@@ -84,6 +84,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 				},
 			})
 		}
+    
 		project.Duration = duration.Format("2006-01-02 15:04:05")
 		tag := repo.GetProjectTag(project.ID)
 		project.Tags = tag
@@ -93,7 +94,8 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	return projects
 }
 
-func (repo *ProjectRepo) CreateProject(userID int, title, description, duration string) int {
+
+func (repo *ProjectRepo) CreateProject(userID int, title, description, label, duration string) int {
 	var project_id int
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -101,9 +103,9 @@ func (repo *ProjectRepo) CreateProject(userID int, title, description, duration 
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	query := "INSERT INTO project (owner_id, title, description, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+	query := "INSERT INTO project (owner_id, title, description, label, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 
-	err := repo.PG.QueryRow(ctx, query, userID, title, description, duration, now, now).Scan(&project_id)
+	err := repo.PG.QueryRow(ctx, query, userID, title, description, label, duration, now, now).Scan(&project_id)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -123,7 +125,7 @@ func (repo *ProjectRepo) GetProjectTag(projectID int) []models.TagModel {
 
 	var tags []models.TagModel
 
-	query := "SELECT t.id, t.name FROM users_project_tag upt JOIN tag t ON upt.tag_id = t.id WHERE upt.project_user_id = $1 AND upt.type = 2"
+	query := "SELECT t.id, t.name FROM project_tag pt JOIN tag t ON pt.tag_id = t.id WHERE pt.project_id = $1"
 
 	rows, err := repo.PG.Query(ctx, query, projectID)
 	if err != nil {
@@ -165,7 +167,7 @@ func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "INSERT INTO users_project_tag (project_user_id, tag_id, type) VALUES ($1, $2, 2)"
+	query := "INSERT INTO project_tag (project_id, tag_id) VALUES ($1, $2)"
 
 	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
 
@@ -183,7 +185,7 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID, tagID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM users_project_tag WHERE project_user_id = $1 AND tag_id = $2 AND type = 2"
+	query := "DELETE FROM project_tag WHERE project_id = $1 AND tag_id = $2"
 
 	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
 
@@ -197,15 +199,15 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID, tagID int) {
 	}
 }
 
-func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description string) {
+func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description, label string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	query := "UPDATE project SET title = $1, description = $2, updated_time=$3 WHERE id = $4 and owner_id = $5"
+	query := "UPDATE project SET title = $1, description = $2, label=$3, updated_time=$4 WHERE id = $5 and owner_id = $6"
 
-	_, err := repo.PG.Exec(ctx, query, title, description, now, projectID, UserID)
+	_, err := repo.PG.Exec(ctx, query, title, description, label, now, projectID, UserID)
 
 	if err != nil {
 		panic(exceptions.Exception{

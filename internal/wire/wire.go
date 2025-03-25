@@ -26,6 +26,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Struct(new(repositories.GeneralRepo), "*"),
 	wire.Struct(new(R.UserCache), "*"),
 	wire.Struct(new(storage.FileStorage), "*"),
+	wire.Struct(new(repositories.PaymentRepo), "*"),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -33,6 +34,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(services.FileService), "*"),
 	wire.Struct(new(services.ProjectService), "*"),
 	wire.Struct(new(services.GeneralService), "*"),
+	wire.Struct(new(services.PaymentService), "*"),
 	services.NewJWT,
 	ProvideConstants,
 )
@@ -43,6 +45,7 @@ var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.ErrorHandler), "*"),
 	wire.Struct(new(handlers.ProjectHandler), "*"),
 	wire.Struct(new(handlers.GeneralHandler), "*"),
+	wire.Struct(new(handlers.PaymentHandler), "*"),
 	handlers.NewValidator,
 	utils.NewUtils,
 )
@@ -77,6 +80,7 @@ type Application struct {
 	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
+	PaymentHandler *handlers.PaymentHandler
 	Middlewares    *Middlewares
 }
 
