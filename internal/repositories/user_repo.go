@@ -172,3 +172,19 @@ func (repo *UserRepo) UpdatePhone(phonenumber string, userid string) {
 		})
 	}
 }
+
+func (repo *UserRepo) DeleteUser(userid int) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	DELETE FROM users
+	WHERE id = $1`
+	_, err := repo.PG.Exec(ctx, query, userid)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+		})
+	}
+}

@@ -84,6 +84,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 				},
 			})
 		}
+    
 		project.Duration = duration.Format("2006-01-02 15:04:05")
 		tag := repo.GetProjectTag(project.ID)
 		project.Tags = tag
@@ -92,6 +93,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 
 	return projects
 }
+
 
 func (repo *ProjectRepo) CreateProject(userID int, title, description, label, duration string) int {
 	var project_id int

@@ -144,6 +144,7 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 
 	existingTags := projectService.ProjectRepo.GetProjectTag(projectID)
 
+	// ? extract method? making it util? this code is also needed in in general_service.go
 	existingTagSet := make(map[int]bool)
 	for _, tag := range existingTags {
 		existingTagSet[tag.ID] = true
