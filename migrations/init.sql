@@ -203,7 +203,9 @@ CREATE TRIGGER user_delete_trigger
 BEFORE DELETE ON users
 FOR EACH ROW EXECUTE FUNCTION delete_cascade_for_user();
 
-INSERT INTO users (username,phone,password) VALUES ('deleted user','666','\x48656c6c6f20776f726c64');
+INSERT INTO users (username,phone,password) VALUES 
+('God','666','\x48656c6c6f20776f726c64'),
+('deleted user','666','\x48656c6c6f20776f726c64');
 
 INSERT INTO tag (name) VALUES
 ('Data Structures'),
