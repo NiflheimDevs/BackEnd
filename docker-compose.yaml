@@ -15,18 +15,14 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   redis:
-      image: redis:latest
-      container_name: redis_container
-      restart: always
-      privileged: true
-      ports:
-        - "6379:6379"
-      volumes:
-        - redisdata:/data
-      sysctls:
-        - vm.overcommit_memory=1
-      command: >
-        sh -c "sysctl -w vm.overcommit_memory=1 && redis-server --save 60 1 --loglevel warning"
+    image: redis:latest
+    container_name: redis_container
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --save 60 1 --loglevel warning
 
   app:
     build: .
