@@ -79,6 +79,27 @@ func (repo *GeneralRepo) GetLabels() []models.LabelModel {
 	return labels
 }
 
+func (repo *GeneralRepo) GetLabelInfo(labelID int) *models.LabelModel {
+	var label models.LabelModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `SELECT id,name,description,price FROM label WHERE id = $1`
+	err := repo.PG.QueryRow(ctx, query, labelID).Scan(&label.ID, &label.Name, &label.Description, &label.Price)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return &label
+}
+
 func (gr *GeneralRepo) GetTagsForUserOrCareer(careerUserid int, isForUser bool) ([]dto.GetTagDto, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
