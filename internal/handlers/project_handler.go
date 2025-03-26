@@ -17,6 +17,7 @@ import (
 type ProjectHandler struct {
 	Constants      *bootstrap.Constants
 	ProjectService *services.ProjectService
+	UserService    *services.UserService
 	JWTService     *services.JWT
 	Validator      *validator.Validate
 }
@@ -24,12 +25,14 @@ type ProjectHandler struct {
 func NewProjectHandler(
 	constants *bootstrap.Constants,
 	projectService *services.ProjectService,
+	userService *services.UserService,
 	jwtService *services.JWT,
 	validator *validator.Validate,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		Constants:      constants,
 		ProjectService: projectService,
+		UserService:    userService,
 		JWTService:     jwtService,
 		Validator:      validator,
 	}
@@ -73,6 +76,7 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 	projectID, _ := strconv.Atoi(projectIDString)
 
 	project := projectHandler.ProjectService.GetProject(projectID)
+	userInfo := projectHandler.UserService.GetUserInfo(project.OwnerID, 0)
 
 	projectDTO := dto.Project{
 		ProjectID:   project.ID,
@@ -80,6 +84,9 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		Title:       project.Title,
 		Description: project.Description,
 		Label:       project.Label,
+		FirstName:   userInfo.FirstName,
+		LastName:    userInfo.LastName,
+		Username:    userInfo.Username,
 		Tags:        project.Tags,
 		Duration:    project.Duration,
 	}

@@ -12,6 +12,7 @@ type Project struct {
 	Tags      []models.TagModel `json:"tags"`
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
+	Username  string            `json:"username"`
 	Duration  string            `json:"duration"`
 }
 

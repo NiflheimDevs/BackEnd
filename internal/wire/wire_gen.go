@@ -79,6 +79,7 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 	projectHandler := &handlers.ProjectHandler{
 		Constants:      constants,
 		ProjectService: projectService,
+		UserService:    userService,
 		JWTService:     jwt,
 		Validator:      validate,
 	}
