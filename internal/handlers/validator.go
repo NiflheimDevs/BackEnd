@@ -24,6 +24,7 @@ func NewValidator() *validator.Validate {
 func Validated[T any](validate *validator.Validate, r *http.Request) T {
 	var params T
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		log.Println(err)
 		panic(exceptions.Exception{
 			Tag: enums.BAD_REQUEST,
 		})

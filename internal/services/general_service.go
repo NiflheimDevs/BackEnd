@@ -139,7 +139,7 @@ func (gs *GeneralService) UpdateCareer(userid int, params []dto.CareerDTO) []dto
 			}
 		} else {
 			if existingCareerSet[params[i].ID] != nil {
-				if params[i].IsEqualToModel(existingCareerSet[params[i].ID]) {
+				if !params[i].IsEqualToModel(existingCareerSet[params[i].ID]) {
 					gs.GeneralRepo.UpdateCareer(userid, &params[i])
 				}
 				gs.UpdateTagsForCareerOrUser(params[i].ID, params[i].Tags, false)
@@ -161,6 +161,14 @@ func (gs *GeneralService) UpdateCareer(userid int, params []dto.CareerDTO) []dto
 }
 
 func (gs *GeneralService) UpdateTagsForCareerOrUser(careerUserid int, newTags []dto.RecieveTagDTO, isForUser bool) []dto.RecieveTagDTO {
+
+	if careerUserid < 0 {
+		panic(
+			exceptions.Exception{
+				Tag: enums.UNPROCESSABLE,
+			})
+	}
+
 	tags, err := gs.GeneralRepo.GetTagsForUserOrCareer(careerUserid, isForUser)
 
 	if err != nil {
@@ -177,7 +185,7 @@ func (gs *GeneralService) UpdateTagsForCareerOrUser(careerUserid int, newTags []
 	for i := 0; i < len(newTags); i++ {
 		newTagSet[newTags[i].ID] = true
 		if existingTagSet[newTags[i].ID] != nil {
-			if newTags[i].IsEqualToGetTagDTO(existingTagSet[newTags[i].ID]) {
+			if !newTags[i].IsEqualToGetTagDTO(existingTagSet[newTags[i].ID]) {
 				gs.GeneralRepo.UpdateTagForUserOrCareer(&newTags[i], careerUserid, isForUser)
 			}
 		} else {
