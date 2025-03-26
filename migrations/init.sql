@@ -1,6 +1,6 @@
 
-CREATE USER niflheim WITH PASSWORD 'niflguard';
-ALTER ROLE niflheim WITH CREATEDB;
+-- CREATE USER niflheim WITH PASSWORD 'niflguard';
+-- ALTER ROLE niflheim WITH CREATEDB;
 
 DO $$
 BEGIN
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS "project" (
   "duration" timestamp,
   FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id"),
-  FOREIGN KEY ("label") REFERENCES "label" ("id"),
+  FOREIGN KEY ("label") REFERENCES "label" ("id")
 );
 
 ALTER TABLE bid

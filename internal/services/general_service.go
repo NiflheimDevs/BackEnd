@@ -53,7 +53,7 @@ func (service *GeneralService) GetTags() []byte {
 }
 
 func (service *GeneralService) GetLabels() []byte {
-	labels := service.GeneralRepo
+	labels := service.GeneralRepo.GetLabels()
 
 	marshaled, _ := json.Marshal(labels)
 
