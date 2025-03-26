@@ -96,10 +96,10 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 
 func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	type createProjectParams struct {
-		Title       string   `json:"title" validate:"required"`
-		Description string   `json:"description" validate:"required"`
-		Tags        []int    `json:"tags" validate:"required"`
-		Label       []string `json:"label"`
+		Title       string `json:"title" validate:"required"`
+		Description string `json:"description" validate:"required"`
+		Tags        []int  `json:"tags" validate:"required"`
+		Label       int    `json:"label" validate:"required"`
 	}
 
 	params := Validated[createProjectParams](projectHandler.Validator, r)
@@ -124,10 +124,10 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	type updateProjectParams struct {
-		Title       string   `json:"title" validate:"required,max=50"`
-		Description string   `json:"description" validate:"required"`
-		Tags        []int    `json:"tags" validate:"required"`
-		Label       []string `json:"label"`
+		Title       string `json:"title" validate:"required,max=50"`
+		Description string `json:"description" validate:"required"`
+		Tags        []int  `json:"tags" validate:"required"`
+		Label       int    `json:"label" validate:"required"`
 	}
 
 	params := Validated[updateProjectParams](projectHandler.Validator, r)

@@ -44,6 +44,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/change-password", app.UserHandler.ChangePassword)
 
 	mux.Get("/tags", app.GeneralHandler.GetTags)
+	mux.Get("/labels", app.GeneralHandler.GetLabel)
 
 	mux.Put("/user/career", app.GeneralHandler.UpdateCareer)
 	mux.Put("/user/tag", app.GeneralHandler.UpdateUserTag)

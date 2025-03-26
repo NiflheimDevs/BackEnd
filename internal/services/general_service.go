@@ -52,6 +52,14 @@ func (service *GeneralService) GetTags() []byte {
 	return marshaled
 }
 
+func (service *GeneralService) GetLabels() []byte {
+	labels := service.GeneralRepo
+
+	marshaled, _ := json.Marshal(labels)
+
+	return marshaled
+}
+
 func (gs *GeneralService) GetCareerForUser(userid int, target int) []dto.SendCareerDTO {
 	var res []dto.SendCareerDTO
 	careers, err := gs.GeneralRepo.GetCareersForUser(target)

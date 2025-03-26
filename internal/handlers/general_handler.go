@@ -46,6 +46,18 @@ func (handler *GeneralHandler) GetTags(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (gh *GeneralHandler) GetLabel(w http.ResponseWriter, r *http.Request) {
+	labels := gh.GeneralService.GetLabels()
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(labels); err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{enums.CAST_ERROR},
+		})
+	}
+}
+
 func (gh *GeneralHandler) UpdateCareer(w http.ResponseWriter, r *http.Request) {
 	type PutCareerDTO struct {
 		Careers []dto.CareerDTO `json:"careers" validate:"required,dive"`

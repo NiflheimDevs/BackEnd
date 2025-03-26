@@ -20,6 +20,7 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
+				log.Println(rec)
 				err, ok := rec.(exceptions.Exception)
 				if ok {
 					json, status := recovery.handleRecoveredError(&err)
@@ -35,7 +36,6 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 					jsonResponse, _ := json.Marshal(errorResponse)
 					w.Write(jsonResponse)
 				}
-				log.Println(err)
 			}
 		}()
 		next.ServeHTTP(w, r)

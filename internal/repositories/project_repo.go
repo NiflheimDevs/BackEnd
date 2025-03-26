@@ -84,7 +84,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 				},
 			})
 		}
-    
+
 		project.Duration = duration.Format("2006-01-02 15:04:05")
 		tag := repo.GetProjectTag(project.ID)
 		project.Tags = tag
@@ -94,8 +94,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	return projects
 }
 
-
-func (repo *ProjectRepo) CreateProject(userID int, title, description, label, duration string) int {
+func (repo *ProjectRepo) CreateProject(userID, label int, title, description, duration string) int {
 	var project_id int
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -199,7 +198,7 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID, tagID int) {
 	}
 }
 
-func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description, label string) {
+func (repo *ProjectRepo) UpdateProject(projectID, UserID, label int, title, description string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
