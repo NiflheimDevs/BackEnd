@@ -1,8 +1,10 @@
 package services
 
 import (
+	"context"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
@@ -69,14 +71,44 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 		})
 	}
 
-	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
-	project_id := projectService.ProjectRepo.CreateProject(userID, label, title, description, duration)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	for _, tag_id := range tags {
-		projectService.ProjectRepo.AddProjectTag(project_id, tag_id)
+	tx, err := projectService.ProjectRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
 	}
 
-	return project_id
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
+
+	projectID := projectService.ProjectRepo.CreateProject(ctx, tx, userID, label, title, description, duration)
+
+	for _, tagID := range tags {
+		projectService.ProjectRepo.AddProjectTag(ctx, tx, projectID, tagID)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return projectID
 }
 
 func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label int, tags []int) {
@@ -88,6 +120,26 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 			},
 		})
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := projectService.ProjectRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
 
 	project, err := projectService.ProjectRepo.GetProject(projectID)
 
@@ -109,11 +161,10 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 		})
 	}
 
-	projectService.ProjectRepo.UpdateProject(projectID, userID, label, title, description)
+	projectService.ProjectRepo.UpdateProject(ctx, tx, projectID, userID, label, title, description)
 
 	existingTags := projectService.ProjectRepo.GetProjectTag(projectID)
 
-	// ? extract method? making it util? this code is also needed in in general_service.go
 	existingTagSet := make(map[int]bool)
 	for _, tag := range existingTags {
 		existingTagSet[tag.ID] = true
@@ -126,14 +177,23 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 
 	for _, tag := range tags {
 		if !existingTagSet[tag] {
-			projectService.ProjectRepo.AddProjectTag(projectID, tag)
+			projectService.ProjectRepo.AddProjectTag(ctx, tx, projectID, tag)
 		}
 	}
 
 	for _, tag := range existingTags {
 		if !newTagSet[tag.ID] {
-			projectService.ProjectRepo.DeleteProjectTags(projectID, tag.ID)
+			projectService.ProjectRepo.DeleteProjectTags(ctx, tx, projectID, tag.ID)
 		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
 	}
 }
 
@@ -146,6 +206,26 @@ func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 			},
 		})
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := projectService.ProjectRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
 
 	project, err := projectService.ProjectRepo.GetProject(projectID)
 
@@ -170,8 +250,17 @@ func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 	tags := projectService.ProjectRepo.GetProjectTag(projectID)
 
 	for _, tag := range tags {
-		projectService.ProjectRepo.DeleteProjectTags(projectID, tag.ID)
+		projectService.ProjectRepo.DeleteProjectTags(ctx, tx, projectID, tag.ID)
 	}
 
-	projectService.ProjectRepo.DeleteProject(projectID)
+	projectService.ProjectRepo.DeleteProject(ctx, tx, projectID)
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
 }
