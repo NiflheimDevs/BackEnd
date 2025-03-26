@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/bootstrap"
@@ -37,6 +38,17 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 		})
 	}
 
+	var labels []string
+	if err := json.Unmarshal([]byte(project.Label[0]), &labels); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.CAST_ERROR,
+			},
+		})
+	}
+	project.Label = labels
+
 	tags := projectService.ProjectRepo.GetProjectTag(projectID)
 
 	project.Tags = tags
@@ -47,7 +59,7 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 func (projectService *ProjectService) GetUserProjects(userID, offset, limit int) []models.ProjectModel {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.AUTHENTICATION_ERROR,
+			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
 				enums.AUTH_ACCESS_DENIED,
 			},
@@ -56,21 +68,37 @@ func (projectService *ProjectService) GetUserProjects(userID, offset, limit int)
 
 	projects := projectService.ProjectRepo.GetUserProject(userID, offset, limit)
 
+	for i := range projects {
+		var labels []string
+		if err := json.Unmarshal([]byte(projects[i].Label[0]), &labels); err != nil {
+			panic(exceptions.Exception{
+				Tag: enums.INTERNAL_ERROR,
+				Errors: []enums.SpecificError{
+					enums.CAST_ERROR,
+				},
+			})
+		}
+		projects[i].Label = labels
+	}
+
 	return projects
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, tags []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description string, label []string, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.AUTHENTICATION_ERROR,
+			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
 				enums.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
 
+	labelsJSON, _ := json.Marshal(label)
+	labels := string(labelsJSON)
+
 	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
-	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, duration)
+	project_id := projectService.ProjectRepo.CreateProject(userID, title, description, labels, duration)
 
 	for _, tag_id := range tags {
 		projectService.ProjectRepo.AddProjectTag(project_id, tag_id)
@@ -79,10 +107,10 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	return project_id
 }
 
-func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, tags []int) {
+func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label []string, tags []int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.AUTHENTICATION_ERROR,
+			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
 				enums.AUTH_ACCESS_DENIED,
 			},
@@ -109,10 +137,14 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 		})
 	}
 
-	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description)
+	labelsJSON, _ := json.Marshal(label)
+	labels := string(labelsJSON)
+
+	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description, labels)
 
 	existingTags := projectService.ProjectRepo.GetProjectTag(projectID)
 
+	// ? extract method? making it util? this code is also needed in in general_service.go
 	existingTagSet := make(map[int]bool)
 	for _, tag := range existingTags {
 		existingTagSet[tag.ID] = true
@@ -139,7 +171,7 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.AUTHENTICATION_ERROR,
+			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
 				enums.AUTH_ACCESS_DENIED,
 			},

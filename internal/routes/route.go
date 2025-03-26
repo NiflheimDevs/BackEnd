@@ -45,17 +45,34 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Get("/tags", app.GeneralHandler.GetTags)
 
+	mux.Put("/user/career", app.GeneralHandler.UpdateCareer)
+	mux.Put("/user/tag", app.GeneralHandler.UpdateUserTag)
+
 	mux.Get("/project", app.ProjectHandler.GetUserProject)
 	mux.Get("/project/{project_id}", app.ProjectHandler.GetSpeceficProject)
 	mux.Post("/project/create", app.ProjectHandler.CreateProject)
 	mux.Put("/project/{project_id}", app.ProjectHandler.UpdateProject)
 	mux.Delete("/project/{project_id}", app.ProjectHandler.DeleteProject)
 
+	mux.Post("/payment/project", app.PaymentHandler.ProjectPayment)
+
 	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
+
+	mux.Get("/user/{id}", app.UserHandler.GetUserInfo)
+	mux.Put("/user/update-info", app.UserHandler.UpdateUserData)
+	mux.Put("/user/update-username", app.UserHandler.UpdateUsername)
+	mux.Put("/user/update-email", app.UserHandler.UpdateEmail)
+	mux.Put("/user/update-phone/send-otp", app.UserHandler.UpdatePhoneSendOTP)
+	mux.Put("/user/update-phone/verify", app.UserHandler.UpdatePhoneVerify)
+
+	mux.Post("/user/profile", app.FileHandler.UploadProfilePhoto)
+	mux.Delete("/user/profile", app.FileHandler.DeleteProfilePhoto)
+
+	mux.Get("/storage/*", app.FileHandler.GetFile)
 
 	return mux
 }

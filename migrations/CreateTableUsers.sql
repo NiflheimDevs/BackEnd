@@ -8,7 +8,5 @@ CREATE TABLE IF NOT EXISTS "users" (
   "is_verified" bool DEFAULT FALSE,
   "bio" text,
   "phone" varchar NOT NULL,
-  "photo" varchar,
-  "resume" varchar,
   "wallet" numeric DEFAULT 0
 );

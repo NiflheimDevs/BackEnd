@@ -7,6 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/niflheimdevs/backend/internal/bootstrap"
+	"github.com/niflheimdevs/backend/internal/dto"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"
@@ -16,14 +18,23 @@ import (
 )
 
 type UserService struct {
-	UserRepo  *repositories.UserRepo
-	CacheRepo *redis.UserCache
+	UserRepo    *repositories.UserRepo
+	CacheRepo   *redis.UserCache
+	Constants   *bootstrap.Constants
+	FileService *FileService
 }
 
-func NewUserService(userRepo *repositories.UserRepo, cacheRepo *redis.UserCache) *UserService {
+func NewUserService(
+	userRepo *repositories.UserRepo,
+	cacheRepo *redis.UserCache,
+	constants *bootstrap.Constants,
+	fileService *FileService,
+) *UserService {
 	return &UserService{
-		UserRepo:  userRepo,
-		CacheRepo: cacheRepo,
+		UserRepo:    userRepo,
+		CacheRepo:   cacheRepo,
+		Constants:   constants,
+		FileService: fileService,
 	}
 }
 
@@ -47,7 +58,6 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 
 	sess1, err := us.CacheRepo.FindByUsername(username)
 	if err == nil {
-		// panic(val)
 		exc.AddError(enums.USERNAME_TAKEN)
 	}
 
@@ -84,13 +94,7 @@ func (us *UserService) CacheUserInfo(phonenumber string, username string, passwo
 		OTP:      otp,
 	}
 
-	err = us.CacheRepo.PostUserCreds(session, &userdata)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CACHE_ERROR},
-		})
-	}
+	us.CacheRepo.PostUserCreds(session, &userdata)
 
 	return session
 }
@@ -117,7 +121,7 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 		})
 	}
 
-	us.CacheRepo.DeleteRow(session)
+	us.CacheRepo.DeleteRedis(session)
 
 	return userdata.Phone, userdata.Username, userdata.Password
 }
@@ -135,10 +139,6 @@ func (us *UserService) Register(phonenumber string, username string, password []
 		})
 	}
 	return userid
-}
-
-func (us *UserService) DeleteFromRedis(key string) {
-	us.CacheRepo.DeleteRow(key)
 }
 
 func (userService *UserService) AuthenticateUser(identifier string, password string) *models.UserModel {
@@ -170,9 +170,9 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 }
 
 func (userService *UserService) ChangePasswordValidate(user_id int, old_password string) {
-	if user_id == -2 {
+	if user_id < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.AUTHENTICATION_ERROR,
+			Tag: enums.UNAUTHORIZED,
 			Errors: []enums.SpecificError{
 				enums.AUTH_INVALID_CREDENTIALS,
 			},
@@ -230,7 +230,7 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 	userdata, err := us.UserRepo.FindUserByPhone(phonenumber)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.BAD_REQUEST,
+			Tag:    enums.NOT_FOUND,
 			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
 		})
 	}
@@ -241,27 +241,14 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 		OTP:   code,
 	}
 
-	err = us.CacheRepo.PostSessionOTP(session, &val)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CACHE_ERROR},
-		})
-	}
+	us.CacheRepo.PostSessionOTP(session, &val)
 
 	return session
 }
 
 func (us *UserService) SetForgetPasswordFlag(userID string) string {
-
 	session := uuid.New().String()
-	err := us.CacheRepo.PostSessionFlag(session, userID)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CACHE_ERROR},
-		})
-	}
+	us.CacheRepo.PostSessionFlag(session, userID)
 	return session
 }
 
@@ -275,4 +262,153 @@ func (us *UserService) CheckFlagForPasswordReset(session string) int {
 	}
 	userID, _ := strconv.Atoi(val)
 	return userID
+}
+
+func (us *UserService) UpdateUserData(userid int, userData *dto.UpdateUserDTO) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	_, err := us.UserRepo.UpdateUserData(userid, userData)
+	if err != nil {
+
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+		})
+	}
+}
+
+func (us *UserService) UpdateEmail(userid int, email string) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+	effected, err := us.UserRepo.UpdateEmail(userid, email)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.UNPROCESSABLE,
+			Errors: []enums.SpecificError{enums.EMAIL_TAKEN},
+		})
+	}
+	if effected == 0 {
+		user, _ := us.UserRepo.FindUserByEmail(email)
+		if user != nil {
+			if user.ID != userid {
+
+				panic(exceptions.Exception{
+					Tag:    enums.UNPROCESSABLE,
+					Errors: []enums.SpecificError{enums.EMAIL_NOT_VERIFIED},
+				})
+			}
+		}
+	}
+}
+
+func (us *UserService) UpdateUsername(userid int, username string) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+	_, err := us.UserRepo.UpdateUsername(userid, username)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.UNPROCESSABLE,
+			Errors: []enums.SpecificError{enums.USERNAME_TAKEN},
+		})
+	}
+}
+
+func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string) string {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag:    enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{enums.AUTH_ACCESS_DENIED},
+		})
+	}
+	_, err := us.CacheRepo.FindByPhone(phone)
+	if err == nil {
+		panic(exceptions.Exception{
+			Tag:    enums.VALIDATION_ERROR,
+			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
+		})
+	}
+
+	_, err = us.UserRepo.FindUserByPhone(phone)
+	if err == nil {
+		panic(exceptions.Exception{
+			Tag:    enums.VALIDATION_ERROR,
+			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
+		})
+	}
+
+	session := uuid.New().String()
+	val := models.UserCacheData{
+		Phone:    phone,
+		Username: fmt.Sprintf("%d", userid),
+		OTP:      code,
+	}
+
+	us.CacheRepo.PostPhone(phone, session)
+	us.CacheRepo.PostSessionOTP(session, &val)
+
+	return session
+}
+
+func (us *UserService) UpdatePhone(phone string, userid string) {
+	us.UserRepo.UpdatePhone(phone, userid)
+}
+
+func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfileDTO {
+	targetInfo, err := us.UserRepo.FindUserByID(targetUserid)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.NOT_FOUND,
+			Errors: []enums.SpecificError{
+				enums.USER_NOT_FOUND,
+			},
+		})
+	}
+
+	response := dto.UserProfileDTO{
+		Phone:          targetInfo.Phone,
+		FirstName:      targetInfo.FirstName,
+		LastName:       targetInfo.LastName,
+		Bio:            targetInfo.Bio,
+		Username:       targetInfo.Username,
+		ProfilePicture: fmt.Sprintf("%s/%s%s", us.Constants.IPAddr, us.Constants.StorageDir, us.FileService.GetUserProfileName(targetUserid, true)),
+	}
+	if userid == targetUserid {
+		response.Email = targetInfo.Email
+		response.Is_verified = targetInfo.Is_verified
+	}
+
+	return &response
+}
+
+func (us *UserService) DeleteUser(userid int) {
+	//TODO: delete user
+	// deletes: tag (trigger), career+, tag for career(trigger), userrole+
+	// change identity: post, comment, bid, message,chatuser, transaction
+	// handle refresh token
+
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+		})
+	}
+
+	us.UserRepo.DeleteUser(userid)
 }

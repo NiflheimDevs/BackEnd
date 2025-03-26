@@ -6,6 +6,8 @@ type Constants struct {
 	Database    DBConst
 	JWTKeysPath string
 	Context     Context
+	IPAddr      string
+	StorageDir  string
 	Project     Project
 }
 
@@ -34,6 +36,8 @@ func NewConstant() *Constants {
 		Context: Context{
 			UserID: "userID",
 		},
+		IPAddr:     "http://103.75.196.227:8080",
+		StorageDir: "./storage/",
 		Project: Project{
 			LastTime: 7 * 24 * time.Hour,
 		},

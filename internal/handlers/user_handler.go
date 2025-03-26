@@ -3,22 +3,27 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
-	dto "github.com/niflheimdevs/backend/internal/dto/users"
+	"github.com/niflheimdevs/backend/internal/dto"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/niflheimdevs/backend/internal/services/communications/sms"
+	"github.com/niflheimdevs/backend/internal/utils"
 )
 
 type UserHandler struct {
-	Constants   *bootstrap.Constants
-	UserService *services.UserService
-	JWTService  *services.JWT
-	Validator   *validator.Validate
+	Constants      *bootstrap.Constants
+	UserService    *services.UserService
+	JWTService     *services.JWT
+	Validator      *validator.Validate
+	Utils          *utils.Utils
+	GeneralService *services.GeneralService
 }
 
 func NewUserHandler(
@@ -26,12 +31,16 @@ func NewUserHandler(
 	userService *services.UserService,
 	jwtService *services.JWT,
 	validator *validator.Validate,
+	utils *utils.Utils,
+	generalService *services.GeneralService,
 ) *UserHandler {
 	return &UserHandler{
-		Constants:   Constants,
-		UserService: userService,
-		Validator:   validator,
-		JWTService:  jwtService,
+		Constants:      Constants,
+		UserService:    userService,
+		Validator:      validator,
+		JWTService:     jwtService,
+		GeneralService: generalService,
+		Utils:          utils,
 	}
 }
 
@@ -75,12 +84,12 @@ func (userHandler *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Re
 
 	params := Validated[changePasswordParam](userHandler.Validator, r)
 
-	userID := r.Context().Value("userID").(int)
+	userID := r.Context().Value(userHandler.Constants.Context.UserID).(int)
 
 	userHandler.UserService.ChangePasswordValidate(userID, params.OldPassword)
 	userHandler.UserService.ChangePassword(userID, params.NewPassword)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
@@ -101,6 +110,7 @@ func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
 		sms.SendOTP(info.Phonenumber, code)
 	}
 
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(session))
 }
 
@@ -163,5 +173,113 @@ func (uh *UserHandler) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 
 	uh.UserService.ChangePassword(userID, changePassword.NewPassword)
 
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+	params := Validated[dto.UpdateUserDTO](uh.Validator, r)
+
+	uh.UserService.UpdateUserData(userid, &params)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uh *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
+	type Param struct {
+		Username string `json:"username" validate:"required,username"`
+	}
+
+	param := Validated[Param](uh.Validator, r)
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+
+	param.Username = strings.ToLower(param.Username)
+
+	uh.UserService.UpdateUsername(userid, param.Username)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uh *UserHandler) UpdateEmail(w http.ResponseWriter, r *http.Request) {
+
+	type Param struct {
+		Email string `json:"email" validate:"required,email"`
+	}
+
+	param := Validated[Param](uh.Validator, r)
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+
+	param.Email = strings.ToLower(param.Email)
+
+	uh.UserService.UpdateEmail(userid, param.Email)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uh *UserHandler) UpdatePhoneSendOTP(w http.ResponseWriter, r *http.Request) {
+	type NewPhone struct {
+		NewPhone string `json:"phone" validate:"required,phone"`
+	}
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+	params := Validated[NewPhone](uh.Validator, r)
+
+	code := sms.GenerateOTP()
+	session := uh.UserService.UpdatePhoneSendOTP(params.NewPhone, userid, code)
+	sms.SendOTP(params.NewPhone, code)
+
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(session))
+}
+
+func (uh *UserHandler) UpdatePhoneVerify(w http.ResponseWriter, r *http.Request) {
+	type Params struct {
+		Code      string `json:"code" validate:"required,len=5,numeric"`
+		SessionID string `json:"sessionid" validate:"required"`
+	}
+
+	params := Validated[Params](uh.Validator, r)
+
+	phone, userid, _ := uh.UserService.ValidateOTP(params.SessionID, params.Code)
+
+	uh.UserService.UpdatePhone(phone, userid)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	useridString := chi.URLParam(r, "id")
+	targetUserid, err := strconv.Atoi(useridString)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.BAD_REQUEST,
+		})
+	}
+	userid := r.Context().Value(uh.Constants.Context.UserID).(int)
+	includes := r.URL.Query()["include"]
+	response := make(map[string]interface{})
+
+	if uh.Utils.Contains(includes, "info") {
+		response["info"] = uh.UserService.GetUserInfo(targetUserid, userid)
+	}
+	if uh.Utils.Contains(includes, "career") {
+		response["career"] = uh.GeneralService.GetCareerForUser(userid, targetUserid)
+	}
+	if uh.Utils.Contains(includes, "tag") {
+		response["tag"] = uh.GeneralService.GetTagsForUser(targetUserid)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (uh *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(uh.Constants.Context.UserID).(int)
+
+	uh.UserService.DeleteUser(userid)
+
+	w.WriteHeader(http.StatusNoContent)
 }

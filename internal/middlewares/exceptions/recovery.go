@@ -46,8 +46,6 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 	var code int
 	if err.Tag == enums.VALIDATION_ERROR {
 		code = 409
-	} else if err.Tag == enums.AUTHENTICATION_ERROR {
-		code = 403
 	} else if err.Tag == enums.INTERNAL_ERROR {
 		code = 500
 	} else if err.Tag == enums.NOT_FOUND {
@@ -56,6 +54,12 @@ func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]by
 		code = 400
 	} else if err.Tag == enums.LIMIT_EXCEED {
 		code = 429
+	} else if err.Tag == enums.UNAUTHORIZED {
+		code = 401
+	} else if err.Tag == enums.FORBIDDEN {
+		code = 403
+	} else if err.Tag == enums.UNPROCESSABLE {
+		code = 422
 	} else {
 		code = 418
 	}

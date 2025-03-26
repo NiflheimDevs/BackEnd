@@ -13,6 +13,8 @@ import (
 	midratelimit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	R "github.com/niflheimdevs/backend/internal/repositories/redis"
+	"github.com/niflheimdevs/backend/internal/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/utils"
 
 	"github.com/niflheimdevs/backend/internal/services"
 	"github.com/redis/go-redis/v9"
@@ -23,24 +25,29 @@ var RepoProviderSet = wire.NewSet(
 	wire.Struct(new(repositories.ProjectRepo), "*"),
 	wire.Struct(new(repositories.GeneralRepo), "*"),
 	wire.Struct(new(R.UserCache), "*"),
+	wire.Struct(new(storage.FileStorage), "*"),
+	wire.Struct(new(repositories.PaymentRepo), "*"),
 )
 
 var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(services.UserService), "*"),
+	wire.Struct(new(services.FileService), "*"),
 	wire.Struct(new(services.ProjectService), "*"),
 	wire.Struct(new(services.GeneralService), "*"),
+	wire.Struct(new(services.PaymentService), "*"),
 	services.NewJWT,
 	ProvideConstants,
-	// wire.Struct(new(services.JWT), "*"),
 )
 
 var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.UserHandler), "*"),
+	wire.Struct(new(handlers.FileHandler), "*"),
 	wire.Struct(new(handlers.ErrorHandler), "*"),
 	wire.Struct(new(handlers.ProjectHandler), "*"),
 	wire.Struct(new(handlers.GeneralHandler), "*"),
+	wire.Struct(new(handlers.PaymentHandler), "*"),
 	handlers.NewValidator,
-	// services.NewJWT,
+	utils.NewUtils,
 )
 
 var MiddlewareProviderSet = wire.NewSet(
@@ -68,10 +75,12 @@ type Middlewares struct {
 }
 
 type Application struct {
+	FileHandler    *handlers.FileHandler
 	UserHandler    *handlers.UserHandler
 	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
+	PaymentHandler *handlers.PaymentHandler
 	Middlewares    *Middlewares
 }
 

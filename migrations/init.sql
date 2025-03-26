@@ -1,6 +1,6 @@
 
--- CREATE USER niflheim WITH PASSWORD 'niflguard';
--- ALTER ROLE niflheim WITH CREATEDB;
+CREATE USER niflheim WITH PASSWORD 'niflguard';
+ALTER ROLE niflheim WITH CREATEDB;
 
 DO $$
 BEGIN
@@ -21,8 +21,6 @@ CREATE TABLE IF NOT EXISTS "users" (
   "is_verified" bool DEFAULT FALSE,
   "bio" text,
   "phone" varchar NOT NULL,
-  "photo" varchar,
-  "resume" varchar,
   "wallet" numeric DEFAULT 0
 );
 
@@ -47,9 +45,10 @@ CREATE TABLE IF NOT EXISTS "project" (
   "owner_id" int NOT NULL,
   "title" text NOT NULL,
   "description" text,
+  "label" text,
   "selected_bid_id" int UNIQUE,
-  "created_time" timestamp NOT NULL,
-  "updated_time" timestamp,
+  "created_time" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_time" timestamp DEFAULT CURRENT_TIMESTAMP,
   "duration" timestamp,
   FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id")
@@ -75,19 +74,13 @@ CREATE TABLE IF NOT EXISTS "comment" (
   FOREIGN KEY ("bid_id") REFERENCES "bid" ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "external_transaction" (
-  "id" int PRIMARY KEY,
-  "user_id" int NOT NULL,
-  "type" int NOT NULL,
-  "amount" numeric NOT NULL,
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
-);
-
-CREATE TABLE IF NOT EXISTS "internal_transaction" (
+CREATE TABLE IF NOT EXISTS "transaction" (
   "id" serial PRIMARY KEY,
   "from_user_id" int NOT NULL,
   "to_user_id" int NOT NULL,
   "amount" numeric NOT NULL,
+  "date" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "description" text,
   FOREIGN KEY ("to_user_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("from_user_id") REFERENCES "users" ("id")
 );
@@ -114,11 +107,23 @@ CREATE TABLE IF NOT EXISTS "role" (
   "name" varchar NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "career" (
+    "id" serial PRIMARY KEY,
+    "user_id" int NOT NULL,
+    "company" varchar NOT NULL,
+    "start_date" timestamp NOT NULL,
+    "end_date" timestamp,
+    "role" varchar NOT NULL,
+    "website" varchar,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE,
+    CHECK ("end_date" IS NULL OR "start_date" < "end_date")
+);
+
 CREATE TABLE IF NOT EXISTS "role_permission" (
   "role_id" int NOT NULL,
   "permission_id" int NOT NULL,
   FOREIGN KEY ("role_id") REFERENCES "role" ("id"),
-  FOREIGN KEY ("permission_id") REFERENCES "permission" ("id")
+  FOREIGN KEY ("permission_id") REFERENCES "permission" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "tag" (
@@ -130,24 +135,34 @@ CREATE TABLE IF NOT EXISTS "users_chat" (
   "chat_id" int NOT NULL,
   "user_id" int NOT NULL,
   "role_id" int NOT NULL,
-  FOREIGN KEY ("chat_id") REFERENCES "chat" ("id"),
+  FOREIGN KEY ("chat_id") REFERENCES "chat" ("id") ON DELETE CASCADE,
   FOREIGN KEY ("user_id") REFERENCES "users" ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "users_project_tag" (
-  "project_user_id" int NOT NULL,
+CREATE TABLE IF NOT EXISTS "project_tag" (
+  "project_id" int NOT NULL,
+  "tag_id" int NOT NULL,
+  FOREIGN KEY ("tag_id") REFERENCES "tag" ("id") ON DELETE CASCADE,
+  FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
+  UNIQUE ("tag_id", "project_id")
+);
+
+CREATE TABLE IF NOT EXISTS "users_career_tag" (
+  "career_user_id" int NOT NULL,
   "tag_id" int NOT NULL,
   "type" int NOT NULL,
+  "level" int,
   FOREIGN KEY ("tag_id") REFERENCES "tag" ("id"),
-  FOREIGN KEY ("project_user_id") REFERENCES "project" ("id"),
-  FOREIGN KEY ("project_user_id") REFERENCES "users" ("id")
+  FOREIGN KEY ("career_user_id") REFERENCES "career" ("id"),
+  FOREIGN KEY ("career_user_id") REFERENCES "users" ("id"),
+  UNIQUE ("career_user_id" , "tag_id" , "type")
 );
 
 CREATE TABLE IF NOT EXISTS "users_role" (
   "user_id" int NOT NULL,
   "role_id" int NOT NULL,
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
-  FOREIGN KEY ("role_id") REFERENCES "role" ("id")
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE,
+  FOREIGN KEY ("role_id") REFERENCES "role" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "users_team" (
@@ -155,5 +170,29 @@ CREATE TABLE IF NOT EXISTS "users_team" (
   "team_id" int NOT NULL,
   "position" varchar,
   FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
-  FOREIGN KEY ("team_id") REFERENCES "team" ("id")
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id") ON DELETE CASCADE
 );
+
+CREATE FUNCTION delete_cascade_for_career() RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM users_career_tag AS ust WHERE uct.career_user_id = OLD.id AND uct.type = 1;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER career_delete_trigger
+BEFORE DELETE ON career
+FOR EACH ROW EXECUTE FUNCTION delete_cascade_for_career();
+
+CREATE FUNCTION delete_cascade_for_user() RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM users_career_tag AS ust WHERE uct.career_user_id = OLD.id AND uct.type = 0;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER user_delete_trigger
+BEFORE DELETE ON users
+FOR EACH ROW EXECUTE FUNCTION delete_cascade_for_user();
+
+INSERT INTO users (username,phone,password) VALUES ("deleted user","666",'\x48656c6c6f20776f726c64');

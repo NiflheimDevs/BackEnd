@@ -96,13 +96,20 @@ func (j *JWT) VerifyToken(tokenString string) jwt.MapClaims {
 		return j.PublicKey, nil
 	})
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		panic(exceptions.Exception{
+			Tag: enums.VALIDATION_ERROR,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
 	}
-	panic(exceptions.Exception{
-		Tag: enums.AUTHENTICATION_ERROR,
-		Errors: []enums.SpecificError{
-			enums.AUTH_ACCESS_DENIED,
-		},
-	})
+	if exp, ok := claims["exp"].(float64); ok {
+		if time.Now().Unix() > int64(exp) {
+			return nil
+		}
+	}
+	return claims
+
 }

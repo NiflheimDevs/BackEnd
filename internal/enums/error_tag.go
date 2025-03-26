@@ -4,8 +4,9 @@ type GeneralError string
 type SpecificError string
 
 const (
-	EMAIL_TAKEN   SpecificError = "EMAIL_TAKEN"
-	EMAIL_INVALID SpecificError = "EMAIL_INVALID"
+	EMAIL_TAKEN        SpecificError = "EMAIL_TAKEN"
+	EMAIL_INVALID      SpecificError = "EMAIL_INVALID"
+	EMAIL_NOT_VERIFIED SpecificError = "EMAIL_NOT_VERIFIED"
 
 	USERNAME_TAKEN     SpecificError = "USERNAME_TAKEN"
 	USERNAME_TOO_SHORT SpecificError = "USERNAME_TOO_SHORT"
@@ -42,17 +43,25 @@ const (
 	MISSING_FILE SpecificError = "MISSING_FILE"
 	CAST_ERROR   SpecificError = "CAST_ERROR"
 
-	USER_NOT_FOUND    SpecificError = "USER_NOT_FOUND"
+	USER_NOT_FOUND SpecificError = "USER_NOT_FOUND"
+
+	FORMAT_NOT_SUPPORTED SpecificError = "FORMAT_NOT_SUPPORTED"
+	FILE_TOO_LARGE       SpecificError = "FILE_TOO_LARGE"
+
 	PROJECT_NOT_FOUND SpecificError = "PROJECT_NOT_FOUND"
 
 	USER_NOT_OWNER SpecificError = "USER_NOT_OWNER"
+
+	INSUFFICIENT_BALANCE SpecificError = "INSUFFICIENT_BALANCE"
 )
 
 const (
-	AUTHENTICATION_ERROR GeneralError = "AUTHENTICATION_ERROR"
-	VALIDATION_ERROR     GeneralError = "VALIDATION_ERROR"
-	INTERNAL_ERROR       GeneralError = "INTERNAL_ERROR"
-	NOT_FOUND            GeneralError = "NOT_FOUND"
-	BAD_REQUEST          GeneralError = "BAD_REQUEST"
-	LIMIT_EXCEED         GeneralError = "LIMIT_EXCEED"
+	UNAUTHORIZED     GeneralError = "UNAUTHORIZED"
+	VALIDATION_ERROR GeneralError = "VALIDATION_ERROR"
+	INTERNAL_ERROR   GeneralError = "INTERNAL_ERROR"
+	NOT_FOUND        GeneralError = "NOT_FOUND"
+	BAD_REQUEST      GeneralError = "BAD_REQUEST"
+	LIMIT_EXCEED     GeneralError = "LIMIT_EXCEED"
+	UNPROCESSABLE    GeneralError = "UNPROCESSABLE"
+	FORBIDDEN        GeneralError = "FORBIDDEN"
 )

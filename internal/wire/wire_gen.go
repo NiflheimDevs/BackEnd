@@ -16,7 +16,9 @@ import (
 	"github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/repositories"
 	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
+	"github.com/niflheimdevs/backend/internal/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/services"
+	"github.com/niflheimdevs/backend/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -24,6 +26,20 @@ import (
 
 func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
 	constants := ProvideConstants(container)
+	fileStorage := &storage.FileStorage{
+		Constants: constants,
+	}
+	fileService := &services.FileService{
+		FileStorage: fileStorage,
+	}
+	validate := handlers.NewValidator()
+	jwt := services.NewJWT(constants)
+	fileHandler := &handlers.FileHandler{
+		FileService: fileService,
+		Validator:   validate,
+		JWTService:  jwt,
+		Constants:   constants,
+	}
 	userRepo := &repositories.UserRepo{
 		PG: db,
 	}
@@ -31,16 +47,26 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		DB: myRedis,
 	}
 	userService := &services.UserService{
-		UserRepo:  userRepo,
-		CacheRepo: userCache,
-	}
-	jwt := services.NewJWT(constants)
-	validate := handlers.NewValidator()
-	userHandler := &handlers.UserHandler{
+		UserRepo:    userRepo,
+		CacheRepo:   userCache,
 		Constants:   constants,
-		UserService: userService,
-		JWTService:  jwt,
-		Validator:   validate,
+		FileService: fileService,
+	}
+	utilsUtils := utils.NewUtils()
+	generalRepo := &repositories.GeneralRepo{
+		PG: db,
+	}
+	generalService := &services.GeneralService{
+		GeneralRepo: generalRepo,
+		UserRepo:    userRepo,
+	}
+	userHandler := &handlers.UserHandler{
+		Constants:      constants,
+		UserService:    userService,
+		JWTService:     jwt,
+		Validator:      validate,
+		Utils:          utilsUtils,
+		GeneralService: generalService,
 	}
 	errorHandler := &handlers.ErrorHandler{}
 	projectRepo := &repositories.ProjectRepo{
@@ -56,14 +82,22 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		JWTService:     jwt,
 		Validator:      validate,
 	}
-	generalRepo := &repositories.GeneralRepo{
-		PG: db,
-	}
-	generalService := &services.GeneralService{
-		GeneralRepo: generalRepo,
-	}
 	generalHandler := &handlers.GeneralHandler{
 		GeneralService: generalService,
+		JWTService:     jwt,
+		Constants:      constants,
+		Validator:      validate,
+	}
+	paymentRepo := &repositories.PaymentRepo{
+		PG: db,
+	}
+	paymentService := &services.PaymentService{
+		PaymentRepo: paymentRepo,
+	}
+	paymentHandler := &handlers.PaymentHandler{
+		PaymentService: paymentService,
+		Constants:      constants,
+		Validator:      validate,
 	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
@@ -74,10 +108,12 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		Authentication: authentication,
 	}
 	application := &Application{
+		FileHandler:    fileHandler,
 		UserHandler:    userHandler,
 		ErrorHandler:   errorHandler,
 		ProjectHandler: projectHandler,
 		GeneralHandler: generalHandler,
+		PaymentHandler: paymentHandler,
 		Middlewares:    middlewares,
 	}
 	return application, nil
@@ -85,11 +121,11 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 
 // wire.go:
 
-var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(repositories.ProjectRepo), "*"), wire.Struct(new(repositories.GeneralRepo), "*"), wire.Struct(new(redis2.UserCache), "*"))
+var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(repositories.ProjectRepo), "*"), wire.Struct(new(repositories.GeneralRepo), "*"), wire.Struct(new(redis2.UserCache), "*"), wire.Struct(new(storage.FileStorage), "*"), wire.Struct(new(repositories.PaymentRepo), "*"))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.ProjectService), "*"), wire.Struct(new(services.GeneralService), "*"), services.NewJWT, ProvideConstants)
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.FileService), "*"), wire.Struct(new(services.ProjectService), "*"), wire.Struct(new(services.GeneralService), "*"), wire.Struct(new(services.PaymentService), "*"), services.NewJWT, ProvideConstants)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), handlers.NewValidator)
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), wire.Struct(new(handlers.PaymentHandler), "*"), handlers.NewValidator, utils.NewUtils)
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -111,9 +147,11 @@ type Middlewares struct {
 }
 
 type Application struct {
+	FileHandler    *handlers.FileHandler
 	UserHandler    *handlers.UserHandler
 	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
+	PaymentHandler *handlers.PaymentHandler
 	Middlewares    *Middlewares
 }
