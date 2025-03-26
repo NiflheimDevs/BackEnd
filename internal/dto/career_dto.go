@@ -17,9 +17,9 @@ type SendCareerDTO struct {
 }
 
 type CareerDTO struct {
-	ID        int             `json:"id" validate:"required,regexp=^-?\\d+$"`
+	ID        int             `json:"id" validate:"required,gt=-2"`
 	Company   string          `json:"company" validate:"required,lt=25,gt=1"`
-	StartDate time.Time       `json:"start_date" validate:"required,datetime=2006-01-02"`
+	StartDate time.Time       `json:"start_date" validate:"required"`
 	EndDate   time.Time       `json:"end_date"`
 	Role      string          `json:"role" validate:"required,lt=20,gt=1"`
 	Website   string          `json:"website"`

@@ -120,7 +120,7 @@ func (gr *GeneralRepo) GetTagsForUserOrCareer(careerUserid int, isForUser bool) 
             t.name,
 			uct.level
         FROM 
-            user_career_tag AS uct
+            users_career_tag AS uct
         JOIN 
             tag AS t 
         ON 
@@ -166,7 +166,7 @@ func (gr *GeneralRepo) DeleteTagForUserOrCareer(tagid int, careerUserid int, isF
 	query := `
         DELETE 
         FROM 
-            user_career_tag
+            users_career_tag
         WHERE 
             type = $2 AND career_user_id = $1 AND tag_id = $3`
 
@@ -187,7 +187,7 @@ func (gr *GeneralRepo) UpdateTagForUserOrCareer(tag *dto.RecieveTagDTO, careerUs
 	}
 
 	query := `
-        UPDATE user_career_tag
+        UPDATE users_career_tag
         SET 
             level = $4
         WHERE 
@@ -210,7 +210,7 @@ func (gr *GeneralRepo) AddTagToUserOrCareer(tag *dto.RecieveTagDTO, careerUserid
 	}
 
 	query := `
-        INSERT INTO user_career_tag
+        INSERT INTO users_career_tag
         (tag_id, career_user_id, type,level)
 		VALUES ($1,$2,$3,$4)
 			`
@@ -230,7 +230,7 @@ func (gr *GeneralRepo) GetCareersForUser(userid int) ([]models.CareerModel, erro
 			c.start_date,
 			c.end_date,
 			c.role,
-			c.website,
+			c.website
 		FROM 
 			career AS c
 		WHERE
@@ -308,7 +308,7 @@ func (gr *GeneralRepo) DeleteTagForCareerOrUserByID(tagid int, careerUserid int,
 
 	query := `DELETE
 	FROM users_career_tag
-	WHERE tag_id = $1 AND career_user_tag = $2 AND type = $3`
+	WHERE tag_id = $1 AND career_user_id = $2 AND type = $3`
 
 	_, err := gr.PG.Exec(ctx, query, tagid, careerUserid, mode)
 	return err

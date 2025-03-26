@@ -250,6 +250,7 @@ func (uh *UserHandler) UpdatePhoneVerify(w http.ResponseWriter, r *http.Request)
 }
 
 func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(uh.Constants.Context.UserID).(int)
 	useridString := chi.URLParam(r, "id")
 	targetUserid, err := strconv.Atoi(useridString)
 	if err != nil {
@@ -257,7 +258,9 @@ func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 			Tag: enums.BAD_REQUEST,
 		})
 	}
-	userid := r.Context().Value(uh.Constants.Context.UserID).(int)
+	if targetUserid <= 0 {
+		targetUserid = userid
+	}
 	includes := r.URL.Query()["include"]
 	response := make(map[string]interface{})
 

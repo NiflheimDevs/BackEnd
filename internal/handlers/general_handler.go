@@ -75,7 +75,7 @@ func (gh *GeneralHandler) UpdateCareer(w http.ResponseWriter, r *http.Request) {
 
 func (gh *GeneralHandler) UpdateUserTag(w http.ResponseWriter, r *http.Request) {
 	type PutTags struct {
-		Tags []dto.RecieveTagDTO `json:"careers" validate:"required,dive"`
+		Tags []dto.RecieveTagDTO `json:"tags" validate:"required,dive"`
 	}
 
 	userid := r.Context().Value(gh.Constants.Context.UserID).(int)
