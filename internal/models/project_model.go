@@ -5,7 +5,7 @@ type ProjectModel struct {
 	OwnerID     int
 	Title       string
 	Description string
-	Label       []string
+	Label       int
 	Tags        []TagModel
 	Duration    string
 }

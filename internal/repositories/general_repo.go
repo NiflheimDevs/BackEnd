@@ -7,6 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/dto"
+	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/models"
 )
 
@@ -42,6 +44,60 @@ func (repo *GeneralRepo) GetTags() ([]models.TagModel, error) {
 	}
 
 	return tags, nil
+}
+
+func (repo *GeneralRepo) GetLabels() []models.LabelModel {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `SELECT * FROM label`
+	result, err := repo.PG.Query(ctx, query)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	var labels []models.LabelModel
+	for result.Next() {
+		var label models.LabelModel
+		err = result.Scan(&label.ID, &label.Name, &label.Description, &label.Price)
+		if err != nil {
+			panic(exceptions.Exception{
+				Tag: enums.INTERNAL_ERROR,
+				Errors: []enums.SpecificError{
+					enums.DATABASE_ERROR,
+				},
+			})
+		}
+		labels = append(labels, label)
+	}
+	return labels
+}
+
+func (repo *GeneralRepo) GetLabelInfo(labelID int) *models.LabelModel {
+	var label models.LabelModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `SELECT id,name,description,price FROM label WHERE id = $1`
+	err := repo.PG.QueryRow(ctx, query, labelID).Scan(&label.ID, &label.Name, &label.Description, &label.Price)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return &label
 }
 
 func (gr *GeneralRepo) GetTagsForUserOrCareer(careerUserid int, isForUser bool) ([]dto.GetTagDto, error) {

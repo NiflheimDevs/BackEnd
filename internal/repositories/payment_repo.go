@@ -20,8 +20,8 @@ func NewPaymentRepo(PG *pgxpool.Pool) *PaymentRepo {
 	}
 }
 
-func (paymentRepo *PaymentRepo) GetBalance(userID int) (int, error) {
-	var balance int
+func (paymentRepo *PaymentRepo) GetBalance(userID int) (int64, error) {
+	var balance int64
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -45,13 +45,13 @@ func (paymentRepo *PaymentRepo) GetBalance(userID int) (int, error) {
 	return balance, nil
 }
 
-func (paymentRepo *PaymentRepo) PostTransaction(userID int, amount int, description string) {
+func (paymentRepo *PaymentRepo) AdminTransaction(userID int, amount int64, description string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	query := "INSERT INTO transactions (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4)"
+	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
 	_, err := paymentRepo.PG.Exec(ctx, query, userID, 1, amount, now, description)
 
 	if err != nil {

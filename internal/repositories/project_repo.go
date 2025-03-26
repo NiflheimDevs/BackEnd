@@ -84,7 +84,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 				},
 			})
 		}
-    
+
 		project.Duration = duration.Format("2006-01-02 15:04:05")
 		tag := repo.GetProjectTag(project.ID)
 		project.Tags = tag
@@ -94,18 +94,14 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	return projects
 }
 
-
-func (repo *ProjectRepo) CreateProject(userID int, title, description, label, duration string) int {
+func (repo *ProjectRepo) CreateProject(ctx context.Context, tx pgx.Tx, userID, label int, title, description, duration string) int {
 	var project_id int
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	query := "INSERT INTO project (owner_id, title, description, label, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 
-	err := repo.PG.QueryRow(ctx, query, userID, title, description, label, duration, now, now).Scan(&project_id)
+	err := tx.QueryRow(ctx, query, userID, title, description, label, duration, now, now).Scan(&project_id)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -163,13 +159,10 @@ func (repo *ProjectRepo) GetProjectTag(projectID int) []models.TagModel {
 	return tags
 }
 
-func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func (repo *ProjectRepo) AddProjectTag(ctx context.Context, tx pgx.Tx, projectID, tagID int) {
 	query := "INSERT INTO project_tag (project_id, tag_id) VALUES ($1, $2)"
 
-	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
+	_, err := tx.Exec(ctx, query, projectID, tagID)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -181,13 +174,10 @@ func (repo *ProjectRepo) AddProjectTag(projectID, tagID int) {
 	}
 }
 
-func (repo *ProjectRepo) DeleteProjectTags(projectID, tagID int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func (repo *ProjectRepo) DeleteProjectTags(ctx context.Context, tx pgx.Tx, projectID, tagID int) {
 	query := "DELETE FROM project_tag WHERE project_id = $1 AND tag_id = $2"
 
-	_, err := repo.PG.Exec(ctx, query, projectID, tagID)
+	_, err := tx.Exec(ctx, query, projectID, tagID)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -199,15 +189,12 @@ func (repo *ProjectRepo) DeleteProjectTags(projectID, tagID int) {
 	}
 }
 
-func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description, label string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func (repo *ProjectRepo) UpdateProject(ctx context.Context, tx pgx.Tx, projectID, UserID, label int, title, description string) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	query := "UPDATE project SET title = $1, description = $2, label=$3, updated_time=$4 WHERE id = $5 and owner_id = $6"
 
-	_, err := repo.PG.Exec(ctx, query, title, description, label, now, projectID, UserID)
+	_, err := tx.Exec(ctx, query, title, description, label, now, projectID, UserID)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -219,12 +206,9 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 	}
 }
 
-func (repo *ProjectRepo) DeleteProject(projectID int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func (repo *ProjectRepo) DeleteProject(ctx context.Context, tx pgx.Tx, projectID int) {
 	query := "DELETE FROM project WHERE id = $1"
-	_, err := repo.PG.Exec(ctx, query, projectID)
+	_, err := tx.Exec(ctx, query, projectID)
 
 	if err != nil {
 		panic(exceptions.Exception{

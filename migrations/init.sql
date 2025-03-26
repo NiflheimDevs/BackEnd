@@ -1,6 +1,6 @@
 
---CREATE USER niflheim WITH PASSWORD 'niflguard';
---ALTER ROLE niflheim WITH CREATEDB;
+-- CREATE USER niflheim WITH PASSWORD 'niflguard';
+-- ALTER ROLE niflheim WITH CREATEDB;
 
 DO $$
 BEGIN
@@ -31,6 +31,13 @@ CREATE TABLE IF NOT EXISTS "team" (
   "description" text
 );
 
+CREATE TABLE IF NOT EXISTS "label" (
+  "id" serial PRIMARY KEY,
+  "name" varchar NOT NULL,
+  "description" text,
+  "price" numeric NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS "bid" (
   "id" serial PRIMARY KEY,
   "team_id" int NOT NULL,
@@ -46,13 +53,14 @@ CREATE TABLE IF NOT EXISTS "project" (
   "owner_id" int NOT NULL,
   "title" text NOT NULL,
   "description" text,
-  "label" text,
+  "label" int DEFAULT 1,
   "selected_bid_id" int UNIQUE,
   "created_time" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_time" timestamp DEFAULT CURRENT_TIMESTAMP,
   "duration" timestamp,
   FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
-  FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id")
+  FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id"),
+  FOREIGN KEY ("label") REFERENCES "label" ("id")
 );
 
 ALTER TABLE bid
@@ -213,7 +221,9 @@ CREATE TRIGGER check_fk_users_career_tag
 BEFORE INSERT OR UPDATE ON users_career_tag
 FOR EACH ROW EXECUTE FUNCTION enforce_fk_constraint_on_users_career_tag();
 
-INSERT INTO users (username,phone,password) VALUES ('deleted user','666','\x48656c6c6f20776f726c64');
+INSERT INTO users (username,phone,password) VALUES 
+('God','666','\x48656c6c6f20776f726c64'),
+('deleted user','666','\x48656c6c6f20776f726c64');
 
 INSERT INTO tag (name) VALUES
 ('Data Structures'),
@@ -274,3 +284,8 @@ INSERT INTO tag (name) VALUES
 ('CSS'),
 ('Verilog'),
 ('VHDL');
+
+INSERT INTO label("name","description","price") VALUES
+('Free','',0),
+('Bold','important',75000),
+('Urgent','',200000);

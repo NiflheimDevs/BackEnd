@@ -17,6 +17,8 @@ import (
 type ProjectHandler struct {
 	Constants      *bootstrap.Constants
 	ProjectService *services.ProjectService
+	UserService    *services.UserService
+	GeneralService *services.GeneralService
 	JWTService     *services.JWT
 	Validator      *validator.Validate
 }
@@ -24,12 +26,16 @@ type ProjectHandler struct {
 func NewProjectHandler(
 	constants *bootstrap.Constants,
 	projectService *services.ProjectService,
+	userService *services.UserService,
+	generalService *services.GeneralService,
 	jwtService *services.JWT,
 	validator *validator.Validate,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		Constants:      constants,
 		ProjectService: projectService,
+		UserService:    userService,
+		GeneralService: generalService,
 		JWTService:     jwtService,
 		Validator:      validator,
 	}
@@ -43,20 +49,26 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 	limit, _ := strconv.Atoi(query.Get("limit"))
 
 	projects := projectHandler.ProjectService.GetUserProjects(userID, offset, limit)
+	userInfo := projectHandler.UserService.GetUserInfo(userID, 0)
 
-	var projectsDTO []dto.Project
+	var projectsDTO dto.UserProject
 
 	for _, project := range projects {
-		projectsDTO = append(projectsDTO, dto.Project{
+		label := projectHandler.GeneralService.GetLabelInfo(project.Label)
+		projectsDTO.Projects = append(projectsDTO.Projects, dto.Project{
 			ProjectID:   project.ID,
 			OwnerID:     project.OwnerID,
 			Title:       project.Title,
 			Description: project.Description,
-			Label:       project.Label,
+			Label:       *label,
 			Tags:        project.Tags,
 			Duration:    project.Duration,
 		})
 	}
+
+	projectsDTO.FirstName = userInfo.FirstName
+	projectsDTO.LastName = userInfo.LastName
+	projectsDTO.Username = userInfo.Username
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -73,13 +85,18 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 	projectID, _ := strconv.Atoi(projectIDString)
 
 	project := projectHandler.ProjectService.GetProject(projectID)
+	userInfo := projectHandler.UserService.GetUserInfo(project.OwnerID, 0)
+	label := projectHandler.GeneralService.GetLabelInfo(project.Label)
 
 	projectDTO := dto.Project{
 		ProjectID:   project.ID,
 		OwnerID:     project.OwnerID,
 		Title:       project.Title,
 		Description: project.Description,
-		Label:       project.Label,
+		Label:       *label,
+		FirstName:   userInfo.FirstName,
+		LastName:    userInfo.LastName,
+		Username:    userInfo.Username,
 		Tags:        project.Tags,
 		Duration:    project.Duration,
 	}
@@ -96,10 +113,10 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 
 func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	type createProjectParams struct {
-		Title       string   `json:"title" validate:"required"`
-		Description string   `json:"description" validate:"required"`
-		Tags        []int    `json:"tags" validate:"required"`
-		Label       []string `json:"label"`
+		Title       string `json:"title" validate:"required"`
+		Description string `json:"description" validate:"required"`
+		Tags        []int  `json:"tags" validate:"required"`
+		Label       int    `json:"label" validate:"required"`
 	}
 
 	params := Validated[createProjectParams](projectHandler.Validator, r)
@@ -124,10 +141,10 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	type updateProjectParams struct {
-		Title       string   `json:"title" validate:"required,max=50"`
-		Description string   `json:"description" validate:"required"`
-		Tags        []int    `json:"tags" validate:"required"`
-		Label       []string `json:"label"`
+		Title       string `json:"title" validate:"required,max=50"`
+		Description string `json:"description" validate:"required"`
+		Tags        []int  `json:"tags" validate:"required"`
+		Label       int    `json:"label" validate:"required"`
 	}
 
 	params := Validated[updateProjectParams](projectHandler.Validator, r)

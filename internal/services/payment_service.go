@@ -20,7 +20,7 @@ func NewPaymentService(
 	}
 }
 
-func (paymentService *PaymentService) ProjectPayment(userID, amount, projectID int) {
+func (paymentService *PaymentService) ProjectPayment(userID, projectID int, amount int64) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -52,5 +52,5 @@ func (paymentService *PaymentService) ProjectPayment(userID, amount, projectID i
 
 	description := fmt.Sprintf("Payment for Project %d", projectID)
 
-	paymentService.PaymentRepo.PostTransaction(userID, amount, description)
+	paymentService.PaymentRepo.AdminTransaction(userID, amount, description)
 }
