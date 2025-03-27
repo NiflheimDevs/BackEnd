@@ -1,8 +1,9 @@
 package services
 
 import (
-	"fmt"
+	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/repositories"
@@ -20,7 +21,7 @@ func NewPaymentService(
 	}
 }
 
-func (paymentService *PaymentService) ProjectPayment(userID, projectID int, amount int64) {
+func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx pgx.Tx, userID int, amount int64) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -50,7 +51,5 @@ func (paymentService *PaymentService) ProjectPayment(userID, projectID int, amou
 		})
 	}
 
-	description := fmt.Sprintf("Payment for Project %d", projectID)
-
-	paymentService.PaymentRepo.AdminTransaction(userID, amount, description)
+	paymentService.PaymentRepo.AdminTransaction(ctx, tx, userID, amount, "")
 }

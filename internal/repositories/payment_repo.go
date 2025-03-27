@@ -45,14 +45,12 @@ func (paymentRepo *PaymentRepo) GetBalance(userID int) (int64, error) {
 	return balance, nil
 }
 
-func (paymentRepo *PaymentRepo) AdminTransaction(userID int, amount int64, description string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+func (paymentRepo *PaymentRepo) AdminTransaction(ctx context.Context, tx pgx.Tx, userID int, amount int64, description string) {
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
-	_, err := paymentRepo.PG.Exec(ctx, query, userID, 1, amount, now, description)
+	_, err := tx.Exec(ctx, query, userID, 1, amount, now, description)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -64,7 +62,7 @@ func (paymentRepo *PaymentRepo) AdminTransaction(userID int, amount int64, descr
 	}
 
 	query = "UPDATE users SET wallet = wallet - $1 WHERE id = $2"
-	_, err = paymentRepo.PG.Exec(ctx, query, amount, userID)
+	_, err = tx.Exec(ctx, query, amount, userID)
 
 	if err != nil {
 		panic(exceptions.Exception{

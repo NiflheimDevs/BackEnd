@@ -13,17 +13,20 @@ import (
 )
 
 type ProjectService struct {
-	ProjectRepo *repositories.ProjectRepo
-	Constants   *bootstrap.Constants
+	ProjectRepo    *repositories.ProjectRepo
+	PaymentService *PaymentService
+	Constants      *bootstrap.Constants
 }
 
 func NewProjectService(
 	projectRepo *repositories.ProjectRepo,
+	paymentService *PaymentService,
 	constants *bootstrap.Constants,
 ) *ProjectService {
 	return &ProjectService{
-		ProjectRepo: projectRepo,
-		Constants:   constants,
+		ProjectRepo:    projectRepo,
+		PaymentService: paymentService,
+		Constants:      constants,
 	}
 }
 
@@ -61,7 +64,7 @@ func (projectService *ProjectService) GetUserProjects(userID, offset, limit int)
 	return projects
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, tags []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, price int64, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -90,6 +93,8 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 			panic(p)
 		}
 	}()
+
+	projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
 
 	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
 

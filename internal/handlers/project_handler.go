@@ -123,7 +123,9 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
-	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, params.Tags)
+	price := projectHandler.GeneralService.GetLabelInfo(params.Label).Price
+
+	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, price, params.Tags)
 
 	dto := dto.CreateProjectDTO{
 		ProjectID: project,

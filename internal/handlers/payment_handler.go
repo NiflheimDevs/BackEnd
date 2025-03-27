@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"net/http"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
 	"github.com/niflheimdevs/backend/internal/services"
@@ -24,19 +22,4 @@ func NewPaymentHandler(
 		Constants:      constants,
 		Validator:      validator,
 	}
-}
-
-func (paymentHandler *PaymentHandler) ProjectPayment(w http.ResponseWriter, r *http.Request) {
-	type projectPayment struct {
-		Amount    int64 `json:"amount" validate:"required"`
-		ProjectID int   `json:"project_id" validate:"required"`
-	}
-
-	param := Validated[projectPayment](paymentHandler.Validator, r)
-
-	userID := r.Context().Value(paymentHandler.Constants.Context.UserID).(int)
-
-	paymentHandler.PaymentService.ProjectPayment(userID, param.ProjectID, param.Amount)
-
-	w.WriteHeader(http.StatusNoContent)
 }

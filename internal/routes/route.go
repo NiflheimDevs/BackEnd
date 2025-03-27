@@ -55,8 +55,6 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/project/{project_id}", app.ProjectHandler.UpdateProject)
 	mux.Delete("/project/{project_id}", app.ProjectHandler.DeleteProject)
 
-	mux.Post("/payment/project", app.PaymentHandler.ProjectPayment)
-
 	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
