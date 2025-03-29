@@ -1,8 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
+	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/services"
 )
 
@@ -21,5 +27,24 @@ func NewPaymentHandler(
 		PaymentService: paymentService,
 		Constants:      constants,
 		Validator:      validator,
+	}
+}
+
+func (paymentHandler *PaymentHandler) GetUserTransactions(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(paymentHandler.Constants.Context.UserID).(int)
+
+	query := r.URL.Query()
+	offset, _ := strconv.Atoi(query.Get("offset"))
+	limit, _ := strconv.Atoi(query.Get("limit"))
+
+	transactions := paymentHandler.PaymentService.GetUserTransactions(userID, offset, limit)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(transactions); err != nil {
+		panic(exceptions.Exception{
+			Tag:    enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{enums.CAST_ERROR},
+		})
 	}
 }

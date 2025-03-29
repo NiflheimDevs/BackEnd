@@ -156,7 +156,9 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 	projectIDString := chi.URLParam(r, "project_id")
 	projectID, _ := strconv.Atoi(projectIDString)
 
-	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, params.Label, params.Tags)
+	price := projectHandler.GeneralService.GetLabelInfo(params.Label).Price
+
+	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, params.Label, price, params.Tags)
 
 	w.WriteHeader(http.StatusNoContent)
 }

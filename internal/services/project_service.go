@@ -116,7 +116,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	return projectID
 }
 
-func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label int, tags []int) {
+func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label int, price int64, tags []int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -164,6 +164,10 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 				enums.USER_NOT_OWNER,
 			},
 		})
+	}
+
+	if project.Label != label {
+		projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
 	}
 
 	projectService.ProjectRepo.UpdateProject(ctx, tx, projectID, userID, label, title, description)
