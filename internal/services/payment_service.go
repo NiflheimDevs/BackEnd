@@ -22,6 +22,30 @@ func NewPaymentService(
 	}
 }
 
+func (paymentService *PaymentService) GetUserBalance(userID int) int64 {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	balance, err := paymentService.PaymentRepo.GetBalance(userID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.NOT_FOUND,
+			Errors: []enums.SpecificError{
+				enums.USER_NOT_FOUND,
+			},
+		})
+	}
+
+	return balance
+}
+
 func (paymentService *PaymentService) GetUserTransactions(userID int, offset, limit int) []dto.UserTransactionDTO {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{

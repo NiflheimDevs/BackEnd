@@ -55,6 +55,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/project/{project_id}", app.ProjectHandler.UpdateProject)
 	mux.Delete("/project/{project_id}", app.ProjectHandler.DeleteProject)
 
+	mux.Get("/user/balance", app.PaymentHandler.GetUserBalance)
 	mux.Get("/transaction", app.PaymentHandler.GetUserTransactions)
 
 	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)

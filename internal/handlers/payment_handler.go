@@ -48,3 +48,12 @@ func (paymentHandler *PaymentHandler) GetUserTransactions(w http.ResponseWriter,
 		})
 	}
 }
+
+func (paymentHandler *PaymentHandler) GetUserBalance(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(paymentHandler.Constants.Context.UserID).(int)
+
+	balance := paymentHandler.PaymentService.GetUserBalance(userID)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(strconv.FormatInt(balance, 10)))
+}
