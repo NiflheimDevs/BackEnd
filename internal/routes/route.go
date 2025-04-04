@@ -58,6 +58,9 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Get("/user/balance", app.PaymentHandler.GetUserBalance)
 	mux.Get("/transaction", app.PaymentHandler.GetUserTransactions)
 
+	mux.Post("/transaction/deposit", app.PaymentHandler.Deposit)
+	mux.Post("/transaction/withdraw", app.PaymentHandler.Withdraw)
+
 	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
 
 	mux.Get("/user/{id}", app.UserHandler.GetUserInfo)

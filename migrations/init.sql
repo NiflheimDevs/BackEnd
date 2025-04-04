@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS "users" (
   "is_verified" bool DEFAULT FALSE,
   "bio" text,
   "phone" varchar NOT NULL,
-  "wallet" numeric DEFAULT 0
+  "wallet" numeric DEFAULT 0,
+  "created_time" timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS "team" (

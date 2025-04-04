@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/niflheimdevs/backend/internal/dto"
@@ -120,5 +121,122 @@ func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx pgx
 		})
 	}
 
-	paymentService.PaymentRepo.AdminTransaction(ctx, tx, userID, amount, "")
+	paymentService.PaymentRepo.Withdraw(ctx, tx, userID, amount, "")
+	paymentService.PaymentRepo.UpdateWallet(ctx, tx, userID, -1*amount)
+}
+
+func (paymentService *PaymentService) Deposit(userID int, amount int64, description string) {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := paymentService.PaymentRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	err = paymentService.PaymentRepo.UpdateWallet(ctx, tx, userID, amount)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.NOT_FOUND,
+			Errors: []enums.SpecificError{
+				enums.USER_NOT_FOUND,
+			},
+		})
+	}
+
+	paymentService.PaymentRepo.Deposit(ctx, tx, userID, amount, description)
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+}
+
+func (paymentService *PaymentService) Withdraw(userID int, amount int64, description string) {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: enums.UNAUTHORIZED,
+			Errors: []enums.SpecificError{
+				enums.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	balance, err := paymentService.PaymentRepo.GetBalance(userID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.NOT_FOUND,
+			Errors: []enums.SpecificError{
+				enums.USER_NOT_FOUND,
+			},
+		})
+	}
+
+	if balance < amount {
+		panic(exceptions.Exception{
+			Tag: enums.FORBIDDEN,
+			Errors: []enums.SpecificError{
+				enums.INSUFFICIENT_BALANCE,
+			},
+		})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := paymentService.PaymentRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	paymentService.PaymentRepo.Withdraw(ctx, tx, userID, amount, description)
+	paymentService.PaymentRepo.UpdateWallet(ctx, tx, userID, -1*amount)
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
 }

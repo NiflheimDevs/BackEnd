@@ -89,7 +89,7 @@ func (paymentRepo *PaymentRepo) GetBalance(userID int) (int64, error) {
 	return balance, nil
 }
 
-func (paymentRepo *PaymentRepo) AdminTransaction(ctx context.Context, tx pgx.Tx, userID int, amount int64, description string) {
+func (paymentRepo *PaymentRepo) Withdraw(ctx context.Context, tx pgx.Tx, userID int, amount int64, description string) {
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
@@ -104,9 +104,13 @@ func (paymentRepo *PaymentRepo) AdminTransaction(ctx context.Context, tx pgx.Tx,
 			},
 		})
 	}
+}
 
-	query = "UPDATE users SET wallet = wallet - $1 WHERE id = $2"
-	_, err = tx.Exec(ctx, query, amount, userID)
+func (paymentRepo *PaymentRepo) Deposit(ctx context.Context, tx pgx.Tx, userID int, amount int64, description string) {
+	now := time.Now().Format("2006-01-02 15:04:05")
+
+	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
+	_, err := tx.Exec(ctx, query, 1, userID, amount, now, description)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -116,4 +120,24 @@ func (paymentRepo *PaymentRepo) AdminTransaction(ctx context.Context, tx pgx.Tx,
 			},
 		})
 	}
+}
+
+func (paymentRepo *PaymentRepo) UpdateWallet(ctx context.Context, tx pgx.Tx, userID int, amount int64) error {
+	query := "UPDATE users SET wallet = wallet + $1 WHERE id = $2"
+	_, err := tx.Exec(ctx, query, amount, userID)
+
+	if err == pgx.ErrNoRows {
+		return err
+	}
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: enums.INTERNAL_ERROR,
+			Errors: []enums.SpecificError{
+				enums.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return nil
 }

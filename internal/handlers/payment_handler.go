@@ -57,3 +57,33 @@ func (paymentHandler *PaymentHandler) GetUserBalance(w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(strconv.FormatInt(balance, 10)))
 }
+
+func (paymentHandler *PaymentHandler) Deposit(w http.ResponseWriter, r *http.Request) {
+	type DepositParam struct {
+		Amount      int64  `json:"amount" validate:"required"`
+		Description string `json:"description"`
+	}
+
+	params := Validated[DepositParam](paymentHandler.Validator, r)
+
+	userID := r.Context().Value(paymentHandler.Constants.Context.UserID).(int)
+
+	paymentHandler.PaymentService.Deposit(userID, params.Amount, params.Description)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (paymentHandler *PaymentHandler) Withdraw(w http.ResponseWriter, r *http.Request) {
+	type DepositParam struct {
+		Amount      int64  `json:"amount" validate:"required"`
+		Description string `json:"description"`
+	}
+
+	params := Validated[DepositParam](paymentHandler.Validator, r)
+
+	userID := r.Context().Value(paymentHandler.Constants.Context.UserID).(int)
+
+	paymentHandler.PaymentService.Withdraw(userID, params.Amount, params.Description)
+
+	w.WriteHeader(http.StatusNoContent)
+}
