@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-
+	_ "image/jpeg"
+	_ "image/png"
 	"log"
 
 	"github.com/chai2010/webp"
