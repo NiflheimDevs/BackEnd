@@ -6,6 +6,7 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"log"
 
 	"github.com/chai2010/webp"
 	"github.com/nfnt/resize"
@@ -60,6 +61,8 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	err = webp.Encode(&webpBuffer, resizedImg, &webp.Options{Lossless: false, Quality: 85})
 
 	if err != nil {
+		log.Println("webp")
+		log.Println(err)
 		panic(exceptions.Exception{
 			Tag: enums.UNPROCESSABLE,
 		})
@@ -74,6 +77,8 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 
 	err = jpeg.Encode(&jpegBuffer, img, options)
 	if err != nil {
+		log.Println("jpeg")
+		log.Println(err)
 		panic(exceptions.Exception{
 			Tag: enums.UNPROCESSABLE,
 		})
