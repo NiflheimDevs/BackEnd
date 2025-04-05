@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
@@ -61,8 +62,6 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	err = webp.Encode(&webpBuffer, resizedImg, &webp.Options{Lossless: false, Quality: 85})
 
 	if err != nil {
-		log.Println("webp")
-		log.Println(err)
 		panic(exceptions.Exception{
 			Tag: enums.UNPROCESSABLE,
 		})
@@ -70,15 +69,17 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	outputName := fs.GetUserProfileName(userid, false)
 	fs.FileStorage.StorageFile(webpBuffer.Bytes(), outputName)
 
+	rgbaImg := image.NewRGBA(img.Bounds())
+	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
+
 	options := &jpeg.EncoderOptions{
 		Quality:         85,
 		ProgressiveMode: true,
 	}
 
-	err = jpeg.Encode(&jpegBuffer, img, options)
+	err = jpeg.Encode(&jpegBuffer, rgbaImg, options)
 	if err != nil {
-		log.Println("jpeg")
-		log.Println(err)
+		log.Println("jpeg", err)
 		panic(exceptions.Exception{
 			Tag: enums.UNPROCESSABLE,
 		})
