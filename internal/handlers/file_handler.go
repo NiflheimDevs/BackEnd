@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -35,8 +36,10 @@ func NewFileHandler(
 }
 
 func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request) {
+	// r.ParseMultipartForm(10 << 20)
 	file, header, err := r.FormFile("file")
 	if err != nil {
+		log.Println(err)
 		panic(exceptions.Exception{
 			Tag: enums.BAD_REQUEST,
 		})

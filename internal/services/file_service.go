@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
+	"log"
 
 	"github.com/chai2010/webp"
 	"github.com/nfnt/resize"
@@ -67,13 +69,17 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	outputName := fs.GetUserProfileName(userid, false)
 	fs.FileStorage.StorageFile(webpBuffer.Bytes(), outputName)
 
+	rgbaImg := image.NewRGBA(img.Bounds())
+	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
+
 	options := &jpeg.EncoderOptions{
 		Quality:         85,
 		ProgressiveMode: true,
 	}
 
-	err = jpeg.Encode(&jpegBuffer, img, options)
+	err = jpeg.Encode(&jpegBuffer, rgbaImg, options)
 	if err != nil {
+		log.Println("jpeg", err)
 		panic(exceptions.Exception{
 			Tag: enums.UNPROCESSABLE,
 		})

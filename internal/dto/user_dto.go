@@ -20,7 +20,7 @@ type UserProfileDTO struct {
 }
 
 type UpdateUserDTO struct {
-	FirstName string `json:"firstname" validate:"required"`
-	LastName  string `json:"lastname" validate:"required"`
-	Bio       string `json:"bio" validate:"required"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	Bio       string `json:"bio"`
 }
