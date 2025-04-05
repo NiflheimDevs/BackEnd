@@ -55,13 +55,13 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/project/{project_id}", app.ProjectHandler.UpdateProject)
 	mux.Delete("/project/{project_id}", app.ProjectHandler.DeleteProject)
 
-	mux.Post("/payment/project", app.PaymentHandler.ProjectPayment)
+	mux.Get("/user/balance", app.PaymentHandler.GetUserBalance)
+	mux.Get("/transaction", app.PaymentHandler.GetUserTransactions)
+
+	mux.Post("/transaction/deposit", app.PaymentHandler.Deposit)
+	mux.Post("/transaction/withdraw", app.PaymentHandler.Withdraw)
 
 	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
-
-	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
-	})
 
 	mux.Get("/user/{id}", app.UserHandler.GetUserInfo)
 	mux.Put("/user/update-info", app.UserHandler.UpdateUserData)
@@ -74,6 +74,10 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Delete("/user/profile", app.FileHandler.DeleteProfilePhoto)
 
 	mux.Get("/storage/*", app.FileHandler.GetFile)
+
+	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
+	})
 
 	return mux
 }

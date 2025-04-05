@@ -13,17 +13,20 @@ import (
 )
 
 type ProjectService struct {
-	ProjectRepo *repositories.ProjectRepo
-	Constants   *bootstrap.Constants
+	ProjectRepo    *repositories.ProjectRepo
+	PaymentService *PaymentService
+	Constants      *bootstrap.Constants
 }
 
 func NewProjectService(
 	projectRepo *repositories.ProjectRepo,
+	paymentService *PaymentService,
 	constants *bootstrap.Constants,
 ) *ProjectService {
 	return &ProjectService{
-		ProjectRepo: projectRepo,
-		Constants:   constants,
+		ProjectRepo:    projectRepo,
+		PaymentService: paymentService,
+		Constants:      constants,
 	}
 }
 
@@ -61,7 +64,7 @@ func (projectService *ProjectService) GetUserProjects(userID, offset, limit int)
 	return projects
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, tags []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, price int64, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -91,6 +94,8 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 		}
 	}()
 
+	projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
+
 	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
 
 	projectID := projectService.ProjectRepo.CreateProject(ctx, tx, userID, label, title, description, duration)
@@ -111,7 +116,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	return projectID
 }
 
-func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label int, tags []int) {
+func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label int, price int64, tags []int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: enums.UNAUTHORIZED,
@@ -159,6 +164,10 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 				enums.USER_NOT_OWNER,
 			},
 		})
+	}
+
+	if project.Label != label {
+		projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
 	}
 
 	projectService.ProjectRepo.UpdateProject(ctx, tx, projectID, userID, label, title, description)

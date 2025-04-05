@@ -72,9 +72,16 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 	projectRepo := &repositories.ProjectRepo{
 		PG: db,
 	}
+	paymentRepo := &repositories.PaymentRepo{
+		PG: db,
+	}
+	paymentService := &services.PaymentService{
+		PaymentRepo: paymentRepo,
+	}
 	projectService := &services.ProjectService{
-		ProjectRepo: projectRepo,
-		Constants:   constants,
+		ProjectRepo:    projectRepo,
+		PaymentService: paymentService,
+		Constants:      constants,
 	}
 	projectHandler := &handlers.ProjectHandler{
 		Constants:      constants,
@@ -89,12 +96,6 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		JWTService:     jwt,
 		Constants:      constants,
 		Validator:      validate,
-	}
-	paymentRepo := &repositories.PaymentRepo{
-		PG: db,
-	}
-	paymentService := &services.PaymentService{
-		PaymentRepo: paymentRepo,
 	}
 	paymentHandler := &handlers.PaymentHandler{
 		PaymentService: paymentService,
