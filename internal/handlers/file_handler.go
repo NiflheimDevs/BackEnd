@@ -36,7 +36,8 @@ func NewFileHandler(
 }
 
 func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request) {
-	file, header, err := r.FormFile("file")
+	r.ParseMultipartForm(10 << 20)
+	file, _, err := r.FormFile("file")
 	if err != nil {
 		log.Println(err)
 		panic(exceptions.Exception{
@@ -46,12 +47,12 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 
 	defer file.Close()
 
-	if header.Size > 50000000 {
-		panic(exceptions.Exception{
-			Tag:    enums.UNPROCESSABLE,
-			Errors: []enums.SpecificError{enums.FILE_TOO_LARGE},
-		})
-	}
+	// if header.Size > 50000000 {
+	// 	panic(exceptions.Exception{
+	// 		Tag:    enums.UNPROCESSABLE,
+	// 		Errors: []enums.SpecificError{enums.FILE_TOO_LARGE},
+	// 	})
+	// }
 
 	data, err := io.ReadAll(file)
 	if err != nil {
