@@ -300,10 +300,9 @@ func (us *UserService) UpdateEmail(userid int, email string) {
 		})
 	}
 	if effected == 0 {
-		user, _ := us.UserRepo.FindUserByEmail(email)
+		user, _ := us.UserRepo.FindUserByID(userid)
 		if user != nil {
 			if user.ID != userid {
-
 				panic(exceptions.Exception{
 					Tag:    enums.UNPROCESSABLE,
 					Errors: []enums.SpecificError{enums.EMAIL_NOT_VERIFIED},
