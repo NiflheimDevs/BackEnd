@@ -22,7 +22,6 @@ type UserHandler struct {
 	UserService    *services.UserService
 	JWTService     *services.JWT
 	Validator      *validator.Validate
-	Utils          *utils.Utils
 	GeneralService *services.GeneralService
 }
 
@@ -31,7 +30,6 @@ func NewUserHandler(
 	userService *services.UserService,
 	jwtService *services.JWT,
 	validator *validator.Validate,
-	utils *utils.Utils,
 	generalService *services.GeneralService,
 ) *UserHandler {
 	return &UserHandler{
@@ -40,7 +38,6 @@ func NewUserHandler(
 		Validator:      validator,
 		JWTService:     jwtService,
 		GeneralService: generalService,
-		Utils:          utils,
 	}
 }
 
@@ -264,13 +261,13 @@ func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	includes := r.URL.Query()["include"]
 	response := make(map[string]interface{})
 
-	if uh.Utils.Contains(includes, "info") {
+	if utils.Contains(includes, "info") {
 		response["info"] = uh.UserService.GetUserInfo(targetUserid, userid)
 	}
-	if uh.Utils.Contains(includes, "career") {
+	if utils.Contains(includes, "career") {
 		response["career"] = uh.GeneralService.GetCareerForUser(userid, targetUserid)
 	}
-	if uh.Utils.Contains(includes, "tag") {
+	if utils.Contains(includes, "tag") {
 		response["tag"] = uh.GeneralService.GetTagsForUser(targetUserid)
 	}
 

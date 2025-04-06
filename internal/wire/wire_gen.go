@@ -18,7 +18,6 @@ import (
 	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/services"
-	"github.com/niflheimdevs/backend/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -52,7 +51,6 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		Constants:   constants,
 		FileService: fileService,
 	}
-	utilsUtils := utils.NewUtils()
 	generalRepo := &repositories.GeneralRepo{
 		PG: db,
 	}
@@ -65,7 +63,6 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 		UserService:    userService,
 		JWTService:     jwt,
 		Validator:      validate,
-		Utils:          utilsUtils,
 		GeneralService: generalService,
 	}
 	errorHandler := &handlers.ErrorHandler{}
@@ -128,7 +125,7 @@ var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), 
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.FileService), "*"), wire.Struct(new(services.ProjectService), "*"), wire.Struct(new(services.GeneralService), "*"), wire.Struct(new(services.PaymentService), "*"), services.NewJWT, ProvideConstants)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), wire.Struct(new(handlers.PaymentHandler), "*"), handlers.NewValidator, utils.NewUtils)
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), wire.Struct(new(handlers.PaymentHandler), "*"), handlers.NewValidator)
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
