@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/niflheimdevs/backend/internal/models"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -21,7 +20,6 @@ func NewUserCache(DB *redis.Client) *UserCache {
 }
 
 // ? should i make constant or functions for setting or giving the keys?
-// duplicate code but idk if i SHOULD fix it (reduces performance). the most efficient code is not readable! FCC
 
 func (uc *UserCache) PostRedis(key string, value interface{}, duration time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
