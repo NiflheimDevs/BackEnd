@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "username" varchar NOT NULL UNIQUE,
   "password" bytea NOT NULL,
   "email" varchar,
-  "is_verified" bool DEFAULT FALSE,
+  "is_verified" bool DEFAULT TRUE,
   "bio" text,
   "phone" varchar NOT NULL,
   "wallet" numeric DEFAULT 0,
