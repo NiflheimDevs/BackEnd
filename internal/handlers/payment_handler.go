@@ -36,8 +36,10 @@ func (paymentHandler *PaymentHandler) GetUserTransactions(w http.ResponseWriter,
 	query := r.URL.Query()
 	offset, _ := strconv.Atoi(query.Get("offset"))
 	limit, _ := strconv.Atoi(query.Get("limit"))
+	sortBy := query.Get("sort_by") // e.g., "date" or "amount"
+	order := query.Get("order")    // e.g., "asc" or "desc"
 
-	transactions := paymentHandler.PaymentService.GetUserTransactions(userID, offset, limit)
+	transactions := paymentHandler.PaymentService.GetUserTransactions(userID, offset, limit, sortBy, order)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
