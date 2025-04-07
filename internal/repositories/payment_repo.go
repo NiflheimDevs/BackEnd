@@ -21,13 +21,21 @@ func NewPaymentRepo(PG *pgxpool.Pool) *PaymentRepo {
 	}
 }
 
-func (paymentRepo *PaymentRepo) GetUserTransactions(userID int, offset, limit int) ([]models.TransactionModel, error) {
+func (paymentRepo *PaymentRepo) GetUserTransactions(userID int, offset, limit int, sortBy, order string) ([]models.TransactionModel, error) {
 	var transactions []models.TransactionModel
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "select * from transaction where from_user_id = $1 or to_user_id = $1 offset $2 limit $3"
+	if sortBy == "" {
+		sortBy = "date"
+	}
+	if order == "" {
+		order = "desc"
+	}
+
+	query := "SELECT * FROM transaction WHERE (from_user_id = $1 OR to_user_id = $1)"
+	query += " ORDER BY " + sortBy + " " + order + " OFFSET $2 LIMIT $3"
 
 	result, err := paymentRepo.PG.Query(ctx, query, userID, offset, limit)
 
