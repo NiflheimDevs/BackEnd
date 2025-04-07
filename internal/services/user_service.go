@@ -292,23 +292,12 @@ func (us *UserService) UpdateEmail(userid int, email string) {
 			},
 		})
 	}
-	effected, err := us.UserRepo.UpdateEmail(userid, email)
+	_, err := us.UserRepo.UpdateEmail(userid, email)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    enums.UNPROCESSABLE,
 			Errors: []enums.SpecificError{enums.EMAIL_TAKEN},
 		})
-	}
-	if effected == 0 {
-		user, _ := us.UserRepo.FindUserByID(userid)
-		if user != nil {
-			if user.ID != userid {
-				panic(exceptions.Exception{
-					Tag:    enums.UNPROCESSABLE,
-					Errors: []enums.SpecificError{enums.EMAIL_NOT_VERIFIED},
-				})
-			}
-		}
 	}
 }
 

@@ -151,7 +151,7 @@ func (repo *UserRepo) UpdateEmail(userid int, email string) (int64, error) {
 	query := `
 	UPDATE users
 	SET email = $2, is_verified = false
-	WHERE id = $1 AND is_verified = true`
+	WHERE id = $1`
 
 	res, err := repo.PG.Exec(ctx, query, userid, email)
 	//? better error handling for internal errors?
