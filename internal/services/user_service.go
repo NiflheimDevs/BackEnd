@@ -337,12 +337,9 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 			Errors: []enums.SpecificError{enums.AUTH_ACCESS_DENIED},
 		})
 	}
-	_, err := us.CacheRepo.FindByPhone(phone)
+	session, err := us.CacheRepo.FindByPhone(phone)
 	if err == nil {
-		panic(exceptions.Exception{
-			Tag:    enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
-		})
+		return session
 	}
 
 	_, err = us.UserRepo.FindUserByPhone(phone)
@@ -353,7 +350,7 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 		})
 	}
 
-	session := uuid.New().String()
+	session = uuid.New().String()
 	val := models.UserCacheData{
 		Phone:    phone,
 		Username: fmt.Sprintf("%d", userid),
