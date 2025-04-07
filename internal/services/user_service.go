@@ -339,8 +339,6 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 		})
 	}
 	session, err := us.CacheRepo.FindByPhone(phone)
-	log.Println("salam", err)
-	log.Println(session)
 	if err == nil {
 		return session
 	}
