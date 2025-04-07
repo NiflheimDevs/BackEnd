@@ -1,4 +1,4 @@
-package services
+package servicesimpl
 
 import (
 	"encoding/json"
@@ -8,12 +8,12 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/niflheimdevs/backend/internal/bootstrap"
+	"github.com/niflheimdevs/backend/internal/domain/models"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/dto"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/models"
 	"github.com/niflheimdevs/backend/internal/repositories"
-	"github.com/niflheimdevs/backend/internal/repositories/redis"
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -1,31 +1,28 @@
-package services
+package servicesimpl
 
 import (
 	"encoding/json"
 
-	"github.com/niflheimdevs/backend/internal/dto"
+	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/domain/models"
+	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/models"
-	"github.com/niflheimdevs/backend/internal/repositories"
 	"github.com/niflheimdevs/backend/internal/utils"
 )
 
-// ! DUPLICATE CODE
-// ! UTILS
-
-type GeneralService struct {
+type CareerService struct {
 	GeneralRepo *repositories.GeneralRepo
 	UserRepo    *repositories.UserRepo
 	// Utils       *utils.Utils
 }
 
-func NewGeneralService(
+func NewCareerService(
 	GeneralRepo *repositories.GeneralRepo,
 	userRepo *repositories.UserRepo,
 	// utils *utils.Utils,
-) *GeneralService {
-	return &GeneralService{
+) *CareerService {
+	return &CareerService{
 		GeneralRepo: GeneralRepo,
 		UserRepo:    userRepo,
 		// Utils:       utils,

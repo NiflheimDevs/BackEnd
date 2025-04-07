@@ -1,4 +1,4 @@
-package services
+package servicesimpl
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/niflheimdevs/backend/internal/bootstrap"
+	"github.com/niflheimdevs/backend/internal/domain/models"
 	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/models"
 	"github.com/niflheimdevs/backend/internal/repositories"
 )
 
