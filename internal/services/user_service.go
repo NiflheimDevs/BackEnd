@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -338,6 +339,7 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 		})
 	}
 	session, err := us.CacheRepo.FindByPhone(phone)
+	log.Println(err)
 	if err == nil {
 		return session
 	}
