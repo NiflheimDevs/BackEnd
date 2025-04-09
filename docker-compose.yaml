@@ -8,21 +8,21 @@ services:
       POSTGRES_USER: niflheim
       POSTGRES_PASSWORD: niflguard
       POSTGRES_DB: bidlancer
-    ports:
-      - "5432:5432"
     volumes:
       - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend_network
 
   redis:
     image: redis:latest
     container_name: redis_container
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - redisdata:/data
     command: redis-server --save 60 1 --loglevel warning
+    networks:
+      - backend_network
 
   app:
     build: .
@@ -33,13 +33,17 @@ services:
       - db
       - redis
     env_file:
-      ./.env
+      - ./.env
     ports:
       - "8080:8080"
-    links:
-      - db
-      - redis
+    networks:
+      - backend_network
+
 
 volumes:
   pgdata:
   redisdata:
+
+networks:
+  backend_network:
+    internal: true
