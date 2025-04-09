@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
@@ -13,16 +14,16 @@ import (
 
 type ProjectService struct {
 	ProjectRepo    repositories.ProjectRepo
-	PaymentService PaymentService
+	PaymentService services.PaymentService
 	Constants      *bootstrap.Constants
 	TxManager      transaction.TxManager
 	TagRepo        repositories.TagRepo
-	TagService     TagService // !
+	TagService     services.TagService
 }
 
 func NewProjectService(
 	projectRepo repositories.ProjectRepo,
-	paymentService PaymentService,
+	paymentService services.PaymentService,
 	constants *bootstrap.Constants,
 	tagRepo repositories.TagRepo,
 	txManager transaction.TxManager,

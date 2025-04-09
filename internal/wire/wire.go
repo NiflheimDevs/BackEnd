@@ -18,6 +18,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/pkg"
 
 	repositries "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
 
@@ -28,6 +29,9 @@ import (
 var DatabaseProviderSet = wire.NewSet(
 	driver.ConnectSQL,
 	driver.ConncetRedis,
+
+	db.NewTxManager,
+	wire.Bind(new(transaction.TxManager), new(*db.PgxTxManager)),
 )
 
 var PkgProviderSet = wire.NewSet(
@@ -103,7 +107,6 @@ func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
-	db.NewTxManager,
 	PkgProviderSet,
 	RepoProviderSet,
 	FileServiceProviderSet,

@@ -9,6 +9,7 @@ import (
 
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
@@ -20,7 +21,7 @@ type UserService struct {
 	UserRepo    repositories.UserRepo
 	CacheRepo   redis.UserCache
 	Constants   *bootstrap.Constants
-	FileService FileService
+	FileService services.FileService
 	SecretSauce *pkg.SecretSauce
 }
 
@@ -28,7 +29,7 @@ func NewUserService(
 	userRepo repositories.UserRepo,
 	cacheRepo redis.UserCache,
 	constants *bootstrap.Constants,
-	fileService FileService,
+	fileService services.FileService,
 	secretSauce *pkg.SecretSauce,
 ) *UserService {
 	return &UserService{

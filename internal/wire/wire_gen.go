@@ -8,91 +8,82 @@ package wire
 
 import (
 	"github.com/google/wire"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/handlers"
-	"github.com/niflheimdevs/backend/internal/middlewares/authentication"
-	"github.com/niflheimdevs/backend/internal/middlewares/exceptions"
-	"github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
-	"github.com/niflheimdevs/backend/internal/repositories"
-	redis2 "github.com/niflheimdevs/backend/internal/repositories/redis"
-	"github.com/niflheimdevs/backend/internal/repositories/storage"
-	"github.com/niflheimdevs/backend/internal/services"
-	"github.com/redis/go-redis/v9"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/services"
+	"github.com/niflheimdevs/backend/internal/application/services/impl"
+	"github.com/niflheimdevs/backend/internal/delivery/http/handlers"
+	"github.com/niflheimdevs/backend/internal/delivery/http/middlewares/authentication"
+	"github.com/niflheimdevs/backend/internal/delivery/http/middlewares/exceptions"
+	"github.com/niflheimdevs/backend/internal/delivery/http/middlewares/ratelimit"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
+	"github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
+	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
+	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
+	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/pkg"
 )
 
 // Injectors from wire.go:
 
-func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di) (*Application, error) {
+	fileStorage := storageimpl.NewFileStorage()
+	fileService := servicesimpl.NewFileService(fileStorage)
+	validate := pkg.NewValidator()
 	constants := ProvideConstants(container)
-	fileStorage := &storage.FileStorage{
-		Constants: constants,
-	}
-	fileService := &services.FileService{
-		FileStorage: fileStorage,
-	}
-	validate := handlers.NewValidator()
-	jwt := services.NewJWT(constants)
+	jwt := servicesimpl.NewJWT(constants)
 	fileHandler := &handlers.FileHandler{
 		FileService: fileService,
 		Validator:   validate,
 		JWTService:  jwt,
 		Constants:   constants,
 	}
-	userRepo := &repositories.UserRepo{
-		PG: db,
-	}
-	userCache := &redis2.UserCache{
-		DB: myRedis,
-	}
-	userService := &services.UserService{
-		UserRepo:    userRepo,
-		CacheRepo:   userCache,
-		Constants:   constants,
-		FileService: fileService,
-	}
-	generalRepo := &repositories.GeneralRepo{
-		PG: db,
-	}
-	generalService := &services.GeneralService{
-		GeneralRepo: generalRepo,
-		UserRepo:    userRepo,
-	}
+	pool := driver.ConnectSQL(container)
+	userRepo := repositoriesimpl.NewUserRepo(pool)
+	client := driver.ConncetRedis(container)
+	userCache := redisimpl.NewUserCache(client)
+	secretSauce := pkg.NewSecretSauce()
+	userService := servicesimpl.NewUserService(userRepo, userCache, constants, fileService, secretSauce)
+	tagRepo := repositoriesimpl.NewTagRepo(pool)
+	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
+	careerRepo := repositoriesimpl.NewCareerRepo(pool)
+	careerService := servicesimpl.NewCareerService(careerRepo, tagRepo, userRepo)
+	smsService := servicesimpl.NewSmsService()
 	userHandler := &handlers.UserHandler{
-		Constants:      constants,
-		UserService:    userService,
-		JWTService:     jwt,
-		Validator:      validate,
-		GeneralService: generalService,
+		Constants:     constants,
+		UserService:   userService,
+		JWTService:    jwt,
+		Validator:     validate,
+		TagService:    tagService,
+		CareerService: careerService,
+		SmsService:    smsService,
 	}
 	errorHandler := &handlers.ErrorHandler{}
-	projectRepo := &repositories.ProjectRepo{
-		PG: db,
-	}
-	paymentRepo := &repositories.PaymentRepo{
-		PG: db,
-	}
-	paymentService := &services.PaymentService{
-		PaymentRepo: paymentRepo,
-	}
-	projectService := &services.ProjectService{
-		ProjectRepo:    projectRepo,
-		PaymentService: paymentService,
-		Constants:      constants,
-	}
+	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
+	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
+	pgxTxManager := db.NewTxManager(pool)
+	paymentService := servicesimpl.NewPaymentService(paymentRepo, pgxTxManager)
+	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, pgxTxManager)
+	labelRepo := repositoriesimpl.NewLabelRepo(pool)
+	labelService := servicesimpl.NewLabelService(labelRepo, userRepo)
 	projectHandler := &handlers.ProjectHandler{
 		Constants:      constants,
 		ProjectService: projectService,
 		UserService:    userService,
-		GeneralService: generalService,
+		LabelService:   labelService,
 		JWTService:     jwt,
 		Validator:      validate,
 	}
 	generalHandler := &handlers.GeneralHandler{
-		GeneralService: generalService,
-		JWTService:     jwt,
-		Constants:      constants,
-		Validator:      validate,
+		TagService:    tagService,
+		CareerService: careerService,
+		LabelService:  labelService,
+		JWTService:    jwt,
+		Constants:     constants,
+		Validator:     validate,
 	}
 	paymentHandler := &handlers.PaymentHandler{
 		PaymentService: paymentService,
@@ -121,11 +112,17 @@ func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *r
 
 // wire.go:
 
-var RepoProviderSet = wire.NewSet(wire.Struct(new(repositories.UserRepo), "*"), wire.Struct(new(repositories.ProjectRepo), "*"), wire.Struct(new(repositories.GeneralRepo), "*"), wire.Struct(new(redis2.UserCache), "*"), wire.Struct(new(storage.FileStorage), "*"), wire.Struct(new(repositories.PaymentRepo), "*"))
+var DatabaseProviderSet = wire.NewSet(driver.ConnectSQL, driver.ConncetRedis, db.NewTxManager, wire.Bind(new(transaction.TxManager), new(*db.PgxTxManager)))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(services.UserService), "*"), wire.Struct(new(services.FileService), "*"), wire.Struct(new(services.ProjectService), "*"), wire.Struct(new(services.GeneralService), "*"), wire.Struct(new(services.PaymentService), "*"), services.NewJWT, ProvideConstants)
+var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), wire.Struct(new(handlers.PaymentHandler), "*"), handlers.NewValidator)
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, storageimpl.NewFileStorage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+
+var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
+
+var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewSmsService, servicesimpl.NewJWT, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), ProvideConstants)
+
+var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), wire.Struct(new(handlers.PaymentHandler), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -134,7 +131,10 @@ func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 }
 
 var ProviderSet = wire.NewSet(
+	DatabaseProviderSet,
+	PkgProviderSet,
 	RepoProviderSet,
+	FileServiceProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
 	MiddlewareProviderSet,

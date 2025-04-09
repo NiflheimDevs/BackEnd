@@ -7,18 +7,19 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
 type ProjectRepo struct {
 	PG      *pgxpool.Pool
-	TagRepo TagRepo
+	TagRepo repositories.TagRepo
 }
 
 func NewProjectRepo(
 	PG *pgxpool.Pool,
-	tagRepo TagRepo,
+	tagRepo repositories.TagRepo,
 ) *ProjectRepo {
 	return &ProjectRepo{
 		PG:      PG,
