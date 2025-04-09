@@ -1,4 +1,4 @@
-package redis
+package redisimpl
 
 //requires redis version >= 6 otherwise most package calls will result in syntax error
 import (

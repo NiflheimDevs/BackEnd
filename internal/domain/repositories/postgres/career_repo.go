@@ -9,5 +9,5 @@ type CareerRepo interface {
 	GetCareersForUser(userid int) ([]models.CareerModel, error)
 	CreateCareer(userid int, params *dto.CareerDTO) (int, error)
 	UpdateCareer(userid int, params *dto.CareerDTO) error
-	DeleteCareer(userd int, careerid int) error
+	DeleteCareer(userid int, careerid int) error
 }

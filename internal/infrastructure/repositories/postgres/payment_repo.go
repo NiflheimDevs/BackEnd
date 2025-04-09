@@ -1,4 +1,4 @@
-package repositories
+package repositoriesimpl
 
 import (
 	"context"
@@ -12,8 +12,7 @@ import (
 )
 
 type PaymentRepo struct {
-	PG          *pgxpool.Pool
-	Transaction transaction.Tx
+	PG *pgxpool.Pool
 }
 
 func NewPaymentRepo(PG *pgxpool.Pool) *PaymentRepo {

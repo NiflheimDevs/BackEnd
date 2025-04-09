@@ -1,4 +1,4 @@
-package repositories
+package repositoriesimpl
 
 import (
 	"context"
@@ -71,8 +71,6 @@ func (cr *CareerRepo) CreateCareer(userid int, params *dto.CareerDTO) (int, erro
 
 	var careerid int
 
-	// if params.Website == "" && params.EndDate.IsZero() {
-
 	query := `INSERT INTO career 
 	(user_id ,company, start_date,end_date,role,website) 
 	VALUES ($1,$2,$3,$4,$5,$6) 
@@ -96,7 +94,7 @@ func (cr *CareerRepo) UpdateCareer(userid int, params *dto.CareerDTO) error {
 	return err
 }
 
-func (tr *TagRepo) DeleteCareer(userid int, careerid int) error {
+func (cr *CareerRepo) DeleteCareer(userid int, careerid int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -104,6 +102,6 @@ func (tr *TagRepo) DeleteCareer(userid int, careerid int) error {
 	FROM users_career
 	WHERE user_id = $1 AND career_id = $2`
 
-	_, err := tr.PG.Exec(ctx, query, userid, careerid)
+	_, err := cr.PG.Exec(ctx, query, userid, careerid)
 	return err
 }

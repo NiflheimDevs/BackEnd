@@ -5,36 +5,79 @@ package wire
 
 import (
 	"github.com/google/wire"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/handlers"
-	midauth "github.com/niflheimdevs/backend/internal/middlewares/authentication"
-	panicwall "github.com/niflheimdevs/backend/internal/middlewares/exceptions"
-	midratelimit "github.com/niflheimdevs/backend/internal/middlewares/ratelimit"
-	"github.com/niflheimdevs/backend/internal/repositories"
-	R "github.com/niflheimdevs/backend/internal/repositories/redis"
-	"github.com/niflheimdevs/backend/internal/repositories/storage"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/delivery/http/handlers"
+	midauth "github.com/niflheimdevs/backend/internal/delivery/http/middlewares/authentication"
+	panicwall "github.com/niflheimdevs/backend/internal/delivery/http/middlewares/exceptions"
+	midratelimit "github.com/niflheimdevs/backend/internal/delivery/http/middlewares/ratelimit"
+	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
+	db "github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
+	repositoriesimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
+	redisimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
+	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/pkg"
 
-	"github.com/niflheimdevs/backend/internal/services"
-	"github.com/redis/go-redis/v9"
+	repositries "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
+
+	"github.com/niflheimdevs/backend/internal/application/services"
+	servicesimpl "github.com/niflheimdevs/backend/internal/application/services/impl"
+)
+
+var DatabaseProviderSet = wire.NewSet(
+	driver.ConnectSQL,
+	driver.ConncetRedis,
+)
+
+var PkgProviderSet = wire.NewSet(
+	pkg.NewValidator,
+	pkg.NewSecretSauce,
 )
 
 var RepoProviderSet = wire.NewSet(
-	wire.Struct(new(repositories.UserRepo), "*"),
-	wire.Struct(new(repositories.ProjectRepo), "*"),
-	wire.Struct(new(repositories.GeneralRepo), "*"),
-	wire.Struct(new(R.UserCache), "*"),
-	wire.Struct(new(storage.FileStorage), "*"),
-	wire.Struct(new(repositories.PaymentRepo), "*"),
+	repositoriesimpl.NewUserRepo,
+	repositoriesimpl.NewProjectRepo,
+	repositoriesimpl.NewCareerRepo,
+	repositoriesimpl.NewTagRepo,
+	repositoriesimpl.NewLabelRepo,
+	repositoriesimpl.NewPaymentRepo,
+	storageimpl.NewFileStorage,
+	redisimpl.NewUserCache,
+	wire.Bind(new(repositries.UserRepo), new(*repositoriesimpl.UserRepo)),
+	wire.Bind(new(repositries.TagRepo), new(*repositoriesimpl.TagRepo)),
+	wire.Bind(new(repositries.CareerRepo), new(*repositoriesimpl.CareerRepo)),
+	wire.Bind(new(repositries.LabelRepo), new(*repositoriesimpl.LabelRepo)),
+	wire.Bind(new(repositries.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
+	wire.Bind(new(repositries.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
+	wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)),
+	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
+)
+
+var FileServiceProviderSet = wire.NewSet(
+	servicesimpl.NewFileService,
+	wire.Bind(new(services.FileService), new(*servicesimpl.FileService)),
 )
 
 var ServiceProviderSet = wire.NewSet(
-	wire.Struct(new(services.UserService), "*"),
-	wire.Struct(new(services.FileService), "*"),
-	wire.Struct(new(services.ProjectService), "*"),
-	wire.Struct(new(services.GeneralService), "*"),
-	wire.Struct(new(services.PaymentService), "*"),
-	services.NewJWT,
+	servicesimpl.NewUserService,
+	servicesimpl.NewTagService,
+	servicesimpl.NewCareerService,
+	servicesimpl.NewLabelService,
+	servicesimpl.NewProjectService,
+	servicesimpl.NewPaymentService,
+	servicesimpl.NewSmsService,
+	servicesimpl.NewJWT,
+
+	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
+	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
+	wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)),
+	wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)),
+	wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)),
+	wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)),
+	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
+	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
+
 	ProvideConstants,
 )
 
@@ -45,7 +88,6 @@ var HandlerProviderSet = wire.NewSet(
 	wire.Struct(new(handlers.ProjectHandler), "*"),
 	wire.Struct(new(handlers.GeneralHandler), "*"),
 	wire.Struct(new(handlers.PaymentHandler), "*"),
-	handlers.NewValidator,
 )
 
 var MiddlewareProviderSet = wire.NewSet(
@@ -60,7 +102,11 @@ func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 }
 
 var ProviderSet = wire.NewSet(
+	DatabaseProviderSet,
+	db.NewTxManager,
+	PkgProviderSet,
 	RepoProviderSet,
+	FileServiceProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
 	MiddlewareProviderSet,
@@ -82,7 +128,7 @@ type Application struct {
 	Middlewares    *Middlewares
 }
 
-func InitializeApplication(container *bootstrap.Di, db *pgxpool.Pool, myRedis *redis.Client) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	wire.Build(
 		ProviderSet,
 		wire.Struct(new(Application), "*"),

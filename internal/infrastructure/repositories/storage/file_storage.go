@@ -1,4 +1,4 @@
-package storage
+package storageimpl
 
 import (
 	"os"
