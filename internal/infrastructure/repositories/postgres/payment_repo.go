@@ -6,13 +6,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/domain/models"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/models"
 )
 
 type PaymentRepo struct {
-	PG *pgxpool.Pool
+	PG          *pgxpool.Pool
+	Transaction transaction.Tx
 }
 
 func NewPaymentRepo(PG *pgxpool.Pool) *PaymentRepo {
@@ -37,9 +38,9 @@ func (paymentRepo *PaymentRepo) GetUserTransactions(userID int, offset, limit in
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -51,9 +52,9 @@ func (paymentRepo *PaymentRepo) GetUserTransactions(userID int, offset, limit in
 		var date time.Time
 		if err := result.Scan(&transaction.ID, &transaction.FromUser, &transaction.ToUser, &transaction.Amount, &date, &transaction.Description); err != nil {
 			panic(exceptions.Exception{
-				Tag: enums.INTERNAL_ERROR,
-				Errors: []enums.SpecificError{
-					enums.DATABASE_ERROR,
+				Tag: exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{
+					exceptions.DATABASE_ERROR,
 				},
 			})
 		}
@@ -79,9 +80,9 @@ func (paymentRepo *PaymentRepo) GetBalance(userID int) (int64, error) {
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -89,7 +90,7 @@ func (paymentRepo *PaymentRepo) GetBalance(userID int) (int64, error) {
 	return balance, nil
 }
 
-func (paymentRepo *PaymentRepo) Withdraw(ctx context.Context, tx pgx.Tx, userID int, amount int64, description string) {
+func (paymentRepo *PaymentRepo) Withdraw(ctx context.Context, tx transaction.Tx, userID int, amount int64, description string) {
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
@@ -98,15 +99,15 @@ func (paymentRepo *PaymentRepo) Withdraw(ctx context.Context, tx pgx.Tx, userID 
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
 }
 
-func (paymentRepo *PaymentRepo) Deposit(ctx context.Context, tx pgx.Tx, userID int, amount int64, description string) {
+func (paymentRepo *PaymentRepo) Deposit(ctx context.Context, tx transaction.Tx, userID int, amount int64, description string) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
@@ -114,15 +115,16 @@ func (paymentRepo *PaymentRepo) Deposit(ctx context.Context, tx pgx.Tx, userID i
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
 }
 
-func (paymentRepo *PaymentRepo) UpdateWallet(ctx context.Context, tx pgx.Tx, userID int, amount int64) error {
+func (paymentRepo *PaymentRepo) UpdateWallet(ctx context.Context, tx transaction.Tx, userID int, amount int64) error {
+
 	query := "UPDATE users SET wallet = wallet + $1 WHERE id = $2"
 	_, err := tx.Exec(ctx, query, amount, userID)
 
@@ -132,9 +134,9 @@ func (paymentRepo *PaymentRepo) UpdateWallet(ctx context.Context, tx pgx.Tx, use
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}

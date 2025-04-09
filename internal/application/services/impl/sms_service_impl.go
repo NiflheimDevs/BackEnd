@@ -10,16 +10,22 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
-func GenerateOTP() string {
+type SmsService struct {
+}
+
+func NewSmsService() *SmsService {
+	return &SmsService{}
+}
+
+func (ss *SmsService) GenerateOTP() string {
 	return fmt.Sprintf("%05d", rand.Int()%100000)
 
 }
 
-func SendOTP(phonenumber string, code string) {
+func (ss *SmsService) SendOTP(phonenumber string, code string) {
 	// apikey := "OQIAPP4fRTpqWpWafX2lljoW9YBSuCmGLdFGFDZfJCfLfc97"
 	apikey := "i9jivkYg8ONebnmtTb5ncBcOuaFoCIxsUyyTWKVcOSXaK3da"
 	type Parameters struct {
@@ -52,7 +58,7 @@ func SendOTP(phonenumber string, code string) {
 	res, err := client.Do(req)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
 	data, _ := io.ReadAll(res.Body)

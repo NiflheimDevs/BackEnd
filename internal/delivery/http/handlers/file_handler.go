@@ -8,23 +8,22 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/services"
 )
 
 type FileHandler struct {
-	FileService *services.FileService
+	FileService services.FileService
 	Validator   *validator.Validate
-	JWTService  *services.JWT
+	JWTService  services.JWT
 	Constants   *bootstrap.Constants
 }
 
 func NewFileHandler(
 	constants *bootstrap.Constants,
-	fileService *services.FileService,
-	jwtService *services.JWT,
+	fileService services.FileService,
+	jwtService services.JWT,
 	validator *validator.Validate,
 ) *FileHandler {
 	return &FileHandler{
@@ -41,7 +40,7 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Println(err)
 		panic(exceptions.Exception{
-			Tag: enums.BAD_REQUEST,
+			Tag: exceptions.BAD_REQUEST,
 		})
 	}
 
@@ -49,15 +48,15 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 
 	if header.Size > 50000000 {
 		panic(exceptions.Exception{
-			Tag:    enums.UNPROCESSABLE,
-			Errors: []enums.SpecificError{enums.FILE_TOO_LARGE},
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.FILE_TOO_LARGE},
 		})
 	}
 
 	data, err := io.ReadAll(file)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.BAD_REQUEST,
+			Tag: exceptions.BAD_REQUEST,
 		})
 	}
 

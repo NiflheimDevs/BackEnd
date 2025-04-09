@@ -1,4 +1,4 @@
-package enums
+package exceptions
 
 type GeneralError string
 type SpecificError string

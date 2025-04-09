@@ -7,49 +7,51 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niflheimdevs/backend/internal/bootstrap"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
-	"github.com/niflheimdevs/backend/internal/dto"
-	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/repositories"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/niflheimdevs/backend/internal/pkg"
 )
 
 type UserService struct {
-	UserRepo    *repositories.UserRepo
-	CacheRepo   *redis.UserCache
+	UserRepo    repositories.UserRepo
+	CacheRepo   redis.UserCache
 	Constants   *bootstrap.Constants
-	FileService *FileService
+	FileService FileService
+	SecretSauce *pkg.SecretSauce
 }
 
 func NewUserService(
-	userRepo *repositories.UserRepo,
-	cacheRepo *redis.UserCache,
+	userRepo repositories.UserRepo,
+	cacheRepo redis.UserCache,
 	constants *bootstrap.Constants,
-	fileService *FileService,
+	fileService FileService,
+	secretSauce *pkg.SecretSauce,
 ) *UserService {
 	return &UserService{
 		UserRepo:    userRepo,
 		CacheRepo:   cacheRepo,
 		Constants:   constants,
 		FileService: fileService,
+		SecretSauce: secretSauce,
 	}
 }
 
 // signup stage. checks if username or phonenumber is already taken.
 func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username string) string {
 	var exc = exceptions.Exception{
-		Tag: enums.VALIDATION_ERROR,
+		Tag: exceptions.VALIDATION_ERROR,
 	}
 	_, err := us.UserRepo.FindUserByPhone(phonenumber)
 	if err == nil {
-		exc.AddError(enums.PHONE_TAKEN)
+		exc.AddError(exceptions.PHONE_TAKEN)
 	}
 	_, err = us.UserRepo.FindUserByUsername(username)
 	if err == nil {
-		exc.AddError(enums.USERNAME_TAKEN)
+		exc.AddError(exceptions.USERNAME_TAKEN)
 	}
 
 	if len(exc.Errors) > 0 {
@@ -58,12 +60,12 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 
 	sess1, err := us.CacheRepo.FindByUsername(username)
 	if err == nil {
-		exc.AddError(enums.USERNAME_TAKEN)
+		exc.AddError(exceptions.USERNAME_TAKEN)
 	}
 
 	sess2, err := us.CacheRepo.FindByPhone(phonenumber)
 	if err == nil {
-		exc.AddError(enums.PHONE_TAKEN)
+		exc.AddError(exceptions.PHONE_TAKEN)
 
 	}
 	if sess1 == sess2 {
@@ -78,10 +80,11 @@ func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username s
 
 // caches the data until otp is expired or entered.
 func (us *UserService) CacheUserInfo(phonenumber string, username string, password string, otp string) string {
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPass, err := us.SecretSauce.MakeSauce(password)
+
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
 
@@ -106,8 +109,8 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 	val, err := us.CacheRepo.FindBySession(session)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{enums.OTP_EXPIRED_OR_BAD_SESSION},
+			Tag:    exceptions.VALIDATION_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.OTP_EXPIRED_OR_BAD_SESSION},
 		})
 	}
 
@@ -116,12 +119,12 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 
 	if otp != userdata.OTP && !develop_mode {
 		panic(exceptions.Exception{
-			Tag:    enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{enums.OTP_INVALID},
+			Tag:    exceptions.VALIDATION_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.OTP_INVALID},
 		})
 	}
 
-	us.CacheRepo.DeleteRedis(session)
+	us.CacheRepo.DeleteSession(session)
 
 	return userdata.Phone, userdata.Username, userdata.Password
 }
@@ -134,8 +137,8 @@ func (us *UserService) Register(phonenumber string, username string, password []
 	userid, err := us.UserRepo.PostUser(phonenumber, username, password)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.DATABASE_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
 		})
 	}
 	return userid
@@ -147,21 +150,21 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 		user, err = userService.UserRepo.FindUserByPhone(identifier)
 		if err != nil {
 			panic(exceptions.Exception{
-				Tag: enums.NOT_FOUND,
-				Errors: []enums.SpecificError{
-					enums.USERNAME_PASSWORD_WRONG,
+				Tag: exceptions.NOT_FOUND,
+				Errors: []exceptions.SpecificError{
+					exceptions.USERNAME_PASSWORD_WRONG,
 				},
 			})
 		}
 	}
 
-	err = bcrypt.CompareHashAndPassword(user.Password, []byte(password))
+	err = userService.SecretSauce.SauceReferee(user.Password, password)
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USERNAME_PASSWORD_WRONG,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USERNAME_PASSWORD_WRONG,
 			},
 		})
 	}
@@ -172,9 +175,9 @@ func (userService *UserService) AuthenticateUser(identifier string, password str
 func (userService *UserService) ChangePasswordValidate(user_id int, old_password string) {
 	if user_id < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_INVALID_CREDENTIALS,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_INVALID_CREDENTIALS,
 			},
 		})
 	}
@@ -183,32 +186,32 @@ func (userService *UserService) ChangePasswordValidate(user_id int, old_password
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
 
-	err = bcrypt.CompareHashAndPassword(user.Password, []byte(old_password))
+	err = userService.SecretSauce.SauceReferee(user.Password, old_password)
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{
-				enums.PASSWORD_INVALID,
+			Tag: exceptions.VALIDATION_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.PASSWORD_INVALID,
 			},
 		})
 	}
 }
 func (userService *UserService) ChangePassword(user_id int, new_password string) {
-	password, err := bcrypt.GenerateFromPassword([]byte(new_password), bcrypt.DefaultCost)
+	password, err := userService.SecretSauce.MakeSauce(new_password)
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.SERVICE_UNAVAILABLE,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.SERVICE_UNAVAILABLE,
 			},
 		})
 	}
@@ -217,9 +220,9 @@ func (userService *UserService) ChangePassword(user_id int, new_password string)
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -230,8 +233,8 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 	userdata, err := us.UserRepo.FindUserByPhone(phonenumber)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.NOT_FOUND,
-			Errors: []enums.SpecificError{enums.USER_NOT_FOUND},
+			Tag:    exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{exceptions.USER_NOT_FOUND},
 		})
 	}
 
@@ -256,8 +259,8 @@ func (us *UserService) CheckFlagForPasswordReset(session string) int {
 	val, err := us.CacheRepo.GetSessionFlag(session)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.BAD_REQUEST,
-			Errors: []enums.SpecificError{enums.BAD_SESSION},
+			Tag:    exceptions.BAD_REQUEST,
+			Errors: []exceptions.SpecificError{exceptions.BAD_SESSION},
 		})
 	}
 	userID, _ := strconv.Atoi(val)
@@ -267,9 +270,9 @@ func (us *UserService) CheckFlagForPasswordReset(session string) int {
 func (us *UserService) UpdateUserData(userid int, userData *dto.UpdateUserDTO) {
 	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -278,7 +281,7 @@ func (us *UserService) UpdateUserData(userid int, userData *dto.UpdateUserDTO) {
 	if err != nil {
 
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
 }
@@ -286,17 +289,17 @@ func (us *UserService) UpdateUserData(userid int, userData *dto.UpdateUserDTO) {
 func (us *UserService) UpdateEmail(userid int, email string) {
 	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
 	effected, err := us.UserRepo.UpdateEmail(userid, email)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.UNPROCESSABLE,
-			Errors: []enums.SpecificError{enums.EMAIL_TAKEN},
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.EMAIL_TAKEN},
 		})
 	}
 	if effected == 0 {
@@ -305,8 +308,8 @@ func (us *UserService) UpdateEmail(userid int, email string) {
 			if user.ID != userid {
 
 				panic(exceptions.Exception{
-					Tag:    enums.UNPROCESSABLE,
-					Errors: []enums.SpecificError{enums.EMAIL_NOT_VERIFIED},
+					Tag:    exceptions.UNPROCESSABLE,
+					Errors: []exceptions.SpecificError{exceptions.EMAIL_NOT_VERIFIED},
 				})
 			}
 		}
@@ -316,17 +319,17 @@ func (us *UserService) UpdateEmail(userid int, email string) {
 func (us *UserService) UpdateUsername(userid int, username string) {
 	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
 	_, err := us.UserRepo.UpdateUsername(userid, username)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.UNPROCESSABLE,
-			Errors: []enums.SpecificError{enums.USERNAME_TAKEN},
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.USERNAME_TAKEN},
 		})
 	}
 }
@@ -334,23 +337,23 @@ func (us *UserService) UpdateUsername(userid int, username string) {
 func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string) string {
 	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag:    enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{enums.AUTH_ACCESS_DENIED},
+			Tag:    exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{exceptions.AUTH_ACCESS_DENIED},
 		})
 	}
 	_, err := us.CacheRepo.FindByPhone(phone)
 	if err == nil {
 		panic(exceptions.Exception{
-			Tag:    enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
+			Tag:    exceptions.VALIDATION_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.PHONE_TAKEN},
 		})
 	}
 
 	_, err = us.UserRepo.FindUserByPhone(phone)
 	if err == nil {
 		panic(exceptions.Exception{
-			Tag:    enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{enums.PHONE_TAKEN},
+			Tag:    exceptions.VALIDATION_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.PHONE_TAKEN},
 		})
 	}
 
@@ -375,9 +378,9 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 	targetInfo, err := us.UserRepo.FindUserByID(targetUserid)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_FOUND,
 			},
 		})
 	}
@@ -406,7 +409,7 @@ func (us *UserService) DeleteUser(userid int) {
 
 	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
+			Tag: exceptions.UNAUTHORIZED,
 		})
 	}
 

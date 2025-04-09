@@ -7,35 +7,34 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/dto"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/services"
 )
 
 type ProjectHandler struct {
 	Constants      *bootstrap.Constants
-	ProjectService *services.ProjectService
-	UserService    *services.UserService
-	GeneralService *services.GeneralService
-	JWTService     *services.JWT
+	ProjectService services.ProjectService
+	UserService    services.UserService
+	LabelService   services.LabelService
+	JWTService     services.JWT
 	Validator      *validator.Validate
 }
 
 func NewProjectHandler(
 	constants *bootstrap.Constants,
-	projectService *services.ProjectService,
-	userService *services.UserService,
-	generalService *services.GeneralService,
-	jwtService *services.JWT,
+	projectService services.ProjectService,
+	userService services.UserService,
+	labelService services.LabelService,
+	jwtService services.JWT,
 	validator *validator.Validate,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		Constants:      constants,
 		ProjectService: projectService,
 		UserService:    userService,
-		GeneralService: generalService,
+		LabelService:   labelService,
 		JWTService:     jwtService,
 		Validator:      validator,
 	}
@@ -54,7 +53,7 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 	var projectsDTO dto.UserProject
 
 	for _, project := range projects {
-		label := projectHandler.GeneralService.GetLabelInfo(project.Label)
+		label := projectHandler.LabelService.GetLabelInfo(project.Label)
 		projectsDTO.Projects = append(projectsDTO.Projects, dto.Project{
 			ProjectID:   project.ID,
 			OwnerID:     project.OwnerID,
@@ -74,8 +73,8 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(projectsDTO); err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CAST_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
 }
@@ -86,7 +85,7 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 
 	project := projectHandler.ProjectService.GetProject(projectID)
 	userInfo := projectHandler.UserService.GetUserInfo(project.OwnerID, 0)
-	label := projectHandler.GeneralService.GetLabelInfo(project.Label)
+	label := projectHandler.LabelService.GetLabelInfo(project.Label)
 
 	projectDTO := dto.Project{
 		ProjectID:   project.ID,
@@ -105,8 +104,8 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(projectDTO); err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CAST_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
 }
@@ -123,7 +122,7 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
-	price := projectHandler.GeneralService.GetLabelInfo(params.Label).Price
+	price := projectHandler.LabelService.GetLabelInfo(params.Label).Price
 
 	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, price, params.Tags)
 
@@ -135,8 +134,8 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(dto); err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CAST_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
 }
@@ -156,7 +155,7 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 	projectIDString := chi.URLParam(r, "project_id")
 	projectID, _ := strconv.Atoi(projectIDString)
 
-	price := projectHandler.GeneralService.GetLabelInfo(params.Label).Price
+	price := projectHandler.LabelService.GetLabelInfo(params.Label).Price
 
 	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, params.Label, price, params.Tags)
 

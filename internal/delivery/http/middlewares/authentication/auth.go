@@ -4,18 +4,18 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/services"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/services"
 )
 
 type Authentication struct {
 	Constants  *bootstrap.Constants
-	JWTService *services.JWT
+	JWTService services.JWT
 }
 
 func NewAuth(
 	Constants *bootstrap.Constants,
-	JWTService *services.JWT,
+	JWTService services.JWT,
 ) *Authentication {
 	return &Authentication{
 		Constants:  Constants,

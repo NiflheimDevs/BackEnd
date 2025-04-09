@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/niflheimdevs/backend/internal/models"
+import "github.com/niflheimdevs/backend/internal/domain/models"
 
 type Project struct {
 	ProjectID   int               `json:"project_id"`

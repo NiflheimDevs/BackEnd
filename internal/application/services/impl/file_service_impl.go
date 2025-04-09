@@ -11,17 +11,16 @@ import (
 
 	"github.com/chai2010/webp"
 	"github.com/nfnt/resize"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/repositories/storage"
 	"github.com/pixiv/go-libjpeg/jpeg"
 )
 
 type FileService struct {
-	FileStorage *storage.FileStorage
+	FileStorage storage.FileStorage
 }
 
-func NewFileService(fileStorage *storage.FileStorage) *FileService {
+func NewFileService(fileStorage storage.FileStorage) *FileService {
 	return &FileService{
 		FileStorage: fileStorage,
 	}
@@ -39,9 +38,9 @@ func (fs *FileService) GetUserProfileName(userid int, wantHighQual bool) string 
 func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -50,9 +49,9 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	img, _, err := image.Decode(imgReader)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.UNPROCESSABLE,
-			Errors: []enums.SpecificError{
-				enums.FORMAT_NOT_SUPPORTED,
+			Tag: exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{
+				exceptions.FORMAT_NOT_SUPPORTED,
 			},
 		})
 	}
@@ -63,11 +62,11 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.UNPROCESSABLE,
+			Tag: exceptions.UNPROCESSABLE,
 		})
 	}
 	outputName := fs.GetUserProfileName(userid, false)
-	fs.FileStorage.StorageFile(webpBuffer.Bytes(), outputName)
+	fs.FileStorage.StoreFile(webpBuffer.Bytes(), outputName)
 
 	rgbaImg := image.NewRGBA(img.Bounds())
 	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
@@ -81,20 +80,20 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	if err != nil {
 		log.Println("jpeg", err)
 		panic(exceptions.Exception{
-			Tag: enums.UNPROCESSABLE,
+			Tag: exceptions.UNPROCESSABLE,
 		})
 	}
 	outputName = fs.GetUserProfileName(userid, true)
-	fs.FileStorage.StorageFile(jpegBuffer.Bytes(), outputName)
+	fs.FileStorage.StoreFile(jpegBuffer.Bytes(), outputName)
 	return outputName
 }
 
 func (fs *FileService) DeleteProfilePhoto(userid int) {
 	if userid < 0 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -103,8 +102,8 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 	err := fs.FileStorage.DeleteFile(target)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.UNPROCESSABLE,
-			Errors: []enums.SpecificError{enums.MISSING_FILE},
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.MISSING_FILE},
 		})
 	}
 
@@ -113,8 +112,8 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 	err = fs.FileStorage.DeleteFile(target)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.UNPROCESSABLE,
-			Errors: []enums.SpecificError{enums.MISSING_FILE},
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.MISSING_FILE},
 		})
 	}
 }

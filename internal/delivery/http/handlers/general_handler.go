@@ -5,55 +5,60 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/dto"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/services"
 )
 
 type GeneralHandler struct {
-	GeneralService *services.GeneralService
-	JWTService     *services.JWT
-	Constants      *bootstrap.Constants
-	Validator      *validator.Validate
+	TagService    services.TagService
+	CareerService services.CareerService
+	LabelService  services.LabelService
+	JWTService    services.JWT
+	Constants     *bootstrap.Constants
+	Validator     *validator.Validate
 }
 
 func NewGeneralHandler(
-	generalservice *services.GeneralService,
-	jwtService *services.JWT,
+	tagService services.TagService,
+	careerService services.CareerService,
+	labelService services.LabelService,
+	jwtService services.JWT,
 	constants *bootstrap.Constants,
 	validator *validator.Validate,
 ) *GeneralHandler {
 	return &GeneralHandler{
-		GeneralService: generalservice,
-		JWTService:     jwtService,
-		Constants:      constants,
-		Validator:      validator,
+		TagService:    tagService,
+		CareerService: careerService,
+		LabelService:  labelService,
+		JWTService:    jwtService,
+		Constants:     constants,
+		Validator:     validator,
 	}
 }
 
 func (handler *GeneralHandler) GetTags(w http.ResponseWriter, r *http.Request) {
-	tags := handler.GeneralService.GetTags()
+	tags := handler.TagService.GetTags()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(tags); err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CAST_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
 }
 
 func (gh *GeneralHandler) GetLabel(w http.ResponseWriter, r *http.Request) {
-	labels := gh.GeneralService.GetLabels()
+	labels := gh.LabelService.GetLabels()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(labels); err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CAST_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
 }
@@ -66,7 +71,7 @@ func (gh *GeneralHandler) UpdateCareer(w http.ResponseWriter, r *http.Request) {
 
 	params := Validated[PutCareerDTO](gh.Validator, r)
 
-	res := gh.GeneralService.UpdateCareer(userid, params.Careers)
+	res := gh.CareerService.UpdateCareers(userid, params.Careers)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -82,7 +87,7 @@ func (gh *GeneralHandler) UpdateUserTag(w http.ResponseWriter, r *http.Request) 
 
 	params := Validated[PutTags](gh.Validator, r)
 
-	res := gh.GeneralService.UpdateTagsForCareerOrUser(userid, params.Tags, true)
+	res := gh.TagService.UpdateTagsForCareerOrUser(userid, params.Tags, true)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

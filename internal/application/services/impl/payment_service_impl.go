@@ -4,31 +4,33 @@ import (
 	"context"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/niflheimdevs/backend/internal/dto"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/application/dto"
+	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/repositories"
 )
 
 type PaymentService struct {
-	PaymentRepo *repositories.PaymentRepo
+	PaymentRepo repositories.PaymentRepo
+	TxManager   transaction.TxManager
 }
 
 func NewPaymentService(
-	paymentRepo *repositories.PaymentRepo,
+	paymentRepo repositories.PaymentRepo,
+	txManager transaction.TxManager,
 ) *PaymentService {
 	return &PaymentService{
 		PaymentRepo: paymentRepo,
+		TxManager:   txManager,
 	}
 }
 
 func (paymentService *PaymentService) GetUserBalance(userID int) int64 {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -37,9 +39,9 @@ func (paymentService *PaymentService) GetUserBalance(userID int) int64 {
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_FOUND,
 			},
 		})
 	}
@@ -50,9 +52,9 @@ func (paymentService *PaymentService) GetUserBalance(userID int) int64 {
 func (paymentService *PaymentService) GetUserTransactions(userID int, offset, limit int) []dto.UserTransactionDTO {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -61,9 +63,9 @@ func (paymentService *PaymentService) GetUserTransactions(userID int, offset, li
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_FOUND,
 			},
 		})
 	}
@@ -91,12 +93,12 @@ func (paymentService *PaymentService) GetUserTransactions(userID int, offset, li
 	return output
 }
 
-func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx pgx.Tx, userID int, amount int64) {
+func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx transaction.Tx, userID int, amount int64) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -105,18 +107,18 @@ func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx pgx
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_FOUND,
 			},
 		})
 	}
 
 	if balance < amount {
 		panic(exceptions.Exception{
-			Tag: enums.FORBIDDEN,
-			Errors: []enums.SpecificError{
-				enums.INSUFFICIENT_BALANCE,
+			Tag: exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{
+				exceptions.INSUFFICIENT_BALANCE,
 			},
 		})
 	}
@@ -128,9 +130,9 @@ func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx pgx
 func (paymentService *PaymentService) Deposit(userID int, amount int64, description string) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -138,12 +140,12 @@ func (paymentService *PaymentService) Deposit(userID int, amount int64, descript
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	tx, err := paymentService.PaymentRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := paymentService.TxManager.Begin(ctx)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -159,9 +161,9 @@ func (paymentService *PaymentService) Deposit(userID int, amount int64, descript
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_FOUND,
 			},
 		})
 	}
@@ -170,9 +172,9 @@ func (paymentService *PaymentService) Deposit(userID int, amount int64, descript
 
 	if err := tx.Commit(ctx); err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -181,9 +183,9 @@ func (paymentService *PaymentService) Deposit(userID int, amount int64, descript
 func (paymentService *PaymentService) Withdraw(userID int, amount int64, description string) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -192,18 +194,18 @@ func (paymentService *PaymentService) Withdraw(userID int, amount int64, descrip
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_FOUND,
 			},
 		})
 	}
 
 	if balance < amount {
 		panic(exceptions.Exception{
-			Tag: enums.FORBIDDEN,
-			Errors: []enums.SpecificError{
-				enums.INSUFFICIENT_BALANCE,
+			Tag: exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{
+				exceptions.INSUFFICIENT_BALANCE,
 			},
 		})
 	}
@@ -211,12 +213,12 @@ func (paymentService *PaymentService) Withdraw(userID int, amount int64, descrip
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	tx, err := paymentService.PaymentRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := paymentService.TxManager.Begin(ctx)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -233,9 +235,9 @@ func (paymentService *PaymentService) Withdraw(userID int, amount int64, descrip
 
 	if err := tx.Commit(ctx); err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}

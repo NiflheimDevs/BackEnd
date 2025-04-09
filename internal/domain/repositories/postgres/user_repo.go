@@ -11,6 +11,7 @@ type UserRepo interface {
 	FindUserByID(id int) (*models.UserModel, error)
 	FindUserByUsername(username string) (*models.UserModel, error)
 	FindUserByEmail(email string) (*models.UserModel, error)
+	PostUser(phonenumber string, username string, password []byte) (int, error)
 	UpdateUserData(userid int, userData *dto.UpdateUserDTO) (int64, error)
 	UpdateUsername(userid int, newUsername string) (int64, error)
 	UpdateEmail(userid int, email string) (int64, error)

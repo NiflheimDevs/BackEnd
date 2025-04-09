@@ -3,7 +3,6 @@ package midratelimit
 import (
 	"net/http"
 
-	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 	"golang.org/x/time/rate"
 )
@@ -25,8 +24,8 @@ func (rl *RateLimit) RateLimitMiddleware(next http.Handler) http.Handler {
 		limiter := rate.NewLimiter(rl.limit, rl.burst)
 		if !limiter.Allow() {
 			err := exceptions.Exception{
-				Tag:    enums.NOT_FOUND,
-				Errors: []enums.SpecificError{},
+				Tag:    exceptions.NOT_FOUND,
+				Errors: []exceptions.SpecificError{},
 			}
 			panic(err)
 		}

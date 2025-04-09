@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
@@ -60,9 +59,9 @@ func (j *JWT) GenerateToken(userID int) (string, string) {
 	accessTokenString, err := accessToken.SignedString(j.PrivateKey)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.AUTH_GENERATE_TOKEN_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_GENERATE_TOKEN_ERROR,
 			},
 		})
 	}
@@ -78,9 +77,9 @@ func (j *JWT) GenerateToken(userID int) (string, string) {
 	refreshTokenString, err := refreshToken.SignedString(j.PrivateKey)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.AUTH_GENERATE_TOKEN_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_GENERATE_TOKEN_ERROR,
 			},
 		})
 	}
@@ -99,9 +98,9 @@ func (j *JWT) VerifyToken(tokenString string) jwt.MapClaims {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		panic(exceptions.Exception{
-			Tag: enums.VALIDATION_ERROR,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.VALIDATION_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}

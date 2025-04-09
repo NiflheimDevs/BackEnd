@@ -8,36 +8,40 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/dto"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/services"
-	"github.com/niflheimdevs/backend/internal/services/communications/sms"
 	"github.com/niflheimdevs/backend/internal/utils"
 )
 
 type UserHandler struct {
-	Constants      *bootstrap.Constants
-	UserService    *services.UserService
-	JWTService     *services.JWT
-	Validator      *validator.Validate
-	GeneralService *services.GeneralService
+	Constants     *bootstrap.Constants
+	UserService   services.UserService
+	JWTService    services.JWT
+	Validator     *validator.Validate
+	TagService    services.TagService
+	CareerService services.CareerService
+	SmsService    services.SmsService
 }
 
 func NewUserHandler(
 	Constants *bootstrap.Constants,
-	userService *services.UserService,
-	jwtService *services.JWT,
+	userService services.UserService,
+	jwtService services.JWT,
 	validator *validator.Validate,
-	generalService *services.GeneralService,
+	tagService services.TagService,
+	careerService services.CareerService,
+	smsService services.SmsService,
 ) *UserHandler {
 	return &UserHandler{
-		Constants:      Constants,
-		UserService:    userService,
-		Validator:      validator,
-		JWTService:     jwtService,
-		GeneralService: generalService,
+		Constants:     Constants,
+		UserService:   userService,
+		Validator:     validator,
+		JWTService:    jwtService,
+		CareerService: careerService,
+		TagService:    tagService,
+		SmsService:    smsService,
 	}
 }
 
@@ -67,8 +71,8 @@ func (userHandler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(userDTO); err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CAST_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
 }
@@ -101,10 +105,10 @@ func (uh *UserHandler) ReserveInfo(w http.ResponseWriter, r *http.Request) {
 	session := uh.UserService.CheckAvailabilityForSignup(info.Phonenumber, info.Username)
 
 	if session == "" {
-		code := sms.GenerateOTP()
+		code := uh.SmsService.GenerateOTP()
 		session = uh.UserService.CacheUserInfo(info.Phonenumber, info.Username, info.Password, code)
 		// ? placement
-		sms.SendOTP(info.Phonenumber, code)
+		uh.SmsService.SendOTP(info.Phonenumber, code)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -138,10 +142,10 @@ func (uh *UserHandler) SendOTP(w http.ResponseWriter, r *http.Request) {
 		Phonenumber string `json:"phonenumber" validate:"required,phone"`
 	}
 	params := Validated[Params](uh.Validator, r)
-	code := sms.GenerateOTP()
+	code := uh.SmsService.GenerateOTP()
 	session := uh.UserService.SetupOTP(params.Phonenumber, code)
 	// ? placement
-	sms.SendOTP(params.Phonenumber, code)
+	uh.SmsService.SendOTP(params.Phonenumber, code)
 
 	w.Write([]byte(session))
 }
@@ -223,9 +227,9 @@ func (uh *UserHandler) UpdatePhoneSendOTP(w http.ResponseWriter, r *http.Request
 	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
 	params := Validated[NewPhone](uh.Validator, r)
 
-	code := sms.GenerateOTP()
+	code := uh.SmsService.GenerateOTP()
 	session := uh.UserService.UpdatePhoneSendOTP(params.NewPhone, userid, code)
-	sms.SendOTP(params.NewPhone, code)
+	uh.SmsService.SendOTP(params.NewPhone, code)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(session))
@@ -252,7 +256,7 @@ func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	targetUserid, err := strconv.Atoi(useridString)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.BAD_REQUEST,
+			Tag: exceptions.BAD_REQUEST,
 		})
 	}
 	if targetUserid <= 0 {
@@ -265,10 +269,10 @@ func (uh *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		response["info"] = uh.UserService.GetUserInfo(targetUserid, userid)
 	}
 	if utils.Contains(includes, "career") {
-		response["career"] = uh.GeneralService.GetCareerForUser(userid, targetUserid)
+		response["career"] = uh.CareerService.GetCareersForUser(userid, targetUserid)
 	}
 	if utils.Contains(includes, "tag") {
-		response["tag"] = uh.GeneralService.GetTagsForUser(targetUserid)
+		response["tag"] = uh.TagService.GetTagsForUser(targetUserid)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

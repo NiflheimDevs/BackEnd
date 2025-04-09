@@ -4,29 +4,35 @@ import (
 	"context"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
+	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/domain/models"
-	"github.com/niflheimdevs/backend/internal/enums"
+	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/repositories"
 )
 
 type ProjectService struct {
-	ProjectRepo    *repositories.ProjectRepo
-	PaymentService *PaymentService
+	ProjectRepo    repositories.ProjectRepo
+	PaymentService PaymentService
 	Constants      *bootstrap.Constants
+	TxManager      transaction.TxManager
+	TagRepo        repositories.TagRepo
+	TagService     TagService // !
 }
 
 func NewProjectService(
-	projectRepo *repositories.ProjectRepo,
-	paymentService *PaymentService,
+	projectRepo repositories.ProjectRepo,
+	paymentService PaymentService,
 	constants *bootstrap.Constants,
+	tagRepo repositories.TagRepo,
+	txManager transaction.TxManager,
 ) *ProjectService {
 	return &ProjectService{
 		ProjectRepo:    projectRepo,
 		PaymentService: paymentService,
 		Constants:      constants,
+		TxManager:      txManager,
+		TagRepo:        tagRepo,
 	}
 }
 
@@ -35,14 +41,14 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.PROJECT_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.PROJECT_NOT_FOUND,
 			},
 		})
 	}
 
-	tags := projectService.ProjectRepo.GetProjectTag(projectID)
+	tags := projectService.TagRepo.GetProjectTag(projectID)
 
 	project.Tags = tags
 
@@ -52,9 +58,9 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 func (projectService *ProjectService) GetUserProjects(userID, offset, limit int) []models.ProjectModel {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -67,9 +73,9 @@ func (projectService *ProjectService) GetUserProjects(userID, offset, limit int)
 func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, price int64, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -77,12 +83,12 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	tx, err := projectService.ProjectRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := projectService.TxManager.Begin(ctx)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -101,14 +107,14 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 	projectID := projectService.ProjectRepo.CreateProject(ctx, tx, userID, label, title, description, duration)
 
 	for _, tagID := range tags {
-		projectService.ProjectRepo.AddProjectTag(ctx, tx, projectID, tagID)
+		projectService.TagRepo.AddProjectTagWithTx(ctx, tx, projectID, tagID)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -119,99 +125,44 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 func (projectService *ProjectService) UpdateProject(projectID, userID int, title, description string, label int, price int64, tags []int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	tx, err := projectService.ProjectRepo.PG.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
-			},
-		})
-	}
-
-	defer func() {
-		if p := recover(); p != nil {
-			_ = tx.Rollback(ctx)
-			panic(p)
-		}
-	}()
 
 	project, err := projectService.ProjectRepo.GetProject(projectID)
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.PROJECT_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.PROJECT_NOT_FOUND,
 			},
 		})
 	}
 
 	if project.OwnerID != userID {
 		panic(exceptions.Exception{
-			Tag: enums.BAD_REQUEST,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_OWNER,
+			Tag: exceptions.BAD_REQUEST,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_OWNER,
 			},
 		})
 	}
 
-	if project.Label != label {
-		projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
-	}
+	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description)
 
-	projectService.ProjectRepo.UpdateProject(ctx, tx, projectID, userID, label, title, description)
-
-	existingTags := projectService.ProjectRepo.GetProjectTag(projectID)
-
-	existingTagSet := make(map[int]bool)
-	for _, tag := range existingTags {
-		existingTagSet[tag.ID] = true
-	}
-
-	newTagSet := make(map[int]bool)
-	for _, tag := range tags {
-		newTagSet[tag] = true
-	}
-
-	for _, tag := range tags {
-		if !existingTagSet[tag] {
-			projectService.ProjectRepo.AddProjectTag(ctx, tx, projectID, tag)
-		}
-	}
-
-	for _, tag := range existingTags {
-		if !newTagSet[tag.ID] {
-			projectService.ProjectRepo.DeleteProjectTags(ctx, tx, projectID, tag.ID)
-		}
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
-			},
-		})
-	}
+	projectService.TagService.UpdateTagsForProject(projectID, tags) // !
 }
 
 func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
-			Tag: enums.UNAUTHORIZED,
-			Errors: []enums.SpecificError{
-				enums.AUTH_ACCESS_DENIED,
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
 			},
 		})
 	}
@@ -219,12 +170,13 @@ func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	tx, err := projectService.ProjectRepo.PG.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := projectService.TxManager.Begin(ctx)
+
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}
@@ -240,35 +192,35 @@ func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.NOT_FOUND,
-			Errors: []enums.SpecificError{
-				enums.PROJECT_NOT_FOUND,
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.PROJECT_NOT_FOUND,
 			},
 		})
 	}
 
 	if project.OwnerID != userID {
 		panic(exceptions.Exception{
-			Tag: enums.BAD_REQUEST,
-			Errors: []enums.SpecificError{
-				enums.USER_NOT_OWNER,
+			Tag: exceptions.BAD_REQUEST,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_OWNER,
 			},
 		})
 	}
 
-	tags := projectService.ProjectRepo.GetProjectTag(projectID)
+	tags := projectService.TagRepo.GetProjectTag(projectID)
 
 	for _, tag := range tags {
-		projectService.ProjectRepo.DeleteProjectTags(ctx, tx, projectID, tag.ID)
+		projectService.TagRepo.DeleteProjectTagWithTx(ctx, tx, projectID, tag.ID)
 	}
 
 	projectService.ProjectRepo.DeleteProject(ctx, tx, projectID)
 
 	if err := tx.Commit(ctx); err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{
-				enums.DATABASE_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
 			},
 		})
 	}

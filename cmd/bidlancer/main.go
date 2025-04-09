@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/driver"
-	"github.com/niflheimdevs/backend/internal/routes"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/delivery/http/routes"
+	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
 	"github.com/niflheimdevs/backend/internal/wire"
 )
 

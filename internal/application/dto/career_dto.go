@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"github.com/niflheimdevs/backend/internal/models"
+	"github.com/niflheimdevs/backend/internal/domain/models"
 )
 
 type SendCareerDTO struct {

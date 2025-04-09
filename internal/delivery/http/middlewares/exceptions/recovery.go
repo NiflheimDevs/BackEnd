@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/niflheimdevs/backend/internal/enums"
 	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
@@ -44,21 +43,21 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 
 func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]byte, int) {
 	var code int
-	if err.Tag == enums.VALIDATION_ERROR {
+	if err.Tag == exceptions.VALIDATION_ERROR {
 		code = 409
-	} else if err.Tag == enums.INTERNAL_ERROR {
+	} else if err.Tag == exceptions.INTERNAL_ERROR {
 		code = 500
-	} else if err.Tag == enums.NOT_FOUND {
+	} else if err.Tag == exceptions.NOT_FOUND {
 		code = 404
-	} else if err.Tag == enums.BAD_REQUEST {
+	} else if err.Tag == exceptions.BAD_REQUEST {
 		code = 400
-	} else if err.Tag == enums.LIMIT_EXCEED {
+	} else if err.Tag == exceptions.LIMIT_EXCEED {
 		code = 429
-	} else if err.Tag == enums.UNAUTHORIZED {
+	} else if err.Tag == exceptions.UNAUTHORIZED {
 		code = 401
-	} else if err.Tag == enums.FORBIDDEN {
+	} else if err.Tag == exceptions.FORBIDDEN {
 		code = 403
-	} else if err.Tag == enums.UNPROCESSABLE {
+	} else if err.Tag == exceptions.UNPROCESSABLE {
 		code = 422
 	} else {
 		code = 418

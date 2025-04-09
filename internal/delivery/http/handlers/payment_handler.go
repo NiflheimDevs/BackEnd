@@ -6,20 +6,19 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/services"
 )
 
 type PaymentHandler struct {
-	PaymentService *services.PaymentService
+	PaymentService services.PaymentService
 	Constants      *bootstrap.Constants
 	Validator      *validator.Validate
 }
 
 func NewPaymentHandler(
-	paymentService *services.PaymentService,
+	paymentService services.PaymentService,
 	constants *bootstrap.Constants,
 	validator *validator.Validate,
 ) *PaymentHandler {
@@ -43,8 +42,8 @@ func (paymentHandler *PaymentHandler) GetUserTransactions(w http.ResponseWriter,
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(transactions); err != nil {
 		panic(exceptions.Exception{
-			Tag:    enums.INTERNAL_ERROR,
-			Errors: []enums.SpecificError{enums.CAST_ERROR},
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
 }

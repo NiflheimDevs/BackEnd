@@ -7,10 +7,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/niflheimdevs/backend/internal/dto"
-	"github.com/niflheimdevs/backend/internal/enums"
+	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/domain/models"
 	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/models"
 )
 
 type UserRepo struct {
@@ -171,7 +170,7 @@ func (repo *UserRepo) UpdatePhone(phonenumber string, userid string) {
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
 }
@@ -187,7 +186,7 @@ func (repo *UserRepo) DeleteUser(userid int) {
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: enums.INTERNAL_ERROR,
+			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
 }
