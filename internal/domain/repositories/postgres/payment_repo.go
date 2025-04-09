@@ -8,7 +8,7 @@ import (
 )
 
 type PaymentRepo interface {
-	GetUserTransactions(userID int, offset, limit int) ([]models.TransactionModel, error)
+	GetUserTransactions(userID int, offset, limit int, sortBy, order string) ([]models.TransactionModel, error)
 	GetBalance(userID int) (int64, error)
 	Withdraw(ctx context.Context, tx transaction.Tx, userID int, amount int64, description string)
 	Deposit(ctx context.Context, tx transaction.Tx, userID int, amount int64, description string)
