@@ -296,24 +296,12 @@ func (us *UserService) UpdateEmail(userid int, email string) {
 			},
 		})
 	}
-	effected, err := us.UserRepo.UpdateEmail(userid, email)
+	_, err := us.UserRepo.UpdateEmail(userid, email)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNPROCESSABLE,
 			Errors: []exceptions.SpecificError{exceptions.EMAIL_TAKEN},
 		})
-	}
-	if effected == 0 {
-		user, _ := us.UserRepo.FindUserByEmail(email)
-		if user != nil {
-			if user.ID != userid {
-
-				panic(exceptions.Exception{
-					Tag:    exceptions.UNPROCESSABLE,
-					Errors: []exceptions.SpecificError{exceptions.EMAIL_NOT_VERIFIED},
-				})
-			}
-		}
 	}
 }
 
@@ -342,12 +330,10 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 			Errors: []exceptions.SpecificError{exceptions.AUTH_ACCESS_DENIED},
 		})
 	}
-	_, err := us.CacheRepo.FindByPhone(phone)
+	session, err := us.CacheRepo.FindByPhone(phone)
 	if err == nil {
-		panic(exceptions.Exception{
-			Tag:    exceptions.VALIDATION_ERROR,
-			Errors: []exceptions.SpecificError{exceptions.PHONE_TAKEN},
-		})
+
+		return session
 	}
 
 	_, err = us.UserRepo.FindUserByPhone(phone)
@@ -358,7 +344,7 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 		})
 	}
 
-	session := uuid.New().String()
+	session = uuid.New().String()
 	val := models.UserCacheData{
 		Phone:    phone,
 		Username: fmt.Sprintf("%d", userid),

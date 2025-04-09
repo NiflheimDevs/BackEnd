@@ -62,7 +62,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE owner_id = $1 OFFSET $2 LIMIT $3"
+	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
 
 	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
 

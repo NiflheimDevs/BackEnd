@@ -99,8 +99,8 @@ func (cr *CareerRepo) DeleteCareer(userid int, careerid int) error {
 	defer cancel()
 
 	query := `DELETE
-	FROM users_career
-	WHERE user_id = $1 AND career_id = $2`
+	FROM career 
+	WHERE user_id = $1 AND id = $2`
 
 	_, err := cr.PG.Exec(ctx, query, userid, careerid)
 	return err
