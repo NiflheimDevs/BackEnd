@@ -45,8 +45,14 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
 	query := r.URL.Query()
-	offset, _ := strconv.Atoi(query.Get("offset"))
-	limit, _ := strconv.Atoi(query.Get("limit"))
+	offset, err := strconv.Atoi(query.Get("offset"))
+	if err != nil {
+		offset = projectHandler.Constants.Pagination.Offset
+	}
+	limit, err := strconv.Atoi(query.Get("limit"))
+	if err != nil {
+		limit = projectHandler.Constants.Pagination.Limit
+	}
 
 	projects := projectHandler.ProjectService.GetUserProjects(userID, offset, limit)
 	userInfo := projectHandler.UserService.GetUserInfo(userID, 0)

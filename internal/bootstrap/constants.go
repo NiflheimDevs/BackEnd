@@ -9,6 +9,7 @@ type Constants struct {
 	IPAddr      string
 	StorageDir  string
 	Project     Project
+	Pagination  Pagination
 }
 
 type DBConst struct {
@@ -23,6 +24,11 @@ type Context struct {
 
 type Project struct {
 	LastTime time.Duration
+}
+
+type Pagination struct {
+	Offset int
+	Limit  int
 }
 
 func NewConstant() *Constants {
@@ -40,6 +46,10 @@ func NewConstant() *Constants {
 		StorageDir: "./storage/",
 		Project: Project{
 			LastTime: 7 * 24 * time.Hour,
+		},
+		Pagination: Pagination{
+			Offset: 0,
+			Limit:  10,
 		},
 	}
 }
