@@ -38,6 +38,7 @@ services:
       - "8080:8080"
     networks:
       - backend_network
+      - public_network
 
 
 volumes:
@@ -47,3 +48,4 @@ volumes:
 networks:
   backend_network:
     internal: true
+  public_network:
