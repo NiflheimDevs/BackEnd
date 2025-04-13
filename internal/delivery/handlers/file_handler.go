@@ -38,7 +38,6 @@ func NewFileHandler(
 }
 
 func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request) {
-	// r.ParseMultipartForm(10 << 20)
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		log.Println(err)
@@ -49,7 +48,7 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 
 	defer file.Close()
 
-	if header.Size > 50000000 {
+	if header.Size > fh.Constants.MaxPhotoSize {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNPROCESSABLE,
 			Errors: []exceptions.SpecificError{exceptions.FILE_TOO_LARGE},
