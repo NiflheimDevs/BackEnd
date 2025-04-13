@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/niflheimdevs/backend/bootstrap"
-	"github.com/niflheimdevs/backend/internal/delivery/http/routes"
+	"github.com/niflheimdevs/backend/internal/delivery/routes"
 	"github.com/niflheimdevs/backend/wire"
 )
 
