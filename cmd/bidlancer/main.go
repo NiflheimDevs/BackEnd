@@ -31,5 +31,8 @@ func main() {
 		Handler: routes.Routes(app),
 	}
 
-	server.ListenAndServeTLS(di.Const.SSLKeysPath+"/Certificate.pem", di.Const.SSLKeysPath+"/privatekey.key")
+	err = server.ListenAndServeTLS(di.Const.SSLKeysPath+"/Certificate.pem", di.Const.SSLKeysPath+"/privatekey.key")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
