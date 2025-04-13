@@ -26,6 +26,11 @@ RUN mkdir -p ./internal/jwt
 COPY ./internal/jwt/privateKey.pem ./internal/jwt/
 COPY ./internal/jwt/publicKey.pem ./internal/jwt/
 
+RUN mkdir -p ./SSL
+
+COPY ./SSL/certificate.pem ./SSL
+COPY ./SSL/privatekey.key ./SSL
+
 COPY --from=builder /app/main .
 
 COPY .env .
