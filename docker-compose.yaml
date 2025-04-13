@@ -35,7 +35,7 @@ services:
     env_file:
       - ./.env
     volumes:
-      - storagedata:./storage
+      - storagedata:/app/storage
     ports:
       - "8080:8080"
     networks:
