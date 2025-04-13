@@ -5,6 +5,7 @@ import "time"
 type Constants struct {
 	Database     DBConst
 	JWTKeysPath  string
+	SSLKeysPath  string
 	Context      Context
 	StorageDir   string
 	Project      Project
@@ -47,6 +48,7 @@ func NewConstant() *Constants {
 			MaxDbLifeTime: 5 * time.Minute,
 		},
 		JWTKeysPath: "./internal/jwt",
+		SSLKeysPath: "./SSL",
 		Context: Context{
 			UserID: "userID",
 		},

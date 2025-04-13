@@ -31,5 +31,5 @@ func main() {
 		Handler: routes.Routes(app),
 	}
 
-	server.ListenAndServe()
+	server.ListenAndServeTLS(di.Const.SSLKeysPath+"/Certificate.pem", di.Const.SSLKeysPath+"/privatekey.key")
 }
