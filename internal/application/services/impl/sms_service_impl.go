@@ -49,7 +49,7 @@ func (ss *SmsService) SendOTP(phonenumber string, code string) {
 	temp := Template{
 		Phonenumber: phonenumber,
 		TemplateId:  "485976",
-		Parameter: []Parameters{Parameters{
+		Parameter: []Parameters{{
 			Name:  "Code",
 			Value: code,
 		}},
