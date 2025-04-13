@@ -1,21 +1,14 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/niflheimdevs/backend/internal/bootstrap"
-	"github.com/niflheimdevs/backend/internal/driver"
-	"github.com/niflheimdevs/backend/internal/routes"
-	"github.com/niflheimdevs/backend/internal/wire"
-	"github.com/redis/go-redis/v9"
+	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/delivery/routes"
+	"github.com/niflheimdevs/backend/wire"
 )
-
-const port = ":8080"
 
 func main() {
 
@@ -26,42 +19,17 @@ func main() {
 		panic(err)
 	}
 
-	pdb, rdb := createConnections(di)
-
-	defer pdb.Close()
-	defer rdb.Close()
-
-	app, err := wire.InitializeApplication(di, pdb, rdb)
+	app, err := wire.InitializeApplication(di)
 
 	if err != nil {
 		panic(err)
 	}
 
-	log.Printf("Application is running on port%s", port)
+	log.Printf("Application is running on port%s", di.Const.Port)
 	server := &http.Server{
-		Addr:    port,
+		Addr:    di.Const.Port,
 		Handler: routes.Routes(app),
 	}
 
 	server.ListenAndServe()
-}
-
-func createConnections(di *bootstrap.Di) (*pgxpool.Pool, *redis.Client) {
-
-	pdb := driver.ConnectSQL(di)
-	rdb := driver.ConncetRedis(di)
-
-	ctx := context.Background()
-
-	err := pdb.Ping(ctx)
-	if err != nil {
-		panic(err)
-	}
-	err = rdb.Ping(ctx).Err()
-
-	if err != nil {
-		panic(err)
-	}
-
-	return pdb, rdb
 }
