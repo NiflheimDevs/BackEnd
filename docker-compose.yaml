@@ -41,7 +41,6 @@ services:
     networks:
       - backend_network
 
-
 volumes:
   pgdata:
   redisdata:
