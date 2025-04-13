@@ -29,8 +29,9 @@ type RDatabase struct {
 }
 
 type SMS struct {
-	IP_Addr string
-	API_Key string
+	IPAddr        string
+	APIKey        string
+	APISandboxKey string
 }
 
 type Server struct {
@@ -60,8 +61,9 @@ func NewEnvironment() *Env {
 			IP_Addr: os.Getenv("IP_ADDR"),
 		},
 		SMS: SMS{
-			IP_Addr: os.Getenv("SMS_URL"),
-			API_Key: os.Getenv("SMS_API_KEY"),
+			IPAddr:        os.Getenv("SMS_URL"),
+			APIKey:        os.Getenv("SMS_API_KEY"),
+			APISandboxKey: os.Getenv("SMS_API_KEY_SANDBOX"),
 		},
 	}
 }

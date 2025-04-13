@@ -10,6 +10,7 @@ type Constants struct {
 	Project     Project
 	Pagination  Pagination
 	Port        string
+	DevelopMode bool
 }
 
 type DBConst struct {
@@ -51,6 +52,7 @@ func NewConstant() *Constants {
 			Offset: 0,
 			Limit:  10,
 		},
-		Port: ":8080",
+		Port:        ":8080",
+		DevelopMode: true,
 	}
 }

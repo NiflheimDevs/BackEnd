@@ -106,7 +106,7 @@ func (us *UserService) CacheUserInfo(phonenumber string, username string, passwo
 	return session
 }
 
-var develop_mode = true
+// var develop_mode = true
 
 // checks the code with cache and returns the data. returns phonenumber, username, password
 func (us *UserService) ValidateOTP(session string, otp string) (string, string, []byte) {
@@ -121,7 +121,7 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 	var userdata models.UserCacheData
 	json.Unmarshal([]byte(val), &userdata)
 
-	if otp != userdata.OTP && !develop_mode {
+	if otp != userdata.OTP && !us.Constants.DevelopMode {
 		panic(exceptions.Exception{
 			Tag:    exceptions.CONFLICT_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.OTP_INVALID},
@@ -208,6 +208,7 @@ func (userService *UserService) ChangePasswordValidate(user_id int, old_password
 		})
 	}
 }
+
 func (userService *UserService) ChangePassword(user_id int, new_password string) {
 	password, err := userService.SecretSauce.MakeSauce(new_password)
 

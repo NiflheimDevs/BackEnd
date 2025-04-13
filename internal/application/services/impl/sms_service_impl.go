@@ -15,7 +15,8 @@ import (
 )
 
 type SmsService struct {
-	Env *bootstrap.Env
+	Env  *bootstrap.Env
+	Cons *bootstrap.Constants
 }
 
 func NewSmsService(env *bootstrap.Env) *SmsService {
@@ -28,8 +29,14 @@ func (ss *SmsService) GenerateOTP() string {
 }
 
 func (ss *SmsService) SendOTP(phonenumber string, code string) {
-	// apikey := "OQIAPP4fRTpqWpWafX2lljoW9YBSuCmGLdFGFDZfJCfLfc97"
-	apikey := ss.Env.SMS.API_Key
+	var apikey string
+
+	if ss.Cons.DevelopMode {
+		apikey = ss.Env.SMS.APISandboxKey
+	} else {
+		apikey = ss.Env.SMS.APIKey
+	}
+
 	type Parameters struct {
 		Name  string `json:"name"`
 		Value string `json:"value"`
@@ -49,7 +56,7 @@ func (ss *SmsService) SendOTP(phonenumber string, code string) {
 	}
 	marshalled, _ := json.Marshal(temp)
 	bodyReader := bytes.NewReader(marshalled)
-	req, _ := http.NewRequest(http.MethodPost, ss.Env.SMS.IP_Addr, bodyReader)
+	req, _ := http.NewRequest(http.MethodPost, ss.Env.SMS.IPAddr, bodyReader)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/plain")
 	req.Header.Set("x-api-key", apikey)
