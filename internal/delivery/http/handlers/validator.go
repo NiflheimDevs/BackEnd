@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
 
 func Validated[T any](validate *validator.Validate, r *http.Request) T {

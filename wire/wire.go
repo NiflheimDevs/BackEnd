@@ -15,7 +15,7 @@ import (
 	repositoriesimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	redisimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
-	"github.com/niflheimdevs/backend/internal/pkg"
+	"github.com/niflheimdevs/backend/pkg"
 
 	repositries "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
@@ -86,12 +86,13 @@ var ServiceProviderSet = wire.NewSet(
 )
 
 var HandlerProviderSet = wire.NewSet(
-	wire.Struct(new(handlers.UserHandler), "*"),
-	wire.Struct(new(handlers.FileHandler), "*"),
-	wire.Struct(new(handlers.ErrorHandler), "*"),
-	wire.Struct(new(handlers.ProjectHandler), "*"),
-	wire.Struct(new(handlers.GeneralHandler), "*"),
-	wire.Struct(new(handlers.PaymentHandler), "*"),
+	handlers.NewFileHandler,
+	handlers.NewUserHandler,
+	handlers.NewErrorHandler,
+	handlers.NewProjectHandler,
+	handlers.NewGeneralHandler,
+	handlers.NewPaymentHandler,
+	wire.Struct(new(Handlers), "*"),
 )
 
 var MiddlewareProviderSet = wire.NewSet(
@@ -121,14 +122,18 @@ type Middlewares struct {
 	Authentication *midauth.Authentication
 }
 
-type Application struct {
+type Handlers struct {
 	FileHandler    *handlers.FileHandler
 	UserHandler    *handlers.UserHandler
 	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
-	Middlewares    *Middlewares
+}
+
+type Application struct {
+	Handlers    *Handlers
+	Middlewares *Middlewares
 }
 
 func InitializeApplication(container *bootstrap.Di) (*Application, error) {

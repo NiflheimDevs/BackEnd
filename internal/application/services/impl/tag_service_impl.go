@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
-	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/utils"
 )
 

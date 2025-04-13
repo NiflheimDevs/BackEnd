@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
-	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
 type PaymentService struct {

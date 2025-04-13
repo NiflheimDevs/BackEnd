@@ -3,7 +3,7 @@ package midratelimit
 import (
 	"net/http"
 
-	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"golang.org/x/time/rate"
 )
 

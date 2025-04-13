@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
 
 type SmsService struct {

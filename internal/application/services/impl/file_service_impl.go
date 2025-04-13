@@ -11,8 +11,8 @@ import (
 
 	"github.com/chai2010/webp"
 	"github.com/nfnt/resize"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
-	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/pixiv/go-libjpeg/jpeg"
 )
 

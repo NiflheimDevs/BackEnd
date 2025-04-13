@@ -56,12 +56,12 @@ const (
 )
 
 const (
-	UNAUTHORIZED     GeneralError = "UNAUTHORIZED"
-	VALIDATION_ERROR GeneralError = "VALIDATION_ERROR"
-	INTERNAL_ERROR   GeneralError = "INTERNAL_ERROR"
-	NOT_FOUND        GeneralError = "NOT_FOUND"
-	BAD_REQUEST      GeneralError = "BAD_REQUEST"
-	LIMIT_EXCEED     GeneralError = "LIMIT_EXCEED"
-	UNPROCESSABLE    GeneralError = "UNPROCESSABLE"
-	FORBIDDEN        GeneralError = "FORBIDDEN"
+	UNAUTHORIZED   GeneralError = "UNAUTHORIZED"
+	CONFLICT_ERROR GeneralError = "CONFLICT_ERROR"
+	INTERNAL_ERROR GeneralError = "INTERNAL_ERROR"
+	NOT_FOUND      GeneralError = "NOT_FOUND"
+	BAD_REQUEST    GeneralError = "BAD_REQUEST"
+	LIMIT_EXCEED   GeneralError = "LIMIT_EXCEED"
+	UNPROCESSABLE  GeneralError = "UNPROCESSABLE"
+	FORBIDDEN      GeneralError = "FORBIDDEN"
 )

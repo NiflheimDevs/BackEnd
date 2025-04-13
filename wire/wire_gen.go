@@ -24,23 +24,18 @@ import (
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
-	"github.com/niflheimdevs/backend/internal/pkg"
+	"github.com/niflheimdevs/backend/pkg"
 )
 
 // Injectors from wire.go:
 
 func InitializeApplication(container *bootstrap.Di) (*Application, error) {
+	constants := ProvideConstants(container)
 	fileStorage := storageimpl.NewFileStorage()
 	fileService := servicesimpl.NewFileService(fileStorage)
-	validate := pkg.NewValidator()
-	constants := ProvideConstants(container)
 	jwt := servicesimpl.NewJWT(constants)
-	fileHandler := &handlers.FileHandler{
-		FileService: fileService,
-		Validator:   validate,
-		JWTService:  jwt,
-		Constants:   constants,
-	}
+	validate := pkg.NewValidator()
+	fileHandler := handlers.NewFileHandler(constants, fileService, jwt, validate)
 	pool := driver.ConnectSQL(container)
 	userRepo := repositoriesimpl.NewUserRepo(pool)
 	client := driver.ConncetRedis(container)
@@ -50,18 +45,10 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	tagRepo := repositoriesimpl.NewTagRepo(pool)
 	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
 	careerRepo := repositoriesimpl.NewCareerRepo(pool)
-	careerService := servicesimpl.NewCareerService(careerRepo, tagRepo, userRepo)
+	careerService := servicesimpl.NewCareerService(careerRepo, tagService, tagRepo, userRepo)
 	smsService := servicesimpl.NewSmsService()
-	userHandler := &handlers.UserHandler{
-		Constants:     constants,
-		UserService:   userService,
-		JWTService:    jwt,
-		Validator:     validate,
-		TagService:    tagService,
-		CareerService: careerService,
-		SmsService:    smsService,
-	}
-	errorHandler := &handlers.ErrorHandler{}
+	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
+	errorHandler := handlers.NewErrorHandler()
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
 	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
 	pgxTxManager := db.NewTxManager(pool)
@@ -69,26 +56,16 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, pgxTxManager)
 	labelRepo := repositoriesimpl.NewLabelRepo(pool)
 	labelService := servicesimpl.NewLabelService(labelRepo, userRepo)
-	projectHandler := &handlers.ProjectHandler{
-		Constants:      constants,
-		ProjectService: projectService,
-		UserService:    userService,
-		LabelService:   labelService,
-		JWTService:     jwt,
-		Validator:      validate,
-	}
-	generalHandler := &handlers.GeneralHandler{
-		TagService:    tagService,
-		CareerService: careerService,
-		LabelService:  labelService,
-		JWTService:    jwt,
-		Constants:     constants,
-		Validator:     validate,
-	}
-	paymentHandler := &handlers.PaymentHandler{
-		PaymentService: paymentService,
-		Constants:      constants,
-		Validator:      validate,
+	projectHandler := handlers.NewProjectHandler(constants, projectService, userService, labelService, jwt, validate)
+	generalHandler := handlers.NewGeneralHandler(tagService, careerService, labelService, jwt, constants, validate)
+	paymentHandler := handlers.NewPaymentHandler(paymentService, constants, validate)
+	wireHandlers := &Handlers{
+		FileHandler:    fileHandler,
+		UserHandler:    userHandler,
+		ErrorHandler:   errorHandler,
+		ProjectHandler: projectHandler,
+		GeneralHandler: generalHandler,
+		PaymentHandler: paymentHandler,
 	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit()
@@ -99,13 +76,8 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		Authentication: authentication,
 	}
 	application := &Application{
-		FileHandler:    fileHandler,
-		UserHandler:    userHandler,
-		ErrorHandler:   errorHandler,
-		ProjectHandler: projectHandler,
-		GeneralHandler: generalHandler,
-		PaymentHandler: paymentHandler,
-		Middlewares:    middlewares,
+		Handlers:    wireHandlers,
+		Middlewares: middlewares,
 	}
 	return application, nil
 }
@@ -122,7 +94,7 @@ var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(
 
 var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewSmsService, servicesimpl.NewJWT, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), ProvideConstants)
 
-var HandlerProviderSet = wire.NewSet(wire.Struct(new(handlers.UserHandler), "*"), wire.Struct(new(handlers.FileHandler), "*"), wire.Struct(new(handlers.ErrorHandler), "*"), wire.Struct(new(handlers.ProjectHandler), "*"), wire.Struct(new(handlers.GeneralHandler), "*"), wire.Struct(new(handlers.PaymentHandler), "*"))
+var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewErrorHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, wire.Struct(new(Handlers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -146,12 +118,16 @@ type Middlewares struct {
 	Authentication *midauth.Authentication
 }
 
-type Application struct {
+type Handlers struct {
 	FileHandler    *handlers.FileHandler
 	UserHandler    *handlers.UserHandler
 	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
-	Middlewares    *Middlewares
+}
+
+type Application struct {
+	Handlers    *Handlers
+	Middlewares *Middlewares
 }

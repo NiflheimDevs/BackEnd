@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/niflheimdevs/backend/internal/wire"
+	"github.com/niflheimdevs/backend/wire"
 )
 
 func Routes(app *wire.Application) http.Handler {
@@ -32,48 +32,48 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
 
-	mux.Post("/login", app.UserHandler.Login)
+	mux.Post("/login", app.Handlers.UserHandler.Login)
 
-	mux.Post("/signup/send-otp", app.UserHandler.ReserveInfo)
-	mux.Post("/signup/verify", app.UserHandler.SignupWithOtp)
+	mux.Post("/signup/send-otp", app.Handlers.UserHandler.ReserveInfo)
+	mux.Post("/signup/verify", app.Handlers.UserHandler.SignupWithOtp)
 
-	mux.Post("/forget-password/send-otp", app.UserHandler.SendOTP)
-	mux.Post("/forget-password/verify", app.UserHandler.VerifyOTP)
-	mux.Post("/forget-password/reset", app.UserHandler.ForgetPassword)
+	mux.Post("/forget-password/send-otp", app.Handlers.UserHandler.SendOTP)
+	mux.Post("/forget-password/verify", app.Handlers.UserHandler.VerifyOTP)
+	mux.Post("/forget-password/reset", app.Handlers.UserHandler.ForgetPassword)
 
-	mux.Post("/change-password", app.UserHandler.ChangePassword)
+	mux.Post("/change-password", app.Handlers.UserHandler.ChangePassword)
 
-	mux.Get("/tags", app.GeneralHandler.GetTags)
-	mux.Get("/labels", app.GeneralHandler.GetLabel)
+	mux.Get("/tags", app.Handlers.GeneralHandler.GetTags)
+	mux.Get("/labels", app.Handlers.GeneralHandler.GetLabel)
 
-	mux.Put("/user/career", app.GeneralHandler.UpdateCareer)
-	mux.Put("/user/tag", app.GeneralHandler.UpdateUserTag)
+	mux.Put("/user/career", app.Handlers.GeneralHandler.UpdateCareer)
+	mux.Put("/user/tag", app.Handlers.GeneralHandler.UpdateUserTag)
 
-	mux.Get("/project", app.ProjectHandler.GetUserProject)
-	mux.Get("/project/{project_id}", app.ProjectHandler.GetSpeceficProject)
-	mux.Post("/project/create", app.ProjectHandler.CreateProject)
-	mux.Put("/project/{project_id}", app.ProjectHandler.UpdateProject)
-	mux.Delete("/project/{project_id}", app.ProjectHandler.DeleteProject)
+	mux.Get("/project", app.Handlers.ProjectHandler.GetUserProject)
+	mux.Get("/project/{project_id}", app.Handlers.ProjectHandler.GetSpeceficProject)
+	mux.Post("/project/create", app.Handlers.ProjectHandler.CreateProject)
+	mux.Put("/project/{project_id}", app.Handlers.ProjectHandler.UpdateProject)
+	mux.Delete("/project/{project_id}", app.Handlers.ProjectHandler.DeleteProject)
 
-	mux.Get("/user/balance", app.PaymentHandler.GetUserBalance)
-	mux.Get("/transaction", app.PaymentHandler.GetUserTransactions)
+	mux.Get("/user/balance", app.Handlers.PaymentHandler.GetUserBalance)
+	mux.Get("/transaction", app.Handlers.PaymentHandler.GetUserTransactions)
 
-	mux.Post("/transaction/deposit", app.PaymentHandler.Deposit)
-	mux.Post("/transaction/withdraw", app.PaymentHandler.Withdraw)
+	mux.Post("/transaction/deposit", app.Handlers.PaymentHandler.Deposit)
+	mux.Post("/transaction/withdraw", app.Handlers.PaymentHandler.Withdraw)
 
-	mux.Get("/error/{code}", app.ErrorHandler.ReturnError)
+	mux.Get("/error/{code}", app.Handlers.ErrorHandler.ReturnError)
 
-	mux.Get("/user/{id}", app.UserHandler.GetUserInfo)
-	mux.Put("/user/update-info", app.UserHandler.UpdateUserData)
-	mux.Put("/user/update-username", app.UserHandler.UpdateUsername)
-	mux.Put("/user/update-email", app.UserHandler.UpdateEmail)
-	mux.Put("/user/update-phone/send-otp", app.UserHandler.UpdatePhoneSendOTP)
-	mux.Put("/user/update-phone/verify", app.UserHandler.UpdatePhoneVerify)
+	mux.Get("/user/{id}", app.Handlers.UserHandler.GetUserInfo)
+	mux.Put("/user/update-info", app.Handlers.UserHandler.UpdateUserData)
+	mux.Put("/user/update-username", app.Handlers.UserHandler.UpdateUsername)
+	mux.Put("/user/update-email", app.Handlers.UserHandler.UpdateEmail)
+	mux.Put("/user/update-phone/send-otp", app.Handlers.UserHandler.UpdatePhoneSendOTP)
+	mux.Put("/user/update-phone/verify", app.Handlers.UserHandler.UpdatePhoneVerify)
 
-	mux.Post("/user/profile", app.FileHandler.UploadProfilePhoto)
-	mux.Delete("/user/profile", app.FileHandler.DeleteProfilePhoto)
+	mux.Post("/user/profile", app.Handlers.FileHandler.UploadProfilePhoto)
+	mux.Delete("/user/profile", app.Handlers.FileHandler.DeleteProfilePhoto)
 
-	mux.Get("/storage/*", app.FileHandler.GetFile)
+	mux.Get("/storage/*", app.Handlers.FileHandler.GetFile)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))

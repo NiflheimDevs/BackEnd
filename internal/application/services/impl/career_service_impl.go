@@ -2,14 +2,15 @@ package servicesimpl
 
 import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/application/services"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
-	"github.com/niflheimdevs/backend/internal/exceptions"
 	"github.com/niflheimdevs/backend/internal/utils"
 )
 
 type CareerService struct {
-	TagService TagService // !
+	TagService services.TagService
 	CareerRepo repositories.CareerRepo
 	TagRepo    repositories.TagRepo
 	UserRepo   repositories.UserRepo
@@ -17,10 +18,12 @@ type CareerService struct {
 
 func NewCareerService(
 	careerRepo repositories.CareerRepo,
+	tagService services.TagService,
 	tagRepo repositories.TagRepo,
 	userRepo repositories.UserRepo,
 ) *CareerService {
 	return &CareerService{
+		TagService: tagService,
 		UserRepo:   userRepo,
 		CareerRepo: careerRepo,
 		TagRepo:    tagRepo,

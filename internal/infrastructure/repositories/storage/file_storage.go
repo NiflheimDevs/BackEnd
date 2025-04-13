@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/niflheimdevs/backend/bootstrap"
-	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
 
 type FileStorage struct {

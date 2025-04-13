@@ -10,11 +10,11 @@ import (
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
-	"github.com/niflheimdevs/backend/internal/exceptions"
-	"github.com/niflheimdevs/backend/internal/pkg"
+	"github.com/niflheimdevs/backend/pkg"
 )
 
 type UserService struct {
@@ -44,7 +44,7 @@ func NewUserService(
 // signup stage. checks if username or phonenumber is already taken.
 func (us *UserService) CheckAvailabilityForSignup(phonenumber string, username string) string {
 	var exc = exceptions.Exception{
-		Tag: exceptions.VALIDATION_ERROR,
+		Tag: exceptions.CONFLICT_ERROR,
 	}
 	_, err := us.UserRepo.FindUserByPhone(phonenumber)
 	if err == nil {
@@ -110,7 +110,7 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 	val, err := us.CacheRepo.FindBySession(session)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    exceptions.VALIDATION_ERROR,
+			Tag:    exceptions.CONFLICT_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.OTP_EXPIRED_OR_BAD_SESSION},
 		})
 	}
@@ -120,7 +120,7 @@ func (us *UserService) ValidateOTP(session string, otp string) (string, string, 
 
 	if otp != userdata.OTP && !develop_mode {
 		panic(exceptions.Exception{
-			Tag:    exceptions.VALIDATION_ERROR,
+			Tag:    exceptions.CONFLICT_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.OTP_INVALID},
 		})
 	}
@@ -198,7 +198,7 @@ func (userService *UserService) ChangePasswordValidate(user_id int, old_password
 
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag: exceptions.VALIDATION_ERROR,
+			Tag: exceptions.CONFLICT_ERROR,
 			Errors: []exceptions.SpecificError{
 				exceptions.PASSWORD_INVALID,
 			},
@@ -339,7 +339,7 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 	_, err = us.UserRepo.FindUserByPhone(phone)
 	if err == nil {
 		panic(exceptions.Exception{
-			Tag:    exceptions.VALIDATION_ERROR,
+			Tag:    exceptions.CONFLICT_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.PHONE_TAKEN},
 		})
 	}

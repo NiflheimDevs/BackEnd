@@ -7,11 +7,8 @@ import (
 
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/delivery/http/routes"
-	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
-	"github.com/niflheimdevs/backend/internal/wire"
+	"github.com/niflheimdevs/backend/wire"
 )
-
-const port = ":8080"
 
 func main() {
 
@@ -22,21 +19,15 @@ func main() {
 		panic(err)
 	}
 
-	pdb := driver.ConnectSQL(di)
-	rdb := driver.ConncetRedis(di)
-
-	defer pdb.Close()
-	defer rdb.Close()
-
 	app, err := wire.InitializeApplication(di)
 
 	if err != nil {
 		panic(err)
 	}
 
-	log.Printf("Application is running on port%s", port)
+	log.Printf("Application is running on port%s", di.Const.Port)
 	server := &http.Server{
-		Addr:    port,
+		Addr:    di.Const.Port,
 		Handler: routes.Routes(app),
 	}
 

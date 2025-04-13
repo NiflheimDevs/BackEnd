@@ -7,9 +7,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
-	"github.com/niflheimdevs/backend/internal/exceptions"
 )
 
 type TagRepo struct {

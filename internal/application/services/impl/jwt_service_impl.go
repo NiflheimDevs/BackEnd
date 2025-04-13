@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/niflheimdevs/backend/bootstrap"
-	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
 
 type JWT struct {
@@ -98,7 +98,7 @@ func (j *JWT) VerifyToken(tokenString string) jwt.MapClaims {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		panic(exceptions.Exception{
-			Tag: exceptions.VALIDATION_ERROR,
+			Tag: exceptions.FORBIDDEN,
 			Errors: []exceptions.SpecificError{
 				exceptions.AUTH_ACCESS_DENIED,
 			},

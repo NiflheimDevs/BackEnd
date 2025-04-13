@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/niflheimdevs/backend/internal/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
 
 type PanicWall struct {
@@ -43,7 +43,7 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 
 func (recovery *PanicWall) handleRecoveredError(err *exceptions.Exception) ([]byte, int) {
 	var code int
-	if err.Tag == exceptions.VALIDATION_ERROR {
+	if err.Tag == exceptions.CONFLICT_ERROR {
 		code = 409
 	} else if err.Tag == exceptions.INTERNAL_ERROR {
 		code = 500
