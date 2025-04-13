@@ -32,7 +32,7 @@ import (
 func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	constants := ProvideConstants(container)
 	env := ProvideEnv(container)
-	fileStorage := storageimpl.NewFileStorage()
+	fileStorage := storageimpl.NewFileStorage(constants)
 	fileService := servicesimpl.NewFileService(fileStorage)
 	jwt := servicesimpl.NewJWT(constants)
 	validate := pkg.NewValidator()
