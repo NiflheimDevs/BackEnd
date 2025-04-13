@@ -69,7 +69,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		PaymentHandler: paymentHandler,
 	}
 	panicWall := panicwall.NewPanicWall()
-	rateLimit := midratelimit.NewRateLimit()
+	rateLimit := midratelimit.NewRateLimit(constants)
 	authentication := midauth.NewAuth(constants, jwt)
 	middlewares := &Middlewares{
 		Recovery:       panicWall,

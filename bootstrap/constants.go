@@ -12,6 +12,7 @@ type Constants struct {
 	Port         string
 	DevelopMode  bool
 	MaxPhotoSize int64
+	RateLimiter
 }
 
 type DBConst struct {
@@ -31,6 +32,11 @@ type Project struct {
 type Pagination struct {
 	Offset int
 	Limit  int
+}
+
+type RateLimiter struct {
+	Limit float64
+	Burst int
 }
 
 func NewConstant() *Constants {
@@ -56,5 +62,9 @@ func NewConstant() *Constants {
 		MaxPhotoSize: 50000000,
 		Port:         ":8080",
 		DevelopMode:  true,
+		RateLimiter: RateLimiter{
+			Limit: (6.0 / 60),
+			Burst: 20,
+		},
 	}
 }
