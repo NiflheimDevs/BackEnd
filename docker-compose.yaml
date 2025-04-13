@@ -34,6 +34,8 @@ services:
       - redis
     env_file:
       - ./.env
+    volumes:
+      -storagedata:./storage
     ports:
       - "8080:8080"
     networks:
@@ -43,6 +45,7 @@ services:
 volumes:
   pgdata:
   redisdata:
+  storagedata:
 
 networks:
   backend_network:
