@@ -12,7 +12,7 @@ import (
 
 func ConnectSQL(di *bootstrap.Di) *pgxpool.Pool {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		di.Env.DB.DB_User, di.Env.DB.DB_Pass, di.Env.DB.DB_Host, di.Env.DB.DB_Port, di.Env.DB.DB_Name)
+		di.Env.PGDB.DB_User, di.Env.PGDB.DB_Pass, di.Env.PGDB.DB_Host, di.Env.PGDB.DB_Port, di.Env.PGDB.DB_Name)
 
 	poolconfig, err := pgxpool.ParseConfig(dsn)
 	poolconfig.MaxConnIdleTime = di.Const.Database.MaxIdleDbConn
@@ -42,11 +42,11 @@ func ConnectSQL(di *bootstrap.Di) *pgxpool.Pool {
 
 func ConncetRedis(di *bootstrap.Di) *redis.Client {
 	ctx := context.Background()
-	dsn := fmt.Sprintf("%s:%s", di.Env.DB.RDB_Addr, di.Env.DB.RDB_Port)
+	dsn := fmt.Sprintf("%s:%s", di.Env.RDB.RDB_Addr, di.Env.RDB.RDB_Port)
 	client := redis.NewClient(&redis.Options{
 		Addr:     dsn,
-		Password: di.Env.DB.RDB_Password,
-		Username: di.Env.DB.RDB_User,
+		Password: di.Env.RDB.RDB_Password,
+		Username: di.Env.RDB.RDB_User,
 		DB:       0,
 	})
 	_, err := client.Ping(ctx).Result()

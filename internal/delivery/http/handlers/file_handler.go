@@ -18,16 +18,19 @@ type FileHandler struct {
 	Validator   *validator.Validate
 	JWTService  services.JWT
 	Constants   *bootstrap.Constants
+	ENV         *bootstrap.Env
 }
 
 func NewFileHandler(
 	constants *bootstrap.Constants,
+	Env *bootstrap.Env,
 	fileService services.FileService,
 	jwtService services.JWT,
 	validator *validator.Validate,
 ) *FileHandler {
 	return &FileHandler{
 		Constants:   constants,
+		ENV:         Env,
 		FileService: fileService,
 		Validator:   validator,
 		JWTService:  jwtService,
@@ -70,7 +73,7 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 
 	var photoPath PhotoResponse
 
-	photoPath.PhotoPath = fmt.Sprintf("%s/storage/%s", fh.Constants.IPAddr, res)
+	photoPath.PhotoPath = fmt.Sprintf("%s/storage/%s", fh.ENV.Server.IP_Addr, res)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

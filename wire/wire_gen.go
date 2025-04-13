@@ -31,22 +31,23 @@ import (
 
 func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	constants := ProvideConstants(container)
+	env := ProvideEnv(container)
 	fileStorage := storageimpl.NewFileStorage()
 	fileService := servicesimpl.NewFileService(fileStorage)
 	jwt := servicesimpl.NewJWT(constants)
 	validate := pkg.NewValidator()
-	fileHandler := handlers.NewFileHandler(constants, fileService, jwt, validate)
+	fileHandler := handlers.NewFileHandler(constants, env, fileService, jwt, validate)
 	pool := driver.ConnectSQL(container)
 	userRepo := repositoriesimpl.NewUserRepo(pool)
 	client := driver.ConncetRedis(container)
 	userCache := redisimpl.NewUserCache(client)
 	secretSauce := pkg.NewSecretSauce()
-	userService := servicesimpl.NewUserService(userRepo, userCache, constants, fileService, secretSauce)
+	userService := servicesimpl.NewUserService(userRepo, userCache, constants, env, fileService, secretSauce)
 	tagRepo := repositoriesimpl.NewTagRepo(pool)
 	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
 	careerRepo := repositoriesimpl.NewCareerRepo(pool)
 	careerService := servicesimpl.NewCareerService(careerRepo, tagService, tagRepo, userRepo)
-	smsService := servicesimpl.NewSmsService()
+	smsService := servicesimpl.NewSmsService(env)
 	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
 	errorHandler := handlers.NewErrorHandler()
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
@@ -92,7 +93,9 @@ var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
-var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewSmsService, servicesimpl.NewJWT, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), ProvideConstants)
+var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewSmsService, servicesimpl.NewJWT, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), ProvideConstants,
+	ProvideEnv,
+)
 
 var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewErrorHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, wire.Struct(new(Handlers), "*"))
 
@@ -100,6 +103,10 @@ var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAu
 
 func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 	return container.Const
+}
+
+func ProvideEnv(container *bootstrap.Di) *bootstrap.Env {
+	return container.Env
 }
 
 var ProviderSet = wire.NewSet(

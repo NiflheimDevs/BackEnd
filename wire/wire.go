@@ -83,6 +83,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 
 	ProvideConstants,
+	ProvideEnv,
 )
 
 var HandlerProviderSet = wire.NewSet(
@@ -104,6 +105,10 @@ var MiddlewareProviderSet = wire.NewSet(
 
 func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 	return container.Const
+}
+
+func ProvideEnv(container *bootstrap.Di) *bootstrap.Env {
+	return container.Env
 }
 
 var ProviderSet = wire.NewSet(

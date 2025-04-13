@@ -21,6 +21,7 @@ type UserService struct {
 	UserRepo    repositories.UserRepo
 	CacheRepo   redis.UserCache
 	Constants   *bootstrap.Constants
+	Env         *bootstrap.Env
 	FileService services.FileService
 	SecretSauce *pkg.SecretSauce
 }
@@ -29,6 +30,7 @@ func NewUserService(
 	userRepo repositories.UserRepo,
 	cacheRepo redis.UserCache,
 	constants *bootstrap.Constants,
+	Env *bootstrap.Env,
 	fileService services.FileService,
 	secretSauce *pkg.SecretSauce,
 ) *UserService {
@@ -36,6 +38,7 @@ func NewUserService(
 		UserRepo:    userRepo,
 		CacheRepo:   cacheRepo,
 		Constants:   constants,
+		Env:         Env,
 		FileService: fileService,
 		SecretSauce: secretSauce,
 	}
@@ -378,7 +381,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		LastName:       targetInfo.LastName,
 		Bio:            targetInfo.Bio,
 		Username:       targetInfo.Username,
-		ProfilePicture: fmt.Sprintf("%s/%s%s", us.Constants.IPAddr, us.Constants.StorageDir, us.FileService.GetUserProfileName(targetUserid, true)),
+		ProfilePicture: fmt.Sprintf("%s/%s%s", us.Env.Server.IP_Addr, us.Constants.StorageDir, us.FileService.GetUserProfileName(targetUserid, true)),
 	}
 	if userid == targetUserid {
 		response.Email = targetInfo.Email

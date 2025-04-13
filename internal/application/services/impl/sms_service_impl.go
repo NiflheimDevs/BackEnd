@@ -10,14 +10,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
 
 type SmsService struct {
+	Env *bootstrap.Env
 }
 
-func NewSmsService() *SmsService {
-	return &SmsService{}
+func NewSmsService(env *bootstrap.Env) *SmsService {
+	return &SmsService{Env: env}
 }
 
 func (ss *SmsService) GenerateOTP() string {
@@ -27,7 +29,7 @@ func (ss *SmsService) GenerateOTP() string {
 
 func (ss *SmsService) SendOTP(phonenumber string, code string) {
 	// apikey := "OQIAPP4fRTpqWpWafX2lljoW9YBSuCmGLdFGFDZfJCfLfc97"
-	apikey := "i9jivkYg8ONebnmtTb5ncBcOuaFoCIxsUyyTWKVcOSXaK3da"
+	apikey := ss.Env.SMS.API_Key
 	type Parameters struct {
 		Name  string `json:"name"`
 		Value string `json:"value"`
@@ -47,7 +49,7 @@ func (ss *SmsService) SendOTP(phonenumber string, code string) {
 	}
 	marshalled, _ := json.Marshal(temp)
 	bodyReader := bytes.NewReader(marshalled)
-	req, _ := http.NewRequest(http.MethodPost, "https://api.sms.ir/v1/send/verify", bodyReader)
+	req, _ := http.NewRequest(http.MethodPost, ss.Env.SMS.IP_Addr, bodyReader)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/plain")
 	req.Header.Set("x-api-key", apikey)
