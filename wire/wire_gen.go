@@ -47,7 +47,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
 	careerRepo := repositoriesimpl.NewCareerRepo(pool)
 	careerService := servicesimpl.NewCareerService(careerRepo, tagService, tagRepo, userRepo)
-	smsService := servicesimpl.NewSmsService(env)
+	smsService := servicesimpl.NewSmsService(env, constants)
 	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
 	errorHandler := handlers.NewErrorHandler()
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
