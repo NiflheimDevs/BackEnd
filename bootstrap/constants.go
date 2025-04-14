@@ -13,7 +13,7 @@ type Constants struct {
 	Port         string
 	DevelopMode  bool
 	MaxPhotoSize int64
-	RateLimiter
+	RateLimiter  RateLimiter
 }
 
 type DBConst struct {
