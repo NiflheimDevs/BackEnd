@@ -5,6 +5,7 @@ import "time"
 type Constants struct {
 	Database     DBConst
 	JWTKeysPath  string
+	SSLKeysPath  string
 	Context      Context
 	StorageDir   string
 	Project      Project
@@ -12,6 +13,7 @@ type Constants struct {
 	Port         string
 	DevelopMode  bool
 	MaxPhotoSize int64
+	RateLimiter  RateLimiter
 }
 
 type DBConst struct {
@@ -33,6 +35,11 @@ type Pagination struct {
 	Limit  int
 }
 
+type RateLimiter struct {
+	Limit float64
+	Burst int
+}
+
 func NewConstant() *Constants {
 	return &Constants{
 		Database: DBConst{
@@ -41,6 +48,7 @@ func NewConstant() *Constants {
 			MaxDbLifeTime: 5 * time.Minute,
 		},
 		JWTKeysPath: "./internal/jwt",
+		SSLKeysPath: "./SSL",
 		Context: Context{
 			UserID: "userID",
 		},
@@ -56,5 +64,9 @@ func NewConstant() *Constants {
 		MaxPhotoSize: 50000000,
 		Port:         ":8080",
 		DevelopMode:  true,
+		RateLimiter: RateLimiter{
+			Limit: (6.0 / 60),
+			Burst: 20,
+		},
 	}
 }

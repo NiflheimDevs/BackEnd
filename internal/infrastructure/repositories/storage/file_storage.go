@@ -11,8 +11,10 @@ type FileStorage struct {
 	Constants *bootstrap.Constants
 }
 
-func NewFileStorage() *FileStorage {
-	return &FileStorage{}
+func NewFileStorage(constant *bootstrap.Constants) *FileStorage {
+	return &FileStorage{
+		Constants: constant,
+	}
 }
 
 func (fs *FileStorage) StoreFile(data []byte, outputName string) {

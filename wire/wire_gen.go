@@ -32,7 +32,7 @@ import (
 func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	constants := ProvideConstants(container)
 	env := ProvideEnv(container)
-	fileStorage := storageimpl.NewFileStorage()
+	fileStorage := storageimpl.NewFileStorage(constants)
 	fileService := servicesimpl.NewFileService(fileStorage)
 	jwt := servicesimpl.NewJWT(constants)
 	validate := pkg.NewValidator()
@@ -47,14 +47,14 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
 	careerRepo := repositoriesimpl.NewCareerRepo(pool)
 	careerService := servicesimpl.NewCareerService(careerRepo, tagService, tagRepo, userRepo)
-	smsService := servicesimpl.NewSmsService(env)
+	smsService := servicesimpl.NewSmsService(env, constants)
 	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
 	errorHandler := handlers.NewErrorHandler()
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
 	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
 	pgxTxManager := db.NewTxManager(pool)
 	paymentService := servicesimpl.NewPaymentService(paymentRepo, pgxTxManager)
-	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, pgxTxManager)
+	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, tagService, pgxTxManager)
 	labelRepo := repositoriesimpl.NewLabelRepo(pool)
 	labelService := servicesimpl.NewLabelService(labelRepo, userRepo)
 	projectHandler := handlers.NewProjectHandler(constants, projectService, userService, labelService, jwt, validate)
@@ -69,7 +69,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		PaymentHandler: paymentHandler,
 	}
 	panicWall := panicwall.NewPanicWall()
-	rateLimit := midratelimit.NewRateLimit()
+	rateLimit := midratelimit.NewRateLimit(constants)
 	authentication := midauth.NewAuth(constants, jwt)
 	middlewares := &Middlewares{
 		Recovery:       panicWall,

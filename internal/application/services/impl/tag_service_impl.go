@@ -101,12 +101,9 @@ func (ts *TagService) UpdateTagsForCareerOrUser(careerUserid int, newTags []dto.
 	return newTags
 }
 
-func (ts *TagService) UpdateTagsForProject(projectid int, newTags []int) []int {
+func (ts *TagService) UpdateTagsForProject(projectid int, newTags []int) {
 
 	existingTags := ts.TagRepo.GetProjectTag(projectid)
-
-	res := make([]int, len(newTags))
-	copy(res, newTags)
 
 	existingTagSet := make(map[int]bool)
 	for _, tag := range existingTags {
@@ -120,9 +117,7 @@ func (ts *TagService) UpdateTagsForProject(projectid int, newTags []int) []int {
 
 	for _, tag := range newTags {
 		if !existingTagSet[tag] {
-			if ts.TagRepo.AddProjectTag(projectid, tag) == nil {
-				res = append(res, tag)
-			}
+			ts.TagRepo.AddProjectTag(projectid, tag)
 		}
 	}
 
@@ -131,6 +126,4 @@ func (ts *TagService) UpdateTagsForProject(projectid int, newTags []int) []int {
 			ts.TagRepo.DeleteProjectTag(projectid, tag.ID)
 		}
 	}
-
-	return res
 }

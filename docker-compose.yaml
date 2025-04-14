@@ -1,13 +1,13 @@
 services:
   db:
-    image: postgres:17
+    image: postgres:latest
     container_name: postgres_container
     platform: linux/amd64
     restart: always
     environment:
-      POSTGRES_USER: niflheim
-      POSTGRES_PASSWORD: niflguard
-      POSTGRES_DB: bidlancer
+      POSTGRES_USER: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_USER}
+      POSTGRES_DB: ${DB_PASS}
     volumes:
       - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
       - pgdata:/var/lib/postgresql/data
@@ -34,15 +34,17 @@ services:
       - redis
     env_file:
       - ./.env
+    volumes:
+      - storagedata:/app/storage
     ports:
       - "8080:8080"
     networks:
       - backend_network
 
-
 volumes:
   pgdata:
   redisdata:
+  storagedata:
 
 networks:
   backend_network:

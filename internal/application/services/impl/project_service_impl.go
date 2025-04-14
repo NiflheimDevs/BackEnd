@@ -26,6 +26,7 @@ func NewProjectService(
 	paymentService services.PaymentService,
 	constants *bootstrap.Constants,
 	tagRepo repositories.TagRepo,
+	tagService services.TagService,
 	txManager transaction.TxManager,
 ) *ProjectService {
 	return &ProjectService{
@@ -34,6 +35,7 @@ func NewProjectService(
 		Constants:      constants,
 		TxManager:      txManager,
 		TagRepo:        tagRepo,
+		TagService:     tagService,
 	}
 }
 

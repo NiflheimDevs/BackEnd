@@ -2,6 +2,7 @@ package repositoriesimpl
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -127,11 +128,12 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	query := "UPDATE project SET title = $1, description = $2, label=$3, updated_time=$4 WHERE id = $5 and owner_id = $6"
+	query := "UPDATE project SET title = $1, description = $2, updated_time=$3 WHERE id = $4 and owner_id = $5"
 
 	_, err := repo.PG.Exec(ctx, query, title, description, now, projectID, UserID)
 
 	if err != nil {
+		log.Println(err)
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{

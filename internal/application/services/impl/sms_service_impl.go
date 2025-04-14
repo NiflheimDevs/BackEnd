@@ -19,8 +19,11 @@ type SmsService struct {
 	Cons *bootstrap.Constants
 }
 
-func NewSmsService(env *bootstrap.Env) *SmsService {
-	return &SmsService{Env: env}
+func NewSmsService(env *bootstrap.Env, constant *bootstrap.Constants) *SmsService {
+	return &SmsService{
+		Env:  env,
+		Cons: constant,
+	}
 }
 
 func (ss *SmsService) GenerateOTP() string {
