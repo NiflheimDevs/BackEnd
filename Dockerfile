@@ -1,4 +1,4 @@
-FROM golang:1.23.4-alpine AS builder
+FROM golang:1.24.2-alpine AS builder
 
 
 RUN apk add --no-cache gcc musl-dev libwebp-dev jpeg-dev
@@ -15,7 +15,7 @@ COPY . .
 
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s " -o main ./cmd/bidlancer
 
-FROM alpine:3.19
+FROM alpine:3.21
 
 RUN apk add --no-cache ca-certificates tzdata libwebp-dev jpeg-dev
 
