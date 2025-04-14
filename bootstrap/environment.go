@@ -7,10 +7,11 @@ import (
 )
 
 type Env struct {
-	PGDB   PGDatabase
-	RDB    RDatabase
-	Server Server
-	SMS    SMS
+	PGDB    PGDatabase
+	RDB     RDatabase
+	Server  Server
+	SMS     SMS
+	Storage S3
 }
 
 type PGDatabase struct {
@@ -36,6 +37,18 @@ type SMS struct {
 
 type Server struct {
 	IP_Addr string
+}
+
+type S3 struct {
+	Buckets   BucketName
+	Region    string
+	AccessKey string
+	SecretKey string
+	Endpoint  string
+}
+
+type BucketName struct {
+	ProfilePic string
 }
 
 func NewEnvironment() *Env {
@@ -64,6 +77,15 @@ func NewEnvironment() *Env {
 			IPAddr:        os.Getenv("SMS_URL"),
 			APIKey:        os.Getenv("SMS_API_KEY"),
 			APISandboxKey: os.Getenv("SMS_API_KEY_SANDBOX"),
+		},
+		Storage: S3{
+			Buckets: BucketName{
+				ProfilePic: os.Getenv("PROFILE_PIC_BUCKET_NAME"),
+			},
+			Region:    os.Getenv("BUCKET_REGION"),
+			AccessKey: os.Getenv("BUCKET_ACCESS_key"),
+			SecretKey: os.Getenv("BUCKET_SECRET_key"),
+			Endpoint:  os.Getenv("BUCKET_ENDPOINT"),
 		},
 	}
 }

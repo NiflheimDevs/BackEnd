@@ -90,3 +90,7 @@ func (fh *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 	http.StripPrefix("/storage/", http.FileServer(http.Dir(fh.Constants.StorageDir))).ServeHTTP(w, r)
 
 }
+
+func (fh *FileHandler) TestUploadFileS3(w http.ResponseWriter, r *http.Request) {
+
+}
