@@ -54,7 +54,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
 	pgxTxManager := db.NewTxManager(pool)
 	paymentService := servicesimpl.NewPaymentService(paymentRepo, pgxTxManager)
-	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, pgxTxManager)
+	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, tagService, pgxTxManager)
 	labelRepo := repositoriesimpl.NewLabelRepo(pool)
 	labelService := servicesimpl.NewLabelService(labelRepo, userRepo)
 	projectHandler := handlers.NewProjectHandler(constants, projectService, userService, labelService, jwt, validate)
