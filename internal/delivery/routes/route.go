@@ -29,7 +29,7 @@ func Routes(app *wire.Application) http.Handler {
 	})
 
 	mux.Use(app.Middlewares.Recovery.Recovery)
-	mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
+	//mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
 
 	mux.Post("/login", app.Handlers.UserHandler.Login)
