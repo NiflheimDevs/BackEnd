@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
@@ -37,6 +38,12 @@ func NewProjectService(
 		TagRepo:        tagRepo,
 		TagService:     tagService,
 	}
+}
+
+func (projectService *ProjectService) LandingProps() []dto.ProjectLanding {
+	projects := projectService.ProjectRepo.LandingProps()
+
+	return projects
 }
 
 func (projectService *ProjectService) GetProject(projectID int) *models.ProjectModel {

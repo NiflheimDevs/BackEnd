@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
@@ -26,6 +27,42 @@ func NewProjectRepo(
 		PG:      PG,
 		TagRepo: tagRepo,
 	}
+}
+
+func (repo *ProjectRepo) LandingProps() []dto.ProjectLanding {
+	var projects []dto.ProjectLanding
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT P.id,P.title,P.description,L.name From project P Join label L on P.label = L.id ORDER BY P.label DESC ,P.created_time DESC LIMIT 4"
+
+	result, err := repo.PG.Query(ctx, query)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer result.Close()
+
+	for result.Next() {
+		var project dto.ProjectLanding
+		if err := result.Scan(&project.ProjectID, &project.Title, &project.Description, &project.Label); err != nil {
+			panic(exceptions.Exception{
+				Tag: exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{
+					exceptions.DATABASE_ERROR,
+				},
+			})
+		}
+		projects = append(projects, project)
+	}
+	return projects
 }
 
 func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error) {
