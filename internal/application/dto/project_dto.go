@@ -2,6 +2,13 @@ package dto
 
 import "github.com/niflheimdevs/backend/internal/domain/models"
 
+type ProjectLanding struct {
+	ProjectID   int    `json:"project_id"`
+	Title       string `json:"title"`
+	Description string `json:"descriptoin"`
+	Label       string `json:"label"`
+}
+
 type Project struct {
 	ProjectID   int               `json:"project_id"`
 	OwnerID     int               `json:"Owner_id"`

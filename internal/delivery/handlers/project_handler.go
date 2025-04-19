@@ -40,6 +40,19 @@ func NewProjectHandler(
 	}
 }
 
+func (projectHandler *ProjectHandler) LandingProps(w http.ResponseWriter, r *http.Request) {
+	projects := projectHandler.ProjectService.LandingProps()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(projects); err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
+		})
+	}
+}
+
 func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
