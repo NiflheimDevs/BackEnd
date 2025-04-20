@@ -49,6 +49,7 @@ type S3 struct {
 
 type BucketName struct {
 	ProfilePic string
+	Resume     string
 }
 
 func NewEnvironment() *Env {
@@ -81,6 +82,7 @@ func NewEnvironment() *Env {
 		Storage: S3{
 			Buckets: BucketName{
 				ProfilePic: os.Getenv("PROFILE_PIC_BUCKET_NAME"),
+				Resume:     os.Getenv("RESUME_BUCKET_NAME"),
 			},
 			Region:    os.Getenv("BUCKET_REGION"),
 			AccessKey: os.Getenv("BUCKET_ACCESS_key"),

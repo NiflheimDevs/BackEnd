@@ -30,6 +30,7 @@ func NewS3Storage(
 ) *S3Storage {
 	buckets := make(map[enums.BucketType]string)
 	buckets[enums.ProfilePic] = storage.Buckets.ProfilePic
+	buckets[enums.Resume] = storage.Buckets.Resume
 	return &S3Storage{
 		env:     env,
 		storage: storage,

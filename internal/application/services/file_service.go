@@ -5,4 +5,6 @@ type FileService interface {
 	GetObjectURL(userid int, wantHighQual bool) string
 	UploadProfilePhoto(data []byte, userid int) string
 	DeleteProfilePhoto(userid int)
+	UploadResume(data []byte, userid int)
+	DeleteResume(userid int)
 }

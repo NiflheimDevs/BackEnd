@@ -3,17 +3,18 @@ package bootstrap
 import "time"
 
 type Constants struct {
-	Database     DBConst
-	JWTKeysPath  string
-	SSLKeysPath  string
-	Context      Context
-	StorageDir   string
-	Project      Project
-	Pagination   Pagination
-	Port         string
-	DevelopMode  bool
-	MaxPhotoSize int64
-	RateLimiter  RateLimiter
+	Database      DBConst
+	JWTKeysPath   string
+	SSLKeysPath   string
+	Context       Context
+	StorageDir    string
+	Project       Project
+	Pagination    Pagination
+	Port          string
+	DevelopMode   bool
+	MaxPhotoSize  int64
+	MaxResumeSize int64
+	RateLimiter   RateLimiter
 }
 
 type DBConst struct {
@@ -61,9 +62,10 @@ func NewConstant() *Constants {
 			Offset: 0,
 			Limit:  10,
 		},
-		MaxPhotoSize: 50000000,
-		Port:         ":8080",
-		DevelopMode:  true,
+		MaxPhotoSize:  5000000,
+		MaxResumeSize: 10000000,
+		Port:          ":8080",
+		DevelopMode:   true,
 		RateLimiter: RateLimiter{
 			Limit: (6.0 / 60),
 			Burst: 20,

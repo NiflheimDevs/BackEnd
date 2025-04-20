@@ -122,3 +122,39 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 		})
 	}
 }
+
+func (fs *FileService) UploadResume(data []byte, userid int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	outputName := fmt.Sprintf("resume%d.pdf", userid)
+
+	fs.S3Storage.UploadObject(enums.Resume, outputName, data)
+}
+
+func (fs *FileService) DeleteResume(userid int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	outputName := fmt.Sprintf("resume%d.pdf", userid)
+
+	err := fs.S3Storage.DeleteObject(enums.Resume, outputName)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.MISSING_FILE},
+		})
+	}
+}
