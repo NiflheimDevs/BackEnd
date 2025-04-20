@@ -1,181 +1,137 @@
 package storageimpl
 
 import (
-	"context"
-	"errors"
+	"bytes"
 	"fmt"
-	"log"
-	"mime/multipart"
 	"slices"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/smithy-go"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/domain/enums"
 )
 
 type S3Storage struct {
-	Storage  *bootstrap.S3
-	Client   *s3.Client
-	Uploader *manager.Uploader
-	Buckets  map[enums.BucketType]string
+	env      *bootstrap.Env
+	storage  *bootstrap.S3
+	clients  *s3.S3
+	uploader *s3manager.Uploader
+	buckets  map[enums.BucketType]string
 }
 
-func NewS3Storage(constants *bootstrap.Constants, storage *bootstrap.S3) *S3Storage {
+func NewS3Storage(
+	env *bootstrap.Env,
+	storage *bootstrap.S3,
+) *S3Storage {
 	buckets := make(map[enums.BucketType]string)
 	buckets[enums.ProfilePic] = storage.Buckets.ProfilePic
 	return &S3Storage{
-		Storage: storage,
-		Buckets: buckets,
+		env:     env,
+		storage: storage,
+		buckets: buckets,
 	}
 }
 
-func (s *S3Storage) setS3Client(ctx context.Context, bucketType enums.BucketType) {
+func (s3StorageS3Storage *S3Storage) setS3Client(bucketType enums.BucketType) {
 	bucketTypes := enums.GetAllBucketTypes()
 	if !slices.Contains(bucketTypes, bucketType) {
-		panic(fmt.Errorf("bucket does not exist"))
+		panic(fmt.Errorf("bucket not exist"))
 	}
-	if s.Client != nil && s.Uploader != nil {
+	if s3StorageS3Storage.uploader != nil && s3StorageS3Storage.clients != nil {
 		return
 	}
-
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(s.Storage.Region),
-		config.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(s.Storage.AccessKey, s.Storage.SecretKey, ""),
-		),
-	)
-	if err != nil {
-		panic(fmt.Errorf("unable to load AWS config: %w", err))
-	}
-
-	s.Client = s3.New(s3.Options{
-		Credentials:  cfg.Credentials,
-		Region:       s.Storage.Region,
-		BaseEndpoint: aws.String(s.Storage.Endpoint),
-		HTTPClient:   cfg.HTTPClient,
-		Retryer:      cfg.Retryer(),
-		Logger:       cfg.Logger,
+	sess, err := session.NewSession(&aws.Config{
+		Credentials: credentials.NewStaticCredentials(s3StorageS3Storage.storage.AccessKey, s3StorageS3Storage.storage.SecretKey, ""),
+		Region:      aws.String(s3StorageS3Storage.storage.Region),
+		Endpoint:    aws.String(s3StorageS3Storage.storage.Endpoint),
 	})
 
-	s.Uploader = manager.NewUploader(s.Client)
+	if err != nil {
+		panic(fmt.Errorf("unable to create AWS session, %w", err))
+	}
+
+	s3StorageS3Storage.uploader = s3manager.NewUploader(sess)
+	s3StorageS3Storage.clients = s3.New(sess)
 }
 
-func (s *S3Storage) UploadObject(ctx context.Context, bucketType enums.BucketType, key string, file *multipart.FileHeader) error {
-	// Set up client and get bucket name
-	s.setS3Client(ctx, bucketType)
-	bucket := s.Buckets[bucketType]
+func (s3StorageS3Storage *S3Storage) UploadObject(bucketType enums.BucketType, key string, data []byte) {
+	s3StorageS3Storage.setS3Client(bucketType)
+	bucket := s3StorageS3Storage.buckets[bucketType]
 
-	// Open the file
-	fileReader, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("unable to open file %q: %w", file.Filename, err)
-	}
-	defer fileReader.Close()
-
-	// Check if bucket exists
-	_, err = s.Client.HeadBucket(ctx, &s3.HeadBucketInput{
+	_, err := s3StorageS3Storage.clients.HeadBucket(&s3.HeadBucketInput{
 		Bucket: aws.String(bucket),
 	})
 
 	if err != nil {
-		var apiErr smithy.APIError
-		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "NotFound" {
-			// Create bucket with proper region configuration
-			_, err = s.Client.CreateBucket(ctx, &s3.CreateBucketInput{
+		if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeNoSuchBucket || aerr.Code() == "NotFound") {
+			_, err = s3StorageS3Storage.clients.CreateBucket(&s3.CreateBucketInput{
 				Bucket: aws.String(bucket),
-				CreateBucketConfiguration: &types.CreateBucketConfiguration{
-					LocationConstraint: types.BucketLocationConstraint(s.Storage.Region),
-				},
 			})
 			if err != nil {
-				return fmt.Errorf("unable to create bucket %q: %w", bucket, err)
+				panic(fmt.Errorf("unable to create bucket %q, %w", bucket, err))
 			}
 
-			// Wait for bucket creation with proper error handling
-			waiter := s3.NewBucketExistsWaiter(s.Client)
-			err = waiter.Wait(ctx, &s3.HeadBucketInput{
+			err = s3StorageS3Storage.clients.WaitUntilBucketExists(&s3.HeadBucketInput{
 				Bucket: aws.String(bucket),
-			}, 5*time.Minute) // More reasonable timeout
+			})
 			if err != nil {
-				return fmt.Errorf("timed out waiting for bucket %q creation: %w", bucket, err)
+				panic(fmt.Errorf("unable to confirm bucket %q exists, %w", bucket, err))
 			}
 		} else {
-			return fmt.Errorf("unable to check bucket %q: %w", bucket, err)
+			panic(fmt.Errorf("unable to check bucket %q, %w", bucket, err))
 		}
 	}
 
-	// Upload the file
-	_, err = s.Uploader.Upload(ctx, &s3.PutObjectInput{
+	_, err = s3StorageS3Storage.uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
-		Body:   fileReader,
+		Body:   bytes.NewReader(data),
 	})
 	if err != nil {
-		return fmt.Errorf("unable to upload %q to %q: %w", file.Filename, bucket, err)
+		panic(fmt.Errorf("unable to upload data to %q, %w", bucket, err))
+	}
+}
+
+func (s3StorageS3Storage *S3Storage) DeleteObject(bucketType enums.BucketType, key string) error {
+	s3StorageS3Storage.setS3Client(bucketType)
+	bucket := s3StorageS3Storage.buckets[bucketType]
+
+	_, err := s3StorageS3Storage.clients.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("unable to delete %q from %q, %w", key, bucket, err)
 	}
 
+	err = s3StorageS3Storage.clients.WaitUntilObjectNotExists(&s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("error confirming deletion of %q, %w", key, err)
+	}
 	return nil
 }
 
-func (s *S3Storage) DeleteObject(ctx context.Context, bucketType enums.BucketType, key string) error {
-	// Initialize client with error handling
-	s.setS3Client(ctx, bucketType)
+func (s3StorageS3Storage *S3Storage) GetPresignedURL(bucketType enums.BucketType, objectKey string, expiration time.Duration) string {
+	s3StorageS3Storage.setS3Client(bucketType)
+	bucket := s3StorageS3Storage.buckets[bucketType]
 
-	bucket := s.Buckets[bucketType]
-
-	// First check if bucket exists
-	_, err := s.Client.HeadBucket(ctx, &s3.HeadBucketInput{
-		Bucket: aws.String(bucket),
-	})
-	if err != nil {
-		return fmt.Errorf("bucket %q does not exist or is inaccessible: %w", bucket, err)
-	}
-
-	// Delete the object
-	_, err = s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		return fmt.Errorf("unable to delete %q from %q: %w", key, bucket, err)
-	}
-
-	// Wait for deletion to complete (with more reasonable timeout)
-	waiter := s3.NewObjectNotExistsWaiter(s.Client)
-	waitTimeout := 30 * time.Second // More generous timeout
-	err = waiter.Wait(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	}, waitTimeout)
-
-	if err != nil {
-		log.Printf("warning: timeout waiting for deletion confirmation of %q: %v", key, err)
-	}
-
-	return nil
-}
-
-func (s *S3Storage) GetPresignedURL(ctx context.Context, bucketType enums.BucketType, objectKey string, expiration time.Duration) string {
-	s.setS3Client(ctx, bucketType)
-	bucket := s.Buckets[bucketType]
-
-	presignClient := s3.NewPresignClient(s.Client)
-
-	url, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+	req, _ := s3StorageS3Storage.clients.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(objectKey),
-	}, s3.WithPresignExpires(expiration))
+	})
 
+	url, err := req.Presign(expiration)
 	if err != nil {
 		panic(fmt.Errorf("failed to generate presigned URL: %w", err))
 	}
 
-	return url.URL
+	return url
 }

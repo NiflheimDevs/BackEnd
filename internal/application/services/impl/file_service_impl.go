@@ -8,21 +8,23 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
+	"time"
 
 	"github.com/chai2010/webp"
 	"github.com/nfnt/resize"
+	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
 	"github.com/pixiv/go-libjpeg/jpeg"
 )
 
 type FileService struct {
-	FileStorage storage.FileStorage
+	S3Storage storage.S3Storage
 }
 
-func NewFileService(fileStorage storage.FileStorage) *FileService {
+func NewFileService(s3storage storage.S3Storage) *FileService {
 	return &FileService{
-		FileStorage: fileStorage,
+		S3Storage: s3storage,
 	}
 }
 
@@ -33,6 +35,10 @@ func (fs *FileService) GetUserProfileName(userid int, wantHighQual bool) string 
 		return fmt.Sprintf("userprofile%d_high.jpeg", userid)
 	}
 
+}
+
+func (fs *FileService) GetObjectURL(userid int, wantHighQual bool) string {
+	return fs.S3Storage.GetPresignedURL(enums.ProfilePic, fs.GetUserProfileName(userid, wantHighQual), 8*time.Hour)
 }
 
 func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
@@ -66,7 +72,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	outputName := fs.GetUserProfileName(userid, false)
-	fs.FileStorage.StoreFile(webpBuffer.Bytes(), outputName)
+	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, webpBuffer.Bytes())
 
 	rgbaImg := image.NewRGBA(img.Bounds())
 	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
@@ -84,7 +90,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	outputName = fs.GetUserProfileName(userid, true)
-	fs.FileStorage.StoreFile(jpegBuffer.Bytes(), outputName)
+	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, jpegBuffer.Bytes())
 	return outputName
 }
 
@@ -99,7 +105,7 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 	}
 
 	target := fs.GetUserProfileName(userid, false)
-	err := fs.FileStorage.DeleteFile(target)
+	err := fs.S3Storage.DeleteObject(enums.ProfilePic, target)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNPROCESSABLE,
@@ -108,8 +114,7 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 	}
 
 	target = fs.GetUserProfileName(userid, true)
-
-	err = fs.FileStorage.DeleteFile(target)
+	err = fs.S3Storage.DeleteObject(enums.ProfilePic, target)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNPROCESSABLE,

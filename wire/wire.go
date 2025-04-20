@@ -47,6 +47,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewLabelRepo,
 	repositoriesimpl.NewPaymentRepo,
 	storageimpl.NewFileStorage,
+	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositries.UserRepo), new(*repositoriesimpl.UserRepo)),
 	wire.Bind(new(repositries.TagRepo), new(*repositoriesimpl.TagRepo)),
@@ -55,6 +56,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositries.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
 	wire.Bind(new(repositries.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
 	wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)),
+	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
 
@@ -84,6 +86,7 @@ var ServiceProviderSet = wire.NewSet(
 
 	ProvideConstants,
 	ProvideEnv,
+	ProvideS3,
 )
 
 var HandlerProviderSet = wire.NewSet(
@@ -109,6 +112,10 @@ func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 
 func ProvideEnv(container *bootstrap.Di) *bootstrap.Env {
 	return container.Env
+}
+
+func ProvideS3(container *bootstrap.Di) *bootstrap.S3 {
+	return &container.Env.Storage
 }
 
 var ProviderSet = wire.NewSet(
