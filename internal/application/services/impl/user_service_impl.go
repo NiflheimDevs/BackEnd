@@ -376,13 +376,17 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		})
 	}
 
+	highpath := us.FileService.GetObjectURL(targetUserid, true)
+	lowPath := us.FileService.GetObjectURL(targetUserid, false)
+
 	response := dto.UserProfileDTO{
-		Phone:          targetInfo.Phone,
-		FirstName:      targetInfo.FirstName,
-		LastName:       targetInfo.LastName,
-		Bio:            targetInfo.Bio,
-		Username:       targetInfo.Username,
-		ProfilePicture: fmt.Sprintf("%s/%s%s", us.Env.Server.IP_Addr, us.Constants.StorageDir, us.FileService.GetUserProfileName(targetUserid, true)),
+		Phone:              targetInfo.Phone,
+		FirstName:          targetInfo.FirstName,
+		LastName:           targetInfo.LastName,
+		Bio:                targetInfo.Bio,
+		Username:           targetInfo.Username,
+		HighProfilePicture: highpath,
+		LowProfilePicture:  lowPath,
 	}
 	if userid == targetUserid {
 		response.Email = targetInfo.Email

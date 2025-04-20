@@ -82,11 +82,48 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 func (fh *FileHandler) DeleteProfilePhoto(w http.ResponseWriter, r *http.Request) {
 	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
 	fh.FileService.DeleteProfilePhoto(userid)
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (fh *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 	// automatically generates 404 if file not found (based on the document)
 	http.StripPrefix("/storage/", http.FileServer(http.Dir(fh.Constants.StorageDir))).ServeHTTP(w, r)
+}
 
+func (fh *FileHandler) UploadUserResume(w http.ResponseWriter, r *http.Request) {
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		log.Println(err)
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	defer file.Close()
+
+	if header.Size > fh.Constants.MaxResumeSize {
+		panic(exceptions.Exception{
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.FILE_TOO_LARGE},
+		})
+	}
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
+
+	fh.FileService.UploadResume(data, userid)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (fh *FileHandler) DeleteUserResume(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
+	fh.FileService.DeleteResume(userid)
+	w.WriteHeader(http.StatusNoContent)
 }

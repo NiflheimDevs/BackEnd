@@ -78,7 +78,7 @@ func (paymentService *PaymentService) GetUserTransactions(userID int, offset, li
 				Date:        transaction.Date,
 				Type:        1,
 				Description: transaction.Description,
-				Amount:      -1 * transaction.Amount,
+				Amount:      transaction.Amount,
 			})
 		} else if transaction.ToUser == userID {
 			output = append(output, dto.UserTransactionDTO{

@@ -32,8 +32,9 @@ import (
 func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	constants := ProvideConstants(container)
 	env := ProvideEnv(container)
-	fileStorage := storageimpl.NewFileStorage(constants)
-	fileService := servicesimpl.NewFileService(fileStorage)
+	s3 := ProvideS3(container)
+	s3Storage := storageimpl.NewS3Storage(env, s3)
+	fileService := servicesimpl.NewFileService(s3Storage)
 	jwt := servicesimpl.NewJWT(constants)
 	validate := pkg.NewValidator()
 	fileHandler := handlers.NewFileHandler(constants, env, fileService, jwt, validate)
@@ -89,12 +90,13 @@ var DatabaseProviderSet = wire.NewSet(driver.ConnectSQL, driver.ConncetRedis, db
 
 var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
-var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, storageimpl.NewFileStorage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, storageimpl.NewFileStorage, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
 var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewSmsService, servicesimpl.NewJWT, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), ProvideConstants,
 	ProvideEnv,
+	ProvideS3,
 )
 
 var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewErrorHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, wire.Struct(new(Handlers), "*"))
@@ -107,6 +109,10 @@ func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 
 func ProvideEnv(container *bootstrap.Di) *bootstrap.Env {
 	return container.Env
+}
+
+func ProvideS3(container *bootstrap.Di) *bootstrap.S3 {
+	return &container.Env.Storage
 }
 
 var ProviderSet = wire.NewSet(
