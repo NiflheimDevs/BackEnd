@@ -53,6 +53,8 @@ const (
 	USER_NOT_OWNER SpecificError = "USER_NOT_OWNER"
 
 	INSUFFICIENT_BALANCE SpecificError = "INSUFFICIENT_BALANCE"
+
+	ALREADY_A_MEMBER SpecificError = "ALREADY_A_MEMBER"
 )
 
 const (

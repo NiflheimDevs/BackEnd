@@ -46,6 +46,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewTagRepo,
 	repositoriesimpl.NewLabelRepo,
 	repositoriesimpl.NewPaymentRepo,
+	repositoriesimpl.NewTeamRepo,
 	storageimpl.NewFileStorage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositries.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -54,6 +55,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositries.LabelRepo), new(*repositoriesimpl.LabelRepo)),
 	wire.Bind(new(repositries.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
 	wire.Bind(new(repositries.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
+	wire.Bind(new(repositries.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -70,6 +72,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewLabelService,
 	servicesimpl.NewProjectService,
 	servicesimpl.NewPaymentService,
+	servicesimpl.NewTeamService,
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
 
@@ -79,6 +82,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)),
 	wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)),
 	wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)),
+	wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 
@@ -93,6 +97,8 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewProjectHandler,
 	handlers.NewGeneralHandler,
 	handlers.NewPaymentHandler,
+	handlers.NewTeamHandler,
+
 	wire.Struct(new(Handlers), "*"),
 )
 

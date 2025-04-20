@@ -3,6 +3,7 @@ package repositoriesimpl
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -10,6 +11,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
 
 type UserRepo struct {
@@ -101,11 +103,8 @@ func (repo *UserRepo) FindUserByEmail(email string) (*models.UserModel, error) {
 	return fillUserModel(row)
 }
 
-func (repo *UserRepo) PostUser(phonenumber string, username string, password []byte) (int, error) {
+func (repo *UserRepo) PostUser(ctx context.Context, tx transaction.Tx, phonenumber string, username string, password []byte) (int, error) {
 	var userid int
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 
 	query := `
 	INSERT INTO users 
@@ -113,7 +112,18 @@ func (repo *UserRepo) PostUser(phonenumber string, username string, password []b
 	VALUES ($1 , $2 , $3)
 	RETURNING id`
 
-	err := repo.PG.QueryRow(ctx, query, phonenumber, username, password).Scan(&userid)
+	row := tx.QueryRow(ctx, query, phonenumber, username, password).(pgx.Row)
+	err := row.Scan(&userid)
+
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			panic(exceptions.Exception{
+				Tag:    exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+			})
+		}
+	}
+
 	return userid, err
 }
 
