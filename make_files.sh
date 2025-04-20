@@ -36,7 +36,7 @@ type ${upper_entity_name}Service struct {
     ${upper_entity_name}Repo repositories.${upper_entity_name}Repo
 }
 
-func New${lower_entity_name}Service (
+func New${upper_entity_name}Service (
     ${lower_entity_name}Repo repositories.${upper_entity_name}Repo,
     ) *${upper_entity_name}Service {
     return &${upper_entity_name}Service{
@@ -66,7 +66,7 @@ type ${upper_entity_name}Repo struct {
     PG *pgxpool.Pool
 }
 
-func New${lower_entity_name}Repo (
+func New${upper_entity_name}Repo (
     PG *pgxpool.Pool,
     ) *${upper_entity_name}Repo {
     return &${upper_entity_name}Repo{
