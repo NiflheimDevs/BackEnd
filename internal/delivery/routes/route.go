@@ -77,6 +77,9 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/user/resume", app.Handlers.FileHandler.UploadUserResume)
 	mux.Delete("/user/resume", app.Handlers.FileHandler.DeleteUserResume)
 
+	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
+	mux.Get("/user/resume", app.Handlers.FileHandler.GetResume)
+
 	mux.Get("/storage/*", app.Handlers.FileHandler.GetFile)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
