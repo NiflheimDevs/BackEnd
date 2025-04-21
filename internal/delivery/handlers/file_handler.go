@@ -114,7 +114,7 @@ func (fh *FileHandler) UploadUserResume(w http.ResponseWriter, r *http.Request) 
 			Tag: exceptions.BAD_REQUEST,
 		})
 	}
-
+  
 	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
 
 	fh.FileService.UploadResume(data, userid)
@@ -126,4 +126,37 @@ func (fh *FileHandler) DeleteUserResume(w http.ResponseWriter, r *http.Request) 
 	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
 	fh.FileService.DeleteResume(userid)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (fh *FileHandler) GetProfilePhoto(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
+	high_qual := fh.FileService.GetProfilePhotoURL(userid, true)
+	low_qual := fh.FileService.GetProfilePhotoURL(userid, false)
+	type profilepic struct {
+		HighQuality string `json:"high_quality"`
+		LowQuality  string `json:"low_quality"`
+	}
+
+	pic := profilepic{
+		HighQuality: high_qual,
+		LowQuality:  low_qual,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(pic); err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
+		})
+	}
+}
+
+func (fh *FileHandler) GetResume(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
+
+	url := fh.FileService.GetResumeURL(userid)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(url))
 }

@@ -376,8 +376,8 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		})
 	}
 
-	highpath := us.FileService.GetObjectURL(targetUserid, true)
-	lowPath := us.FileService.GetObjectURL(targetUserid, false)
+	highpath := us.FileService.GetProfilePhotoURL(targetUserid, true)
+	lowPath := us.FileService.GetProfilePhotoURL(targetUserid, false)
 
 	response := dto.UserProfileDTO{
 		Phone:              targetInfo.Phone,

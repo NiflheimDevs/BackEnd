@@ -37,8 +37,13 @@ func (fs *FileService) GetUserProfileName(userid int, wantHighQual bool) string 
 
 }
 
-func (fs *FileService) GetObjectURL(userid int, wantHighQual bool) string {
+func (fs *FileService) GetProfilePhotoURL(userid int, wantHighQual bool) string {
 	return fs.S3Storage.GetPresignedURL(enums.ProfilePic, fs.GetUserProfileName(userid, wantHighQual), 8*time.Hour)
+}
+
+func (fs *FileService) GetResumeURL(userid int) string {
+	outputName := fmt.Sprintf("resume%d.pdf", userid)
+	return fs.S3Storage.GetPresignedURL(enums.Resume, outputName, 8*time.Hour)
 }
 
 func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
