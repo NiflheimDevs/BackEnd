@@ -291,3 +291,39 @@ INSERT INTO label("name","description","price") VALUES
 ('Free','',0),
 ('Bold','important',75000),
 ('Urgent','',200000);
+
+ALTER SEQUENCE role_id_seq RESTART WITH 0;
+INSERT INTO "role" ("name") VALUES
+("TEAM_OWNER"),
+("TEAM_ADMIN"),
+("TEAM_CRAWLER"),
+("TEAM_MAINTAINER");
+
+ALTER SEQUENCE permission_id_seq RESTART WITH 0;
+INSERT INTO "permission" ("name" , "description") VALUES
+("ADD_MEMBER", "adds member"),
+("REMOVE_MEMEBER", "removes a member"),
+("EDIT_INFO", "edit title, bio and ..."),
+("BIDDER", "the one who bids"),
+("EDIT_NICKNAME", "for teams, it works for positions. for groups and etc for nickname"),
+("EDIT_ROLE", "able to change the roles");
+
+INSERT INTO "role_permission" ("role_id" , "permission_id") VALUES
+(0 , 0),
+(0 , 1),
+(0 , 2),
+(0 , 3),
+(0 , 4),
+(0 , 5),
+(1 , 0),
+(1 , 1),
+(1 , 2),
+(1 , 3),
+(1 , 4),
+(1 , 5),
+(2 , 3),
+(3 , 0),
+(3 , 1),
+(3 , 2),
+(3 , 4);
+
