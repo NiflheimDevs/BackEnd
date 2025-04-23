@@ -46,7 +46,6 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewTagRepo,
 	repositoriesimpl.NewLabelRepo,
 	repositoriesimpl.NewPaymentRepo,
-	storageimpl.NewFileStorage,
 	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositries.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -55,7 +54,6 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositries.LabelRepo), new(*repositoriesimpl.LabelRepo)),
 	wire.Bind(new(repositries.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
 	wire.Bind(new(repositries.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
-	wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -92,7 +90,6 @@ var ServiceProviderSet = wire.NewSet(
 var HandlerProviderSet = wire.NewSet(
 	handlers.NewFileHandler,
 	handlers.NewUserHandler,
-	handlers.NewErrorHandler,
 	handlers.NewProjectHandler,
 	handlers.NewGeneralHandler,
 	handlers.NewPaymentHandler,
@@ -137,7 +134,6 @@ type Middlewares struct {
 type Handlers struct {
 	FileHandler    *handlers.FileHandler
 	UserHandler    *handlers.UserHandler
-	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler

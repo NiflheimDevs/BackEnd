@@ -50,7 +50,6 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	careerService := servicesimpl.NewCareerService(careerRepo, tagService, tagRepo, userRepo)
 	smsService := servicesimpl.NewSmsService(env, constants)
 	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
-	errorHandler := handlers.NewErrorHandler()
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
 	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
 	pgxTxManager := db.NewTxManager(pool)
@@ -64,7 +63,6 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	wireHandlers := &Handlers{
 		FileHandler:    fileHandler,
 		UserHandler:    userHandler,
-		ErrorHandler:   errorHandler,
 		ProjectHandler: projectHandler,
 		GeneralHandler: generalHandler,
 		PaymentHandler: paymentHandler,
@@ -90,7 +88,7 @@ var DatabaseProviderSet = wire.NewSet(driver.ConnectSQL, driver.ConncetRedis, db
 
 var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
-var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, storageimpl.NewFileStorage, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
@@ -99,7 +97,7 @@ var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.N
 	ProvideS3,
 )
 
-var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewErrorHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, wire.Struct(new(Handlers), "*"))
+var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, wire.Struct(new(Handlers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -134,7 +132,6 @@ type Middlewares struct {
 type Handlers struct {
 	FileHandler    *handlers.FileHandler
 	UserHandler    *handlers.UserHandler
-	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
