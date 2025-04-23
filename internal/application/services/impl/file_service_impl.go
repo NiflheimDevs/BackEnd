@@ -10,12 +10,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/chai2010/webp"
-	"github.com/nfnt/resize"
 	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
-	"github.com/pixiv/go-libjpeg/jpeg"
+	"github.com/niflheimdevs/backend/pkg"
 )
 
 type FileService struct {
@@ -67,9 +65,9 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	var webpBuffer, jpegBuffer bytes.Buffer
-	resizedImg := resize.Resize(512, 512, img, resize.Lanczos2)
+	resizedImg := pkg.Resize(512, 512, img)
 
-	err = webp.Encode(&webpBuffer, resizedImg, &webp.Options{Lossless: false, Quality: 85})
+	err = pkg.ImageEncode(&webpBuffer, resizedImg, 1)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -82,12 +80,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	rgbaImg := image.NewRGBA(img.Bounds())
 	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
 
-	options := &jpeg.EncoderOptions{
-		Quality:         85,
-		ProgressiveMode: true,
-	}
-
-	err = jpeg.Encode(&jpegBuffer, rgbaImg, options)
+	err = pkg.ImageEncode(&jpegBuffer, rgbaImg, 2)
 	if err != nil {
 		log.Println("jpeg", err)
 		panic(exceptions.Exception{
