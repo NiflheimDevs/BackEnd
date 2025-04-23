@@ -69,7 +69,7 @@ func (j *JWT) GenerateToken(userID int) (string, string) {
 	refreshTokenClaims := jwt.MapClaims{
 		"iss": "bidlancer",
 		"sub": userID,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
 		"iat": time.Now().Unix(),
 	}
 
@@ -111,4 +111,46 @@ func (j *JWT) VerifyToken(tokenString string) jwt.MapClaims {
 	}
 	return claims
 
+}
+
+func (j *JWT) RefreshToken(tokenString string) string {
+	claims := j.VerifyToken(tokenString)
+	if claims == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_TOKEN_EXPIRED,
+			},
+		})
+	}
+
+	userID, ok := claims["sub"].(float64)
+	if !ok {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_FOUND,
+			},
+		})
+	}
+
+	newAccessTokenClaims := jwt.MapClaims{
+		"iss": "bidlancer",
+		"sub": int(userID),
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		"iat": time.Now().Unix(),
+	}
+
+	newAccessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, newAccessTokenClaims)
+	newAccessTokenString, err := newAccessToken.SignedString(j.PrivateKey)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_GENERATE_TOKEN_ERROR,
+			},
+		})
+	}
+
+	return newAccessTokenString
 }

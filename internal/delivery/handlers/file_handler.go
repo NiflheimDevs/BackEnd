@@ -114,7 +114,7 @@ func (fh *FileHandler) UploadUserResume(w http.ResponseWriter, r *http.Request) 
 			Tag: exceptions.BAD_REQUEST,
 		})
 	}
-  
+
 	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
 
 	fh.FileService.UploadResume(data, userid)
