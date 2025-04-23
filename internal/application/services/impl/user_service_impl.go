@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/google/uuid"
-
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
@@ -92,7 +90,7 @@ func (us *UserService) CacheUserInfo(phonenumber string, username string, passwo
 		})
 	}
 
-	session := uuid.New().String()
+	session := pkg.NewUniqueID()
 
 	userdata := models.UserCacheData{
 		Phone:    phonenumber,
@@ -243,7 +241,7 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 		})
 	}
 
-	session := uuid.New().String()
+	session := pkg.NewUniqueID()
 	val := models.UserCacheData{
 		Phone: fmt.Sprintf("%d", userdata.ID),
 		OTP:   code,
@@ -255,7 +253,7 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 }
 
 func (us *UserService) SetForgetPasswordFlag(userID string) string {
-	session := uuid.New().String()
+	session := pkg.NewUniqueID()
 	us.CacheRepo.PostSessionFlag(session, userID)
 	return session
 }
@@ -348,7 +346,7 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 		})
 	}
 
-	session = uuid.New().String()
+	session = pkg.NewUniqueID()
 	val := models.UserCacheData{
 		Phone:    phone,
 		Username: fmt.Sprintf("%d", userid),

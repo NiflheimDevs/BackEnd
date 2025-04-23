@@ -63,8 +63,6 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/transaction/deposit", app.Handlers.PaymentHandler.Deposit)
 	mux.Post("/transaction/withdraw", app.Handlers.PaymentHandler.Withdraw)
 
-	mux.Get("/error/{code}", app.Handlers.ErrorHandler.ReturnError)
-
 	mux.Get("/user/{id}", app.Handlers.UserHandler.GetUserInfo)
 	mux.Put("/user/update-info", app.Handlers.UserHandler.UpdateUserData)
 	mux.Put("/user/update-username", app.Handlers.UserHandler.UpdateUsername)
