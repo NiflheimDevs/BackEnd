@@ -10,4 +10,5 @@ type S3Storage interface {
 	UploadObject(bucketType enums.BucketType, key string, file []byte)
 	DeleteObject(bucketType enums.BucketType, key string) error
 	GetPresignedURL(bucketType enums.BucketType, objectKey string, expiration time.Duration) string
+	GetObjectList(bucketType enums.BucketType) []string
 }
