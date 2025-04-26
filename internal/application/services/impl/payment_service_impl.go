@@ -49,7 +49,7 @@ func (paymentService *PaymentService) GetUserBalance(userID int) int64 {
 	return balance
 }
 
-func (paymentService *PaymentService) GetUserTransactions(userID int, offset, limit int, sortBy, order string) []dto.UserTransactionDTO {
+func (paymentService *PaymentService) GetUserTransactions(userID int, offset, limit int, sortBy, order string) (int, []dto.UserTransactionDTO) {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
@@ -58,6 +58,8 @@ func (paymentService *PaymentService) GetUserTransactions(userID int, offset, li
 			},
 		})
 	}
+
+	count := paymentService.PaymentRepo.GetTransactionCount(userID)
 
 	transactions, err := paymentService.PaymentRepo.GetUserTransactions(userID, offset, limit, sortBy, order)
 
@@ -90,7 +92,7 @@ func (paymentService *PaymentService) GetUserTransactions(userID int, offset, li
 		}
 	}
 
-	return output
+	return count, output
 }
 
 func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx transaction.Tx, userID int, amount int64) {

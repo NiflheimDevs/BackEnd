@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
@@ -44,11 +45,16 @@ func (paymentHandler *PaymentHandler) GetUserTransactions(w http.ResponseWriter,
 	sortBy := query.Get("sort_by") // e.g., "date" or "amount"
 	order := query.Get("order")    // e.g., "asc" or "desc"
 
-	transactions := paymentHandler.PaymentService.GetUserTransactions(userID, offset, limit, sortBy, order)
+	count, transactions := paymentHandler.PaymentService.GetUserTransactions(userID, offset, limit, sortBy, order)
+
+	tran := dto.UserTransactionsDTO{
+		Count:        count,
+		Transactions: transactions,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(transactions); err != nil {
+	if err := json.NewEncoder(w).Encode(tran); err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
