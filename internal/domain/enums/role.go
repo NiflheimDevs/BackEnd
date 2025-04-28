@@ -7,6 +7,7 @@ const (
 	TEAM_ADMIN
 	TEAM_CRAWLER
 	TEAM_MAINTAINER
+	TEAM_NEWBIE
 )
 
 var roleNames = map[RoleType]string{
@@ -14,6 +15,15 @@ var roleNames = map[RoleType]string{
 	TEAM_ADMIN:      "TEAM_ADMIN",
 	TEAM_CRAWLER:    "TEAM_CRAWLER",
 	TEAM_MAINTAINER: "TEAM_MAINTAINER",
+	TEAM_NEWBIE:     "TEAM_NEWBIE",
+}
+
+var namesRole = map[string]RoleType{
+	"TEAM_OWNER":      TEAM_OWNER,
+	"TEAM_ADMIN":      TEAM_ADMIN,
+	"TEAM_CRAWLER":    TEAM_CRAWLER,
+	"TEAM_MAINTAINER": TEAM_MAINTAINER,
+	"TEAM_NEWBIE":     TEAM_NEWBIE,
 }
 
 var rolePermissions = map[RoleType][]PermType{
@@ -21,6 +31,7 @@ var rolePermissions = map[RoleType][]PermType{
 	TEAM_OWNER:      {ADD_MEMBER, REMOVE_MEMEBER, BIDDER, EDIT_INFO, EDIT_NICKNAME, EDIT_ROLE, DELETE_TEAM},
 	TEAM_CRAWLER:    {BIDDER},
 	TEAM_MAINTAINER: {EDIT_INFO, EDIT_NICKNAME, ADD_MEMBER, REMOVE_MEMEBER},
+	TEAM_NEWBIE:     {},
 }
 
 func (r RoleType) String() string {
@@ -44,6 +55,13 @@ func RoleExists(query string) bool {
 		}
 	}
 	return false
+}
+
+func NameToRole(name string) RoleType {
+	if role, ok := namesRole[name]; ok {
+		return role
+	}
+	return 0
 }
 
 func GetAllRoles() []RoleType {

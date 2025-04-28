@@ -25,7 +25,7 @@ func NewRoleRepo(
 }
 
 // type_ : 0 for user, 1 for team and 2 for chat
-func (rr *RoleRepo) AddRole(userid int, originid int, type_ int, roleid int) error {
+func (rr *RoleRepo) AddRole(userid int, originid int, type_ int, roleid uint) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
 
@@ -39,7 +39,7 @@ func (rr *RoleRepo) AddRole(userid int, originid int, type_ int, roleid int) err
 }
 
 // type_ : 0 for user, 1 for team and 2 for chat
-func (rr *RoleRepo) AddRoleWithTx(ctx context.Context, tx transaction.Tx, userid int, originid int, type_ int, roleid int) error {
+func (rr *RoleRepo) AddRoleWithTx(ctx context.Context, tx transaction.Tx, userid int, originid int, type_ int, roleid uint) error {
 
 	query := `INSERT INTO member_role
     (user_id , origin_id, type, role_id) VALUES
@@ -50,7 +50,7 @@ func (rr *RoleRepo) AddRoleWithTx(ctx context.Context, tx transaction.Tx, userid
 	return err
 }
 
-func (rr *RoleRepo) UpdateRole(userid int, originid int, type_ int, roleid int) error {
+func (rr *RoleRepo) UpdateRole(userid int, originid int, type_ int, roleid uint) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
 

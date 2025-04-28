@@ -37,7 +37,13 @@ func SeedRoles(tx transaction.Tx) {
 			if err != nil {
 				panic(err)
 			}
-			query = `DELETE FROM memeber_role
+			query = `DELETE FROM users_team
+			WHERE role_id = $1`
+			_, err = tx.Exec(ctx, query, temp.ID)
+			if err != nil {
+				panic(err)
+			}
+			query = `DELETE FROM users_chat
 			WHERE role_id = $1`
 			_, err = tx.Exec(ctx, query, temp.ID)
 			if err != nil {
@@ -68,7 +74,15 @@ func SeedRoles(tx transaction.Tx) {
 		}
 		if previousRoles[seed.String()] != 0 {
 
-			query = `UPDATE member_role
+			query = `UPDATE uesrs_team
+				SET role_id = $1
+				WHERE role_id = $2`
+			_, err = tx.Exec(ctx, query, seed, previousRoles[seed.String()])
+			if err != nil {
+				panic(err)
+			}
+
+			query = `UPDATE users_chat
 				SET role_id = $1
 				WHERE role_id = $2`
 			_, err = tx.Exec(ctx, query, seed, previousRoles[seed.String()])
