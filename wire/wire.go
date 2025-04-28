@@ -17,6 +17,7 @@ import (
 	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
 	"github.com/niflheimdevs/backend/pkg"
 
+	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	repositries "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
@@ -46,6 +47,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewTagRepo,
 	repositoriesimpl.NewLabelRepo,
 	repositoriesimpl.NewPaymentRepo,
+	repositoriesimpl.NewBidRepo,
 	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositries.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -54,6 +56,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositries.LabelRepo), new(*repositoriesimpl.LabelRepo)),
 	wire.Bind(new(repositries.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
 	wire.Bind(new(repositries.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
+	wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -72,6 +75,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewPaymentService,
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
+	servicesimpl.NewBidService,
 
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
@@ -81,6 +85,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
+	wire.Bind(new(services.BidService), new(*servicesimpl.BidService)),
 
 	ProvideConstants,
 	ProvideEnv,
@@ -93,6 +98,7 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewProjectHandler,
 	handlers.NewGeneralHandler,
 	handlers.NewPaymentHandler,
+	handlers.NewBidHandler,
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -137,6 +143,7 @@ type Handlers struct {
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
+	BidHandler     *handlers.BidHandler
 }
 
 type Application struct {
