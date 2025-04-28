@@ -20,6 +20,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
+	"github.com/niflheimdevs/backend/internal/infrastructure/db/seed"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
@@ -43,7 +44,8 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	userCache := redisimpl.NewUserCache(client)
 	pgxTxManager := db.NewTxManager(pool)
 	teamRepo := repositoriesimpl.NewTeamRepo(pool)
-	teamService := servicesimpl.NewTeamService(teamRepo)
+	roleRepo := repositoriesimpl.NewRoleRepo(pool)
+	teamService := servicesimpl.NewTeamService(teamRepo, roleRepo, pgxTxManager, fileService)
 	secretSauce := pkg.NewSecretSauce()
 	userService := servicesimpl.NewUserService(userRepo, userCache, pgxTxManager, constants, env, fileService, teamService, secretSauce)
 	tagRepo := repositoriesimpl.NewTagRepo(pool)
@@ -78,9 +80,11 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		RateLimit:      rateLimit,
 		Authentication: authentication,
 	}
+	seeder := seed.NewSeeder(pgxTxManager)
 	application := &Application{
 		Handlers:    wireHandlers,
 		Middlewares: middlewares,
+		Seeder:      seeder,
 	}
 	return application, nil
 }
@@ -91,7 +95,7 @@ var DatabaseProviderSet = wire.NewSet(driver.ConnectSQL, driver.ConncetRedis, db
 
 var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
-var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, storageimpl.NewFileStorage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, storageimpl.NewFileStorage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
@@ -118,7 +122,7 @@ var ProviderSet = wire.NewSet(
 	FileServiceProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
-	MiddlewareProviderSet,
+	MiddlewareProviderSet, seed.NewSeeder,
 )
 
 type Middlewares struct {
@@ -139,4 +143,5 @@ type Handlers struct {
 type Application struct {
 	Handlers    *Handlers
 	Middlewares *Middlewares
+	Seeder      *seed.Seeder
 }

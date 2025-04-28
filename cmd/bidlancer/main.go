@@ -25,6 +25,8 @@ func main() {
 		panic(err)
 	}
 
+	// app.Seeder.SeedDaddy()
+
 	log.Printf("Application is running on port%s", di.Const.Port)
 	server := &http.Server{
 		Addr:    di.Const.Port,
