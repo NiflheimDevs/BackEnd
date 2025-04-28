@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS "team" (
   "type" int DEFAULT 0,
   "title" varchar,
   "description" text,
-  "created_at" timestamp DEFAULT CURRENT_TIMESTAMP
+  "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );

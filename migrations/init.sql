@@ -11,6 +11,43 @@ END $$;
 
 \c bidlancer;
 
+CREATE TABLE IF NOT EXISTS "permission" (
+  "id" serial PRIMARY KEY,
+  "name" varchar UNIQUE NOT NULL,
+  "description" text
+);
+
+CREATE TABLE IF NOT EXISTS "role" (
+  "id" int PRIMARY KEY,
+  "name" varchar UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "label" (
+  "id" serial PRIMARY KEY,
+  "name" varchar NOT NULL,
+  "description" text,
+  "price" numeric NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "chat" (
+  "id" serial PRIMARY KEY,
+  "title" varchar,
+  "description" text
+);
+
+CREATE TABLE IF NOT EXISTS "tag" (
+  "id" serial PRIMARY KEY,
+  "name" varchar NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "team" (
+  "id" serial PRIMARY KEY,
+  "type" int DEFAULT 0,
+  "title" varchar,
+  "description" text,
+  "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS "users" (
   "id" serial PRIMARY KEY,
   "firstname" varchar,
@@ -22,22 +59,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "bio" text,
   "phone" varchar NOT NULL,
   "wallet" numeric DEFAULT 0,
-  "created_time" timestamp DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS "team" (
-  "id" serial PRIMARY KEY,
-  "type" int DEFAULT 0,
-  "title" varchar,
-  "description" text,
-  "created_at" timestamp DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS "label" (
-  "id" serial PRIMARY KEY,
-  "name" varchar NOT NULL,
-  "description" text,
-  "price" numeric NOT NULL
+  "created_time" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS "bid" (
@@ -45,8 +67,8 @@ CREATE TABLE IF NOT EXISTS "bid" (
   "team_id" int NOT NULL,
   "project_id" int NOT NULL,
   "value" numeric NOT NULL,
-  "expected_time" timestamp NOT NULL,
-  "created_time" timestamp NOT NULL,
+  "expected_time" TIMESTAMP WITH TIME ZONE NOT NULL,
+  "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY ("team_id") REFERENCES "team" ("id")
 );
 
@@ -57,9 +79,9 @@ CREATE TABLE IF NOT EXISTS "project" (
   "description" text,
   "label" int DEFAULT 1,
   "selected_bid_id" int UNIQUE,
-  "created_time" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updated_time" timestamp DEFAULT CURRENT_TIMESTAMP,
-  "duration" timestamp,
+  "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_time" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  "duration" TIMESTAMP WITH TIME ZONE,
   FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id"),
   FOREIGN KEY ("label") REFERENCES "label" ("id")
@@ -68,12 +90,6 @@ CREATE TABLE IF NOT EXISTS "project" (
 ALTER TABLE bid
 ADD FOREIGN KEY ("project_id")
 REFERENCES "project" ("id");
-
-CREATE TABLE IF NOT EXISTS "chat" (
-  "id" serial PRIMARY KEY,
-  "title" varchar,
-  "description" text
-);
 
 CREATE TABLE IF NOT EXISTS "comment" (
   "id" serial PRIMARY KEY,
@@ -90,7 +106,7 @@ CREATE TABLE IF NOT EXISTS "transaction" (
   "from_user_id" int NOT NULL,
   "to_user_id" int NOT NULL,
   "amount" numeric NOT NULL,
-  "date" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "description" text,
   FOREIGN KEY ("to_user_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("from_user_id") REFERENCES "users" ("id")
@@ -100,30 +116,19 @@ CREATE TABLE IF NOT EXISTS "message" (
   "id" serial PRIMARY KEY,
   "chat_id" int NOT NULL,
   "sender_id" int,
-  "sent_time" timestamp DEFAULT CURRENT_TIMESTAMP,
-  "edit_time" timestamp,
+  "sent_time" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  "edit_time" TIMESTAMP WITH TIME ZONE,
   "content" text NOT NULL,
   FOREIGN KEY ("chat_id") REFERENCES "chat" ("id"),
   FOREIGN KEY ("sender_id") REFERENCES "users" ("id")
-);
-
-CREATE TABLE IF NOT EXISTS "permission" (
-  "id" serial PRIMARY KEY,
-  "name" varchar NOT NULL,
-  "description" text
-);
-
-CREATE TABLE IF NOT EXISTS "role" (
-  "id" int PRIMARY KEY,
-  "name" varchar NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "career" (
     "id" serial PRIMARY KEY,
     "user_id" int NOT NULL,
     "company" varchar NOT NULL,
-    "start_date" timestamp NOT NULL,
-    "end_date" timestamp,
+    "start_date" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "end_date" TIMESTAMP WITH TIME ZONE,
     "role" varchar NOT NULL,
     "website" varchar,
     FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE,
@@ -137,17 +142,14 @@ CREATE TABLE IF NOT EXISTS "role_permission" (
   FOREIGN KEY ("permission_id") REFERENCES "permission" ("id") ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS "tag" (
-  "id" serial PRIMARY KEY,
-  "name" varchar NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS "users_chat" (
   "chat_id" int NOT NULL,
   "user_id" int NOT NULL,
   "role_id" int NOT NULL,
   FOREIGN KEY ("chat_id") REFERENCES "chat" ("id") ON DELETE CASCADE,
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
+  FOREIGN KEY ("role_id") REFERENCES "role" ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "project_tag" (
@@ -167,19 +169,14 @@ CREATE TABLE IF NOT EXISTS "users_career_tag" (
   UNIQUE ("career_user_id" , "tag_id" , "type")
 );
 
-CREATE TABLE IF NOT EXISTS "users_role" (
-  "user_id" int NOT NULL,
-  "role_id" int NOT NULL,
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE,
-  FOREIGN KEY ("role_id") REFERENCES "role" ("id") ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS "users_team" (
   "user_id" int NOT NULL,
   "team_id" int NOT NULL,
   "position" varchar,
+  "role_id" int NOT NULL,
   FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
-  FOREIGN KEY ("team_id") REFERENCES "team" ("id") ON DELETE CASCADE
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id") ON DELETE CASCADE,
+  FOREIGN KEY ("role_id") REFERENCES "role" ("id"),
 );
 
 CREATE FUNCTION delete_cascade_for_career() RETURNS TRIGGER AS $$
@@ -222,6 +219,25 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER check_fk_users_career_tag
 BEFORE INSERT OR UPDATE ON users_career_tag
 FOR EACH ROW EXECUTE FUNCTION enforce_fk_constraint_on_users_career_tag();
+
+CREATE OR REPLACE FUNCTION enforce_fk_constraint_on_member_role() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.type = 1 THEN
+        IF NOT EXISTS (SELECT 1 FROM "team" WHERE "id" = NEW.origin_id) THEN
+            RAISE EXCEPTION 'Invalid reference: % does not exist in team', NEW.origin_id;
+        END IF;
+    ELSIF NEW.type = 2 THEN
+        IF NOT EXISTS (SELECT 1 FROM chat WHERE id = NEW.origin_id) THEN
+            RAISE EXCEPTION 'Invalid reference: % does not exist in chat', NEW.origin_id;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_fk_member_role
+BEFORE INSERT OR UPDATE member_role
+FOR EACH ROW EXECUTE FUNCTION enforce_fk_constraint_on_member_role();
 
 INSERT INTO users (username,phone,password) VALUES 
 ('God','666','\x48656c6c6f20776f726c64'),
@@ -292,38 +308,11 @@ INSERT INTO label("name","description","price") VALUES
 ('Bold','important',75000),
 ('Urgent','',200000);
 
-ALTER SEQUENCE role_id_seq RESTART WITH 0;
-INSERT INTO "role" ("name") VALUES
-("TEAM_OWNER"),
-("TEAM_ADMIN"),
-("TEAM_CRAWLER"),
-("TEAM_MAINTAINER");
-
-ALTER SEQUENCE permission_id_seq RESTART WITH 0;
-INSERT INTO "permission" ("name" , "description") VALUES
-("ADD_MEMBER", "adds member"),
-("REMOVE_MEMEBER", "removes a member"),
-("EDIT_INFO", "edit title, bio and ..."),
-("BIDDER", "the one who bids"),
-("EDIT_NICKNAME", "for teams, it works for positions. for groups and etc for nickname"),
-("EDIT_ROLE", "able to change the roles");
-
-INSERT INTO "role_permission" ("role_id" , "permission_id") VALUES
-(0 , 0),
-(0 , 1),
-(0 , 2),
-(0 , 3),
-(0 , 4),
-(0 , 5),
-(1 , 0),
-(1 , 1),
-(1 , 2),
-(1 , 3),
-(1 , 4),
-(1 , 5),
-(2 , 3),
-(3 , 0),
-(3 , 1),
-(3 , 2),
-(3 , 4);
-
+-- ALTER SEQUENCE permission_id_seq RESTART WITH 0;
+-- INSERT INTO "permission" ("name" , "description") VALUES
+-- ("ADD_MEMBER", "adds member"),
+-- ("REMOVE_MEMEBER", "removes a member"),
+-- ("EDIT_INFO", "edit title, bio and ..."),
+-- ("BIDDER", "the one who bids"),
+-- ("EDIT_NICKNAME", "for teams, it works for positions. for groups and etc for nickname"),
+-- ("EDIT_ROLE", "able to change the roles");

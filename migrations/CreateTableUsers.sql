@@ -9,5 +9,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "bio" text,
   "phone" varchar NOT NULL,
   "wallet" numeric DEFAULT 0,
-  "created_time" timestamp DEFAULT CURRENT_TIMESTAMP
+  "created_time" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  "role_id" int,
+  FOREIGN KEY ("role_id") REFERENCES "role" ("id")
 );
