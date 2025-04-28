@@ -8,7 +8,8 @@ import (
 type ProjectService interface {
 	LandingProps() []dto.ProjectLanding
 	GetProject(projectID int) *models.ProjectModel
-	GetUserProjects(userID, offset, limit int) []models.ProjectModel
+	GetUserProjects(userID, targetuserID, offset, limit int) ([]models.ProjectModel, int)
+	GetProjectCount(userID int) int
 	CreateProject(userID int, title, description string, label int, price int64, tags []int) int
 	UpdateProject(projectID, userID int, title, description string, label int, price int64, tags []int)
 	DeleteProject(userID, projectID int)
