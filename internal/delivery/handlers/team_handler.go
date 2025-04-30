@@ -54,14 +54,17 @@ func (th *TeamHandler) UpdateTeamInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (th *TeamHandler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
-	type Param struct {
-		TeamID int64 `json:"team_id" validate:"required"`
-	}
-	params := Validated[Param](th.Validator, r)
+	teamidString := chi.URLParam(r, "team_id")
+	teamid, err := strconv.Atoi(teamidString)
 
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
 	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
 
-	th.TeamService.DeleteTeam(userid, params.TeamID)
+	th.TeamService.DeleteTeam(userid, int64(teamid))
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -126,26 +129,14 @@ func (th *TeamHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 
 	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
 
+	if params.UserID == 0 {
+		params.UserID = userid
+	}
+
 	th.TeamService.KickMemebr(userid, params.UserID, params.TeamID)
 
 	w.WriteHeader(http.StatusNoContent)
 }
-
-func (th *TeamHandler) LeaveTeam(w http.ResponseWriter, r *http.Request) {
-	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
-	teamidString := chi.URLParam(r, "team-id")
-	teamid, err := strconv.Atoi(teamidString)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: exceptions.BAD_REQUEST,
-		})
-	}
-
-	th.TeamService.LeaveTeam(userid, int64(teamid))
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func (th *TeamHandler) AddMembers(w http.ResponseWriter, r *http.Request) {
 	type Param struct {
 		TeamID     int64 `json:"team_id" validate:"required,numeric"`
@@ -161,18 +152,7 @@ func (th *TeamHandler) AddMembers(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (th *TeamHandler) EditPosition(w http.ResponseWriter, r *http.Request) {
-
-	params := Validated[dto.UpdateMemberPositionDto](th.Validator, r)
-
-	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
-
-	th.TeamService.UpdatePosition(userid, &params)
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (th *TeamHandler) EditRole(w http.ResponseWriter, r *http.Request) {
+func (th *TeamHandler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 
 	params := Validated[dto.UpdateMemberRoleDto](th.Validator, r)
 

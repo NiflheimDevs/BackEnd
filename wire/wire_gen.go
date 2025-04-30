@@ -64,6 +64,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	projectHandler := handlers.NewProjectHandler(constants, projectService, userService, labelService, jwt, validate)
 	generalHandler := handlers.NewGeneralHandler(tagService, careerService, labelService, jwt, constants, validate)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, constants, validate)
+	teamHandler := handlers.NewTeamHandler(teamService, constants, validate)
 	wireHandlers := &Handlers{
 		FileHandler:    fileHandler,
 		UserHandler:    userHandler,
@@ -71,6 +72,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		ProjectHandler: projectHandler,
 		GeneralHandler: generalHandler,
 		PaymentHandler: paymentHandler,
+		TeamHandler:    teamHandler,
 	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit(constants)
@@ -138,6 +140,7 @@ type Handlers struct {
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
+	TeamHandler    *handlers.TeamHandler
 }
 
 type Application struct {

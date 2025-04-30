@@ -145,6 +145,7 @@ type Handlers struct {
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
+	TeamHandler    *handlers.TeamHandler
 }
 
 type Application struct {
