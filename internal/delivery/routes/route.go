@@ -80,8 +80,6 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
-	mux.Get("/storage/*", app.Handlers.FileHandler.GetFile)
-
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})

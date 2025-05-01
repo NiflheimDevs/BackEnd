@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -72,7 +71,7 @@ func (fh *FileHandler) UploadProfilePhoto(w http.ResponseWriter, r *http.Request
 
 	var photoPath PhotoResponse
 
-	photoPath.PhotoPath = fmt.Sprintf("%s/storage/%s", fh.ENV.Server.IP_Addr, res)
+	photoPath.PhotoPath = res
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -83,11 +82,6 @@ func (fh *FileHandler) DeleteProfilePhoto(w http.ResponseWriter, r *http.Request
 	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
 	fh.FileService.DeleteProfilePhoto(userid)
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (fh *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
-	// automatically generates 404 if file not found (based on the document)
-	http.StripPrefix("/storage/", http.FileServer(http.Dir(fh.Constants.StorageDir))).ServeHTTP(w, r)
 }
 
 func (fh *FileHandler) UploadUserResume(w http.ResponseWriter, r *http.Request) {

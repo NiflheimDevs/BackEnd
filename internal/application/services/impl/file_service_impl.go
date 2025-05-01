@@ -95,7 +95,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 	}
 	outputName = fs.GetUserProfileName(userid, true)
 	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, jpegBuffer.Bytes())
-	return outputName
+	return fs.GetProfilePhotoURL(userid, true)
 }
 
 func (fs *FileService) DeleteProfilePhoto(userid int) {

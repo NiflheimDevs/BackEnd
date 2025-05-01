@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/delivery/routes"
@@ -13,11 +12,6 @@ import (
 func main() {
 
 	var di = bootstrap.Get()
-
-	err := os.MkdirAll(di.Const.StorageDir, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
 
 	app, err := wire.InitializeApplication(di)
 
