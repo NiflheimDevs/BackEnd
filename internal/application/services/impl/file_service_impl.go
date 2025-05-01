@@ -13,6 +13,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/utils"
 	"github.com/niflheimdevs/backend/pkg"
 )
 
@@ -41,7 +42,12 @@ func (fs *FileService) GetProfilePhotoURL(userid int, wantHighQual bool) string 
 
 func (fs *FileService) GetResumeURL(userid int) string {
 	outputName := fmt.Sprintf("resume%d.pdf", userid)
-	return fs.S3Storage.GetPresignedURL(enums.Resume, outputName, 8*time.Hour)
+	objects := fs.S3Storage.GetObjectList(enums.Resume)
+	if utils.Contains(objects, outputName) {
+		return fs.S3Storage.GetPresignedURL(enums.Resume, outputName, 8*time.Hour)
+	} else {
+		return ""
+	}
 }
 
 func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {

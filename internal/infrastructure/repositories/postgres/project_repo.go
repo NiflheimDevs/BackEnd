@@ -151,6 +151,28 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	return projects
 }
 
+func (repo *ProjectRepo) GetProjectCount(userID int) int {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var count int
+
+	query := "SELECT COUNT(*) FROM project WHERE owner_id = $1"
+
+	err := repo.PG.QueryRow(ctx, query, userID).Scan(&count)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return count
+}
+
 func (repo *ProjectRepo) CreateProject(ctx context.Context, tx transaction.Tx, userID, label int, title, description, duration string) int {
 	var project_id int
 

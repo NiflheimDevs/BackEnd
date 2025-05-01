@@ -1,5 +1,10 @@
 package dto
 
+type UserTransactionsDTO struct {
+	Count        int                  `json:"count"`
+	Transactions []UserTransactionDTO `json:"transactions"`
+}
+
 type UserTransactionDTO struct {
 	Date        string `json:"date"`
 	Type        int    `json:"type"`
