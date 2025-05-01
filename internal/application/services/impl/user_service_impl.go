@@ -385,6 +385,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		Username:           targetInfo.Username,
 		HighProfilePicture: highpath,
 		LowProfilePicture:  lowPath,
+		CreatedAt:          targetInfo.CreatedAt,
 	}
 	if userid == targetUserid {
 		response.Email = targetInfo.Email

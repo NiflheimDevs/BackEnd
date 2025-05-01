@@ -26,7 +26,7 @@ func fillUserModel(row pgx.Row) (*models.UserModel, error) {
 	var user models.UserModel
 
 	var firstname, lastname, bio, email sql.NullString
-	err := row.Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname, &bio, &email, &user.Is_verified, &user.Phone, &user.Wallet)
+	err := row.Scan(&user.ID, &user.Username, &user.Password, &firstname, &lastname, &bio, &email, &user.Is_verified, &user.Phone, &user.Wallet, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (repo *UserRepo) FindUserByPhone(phone string) (*models.UserModel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet FROM users WHERE phone = $1"
+	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet,created_time FROM users WHERE phone = $1"
 
 	row := repo.PG.QueryRow(ctx, query, phone)
 
@@ -71,7 +71,7 @@ func (repo *UserRepo) FindUserByPhone(phone string) (*models.UserModel, error) {
 func (repo *UserRepo) FindUserByID(id int) (*models.UserModel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet FROM users WHERE id = $1"
+	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet,created_time FROM users WHERE id = $1"
 
 	row := repo.PG.QueryRow(ctx, query, id)
 
@@ -83,7 +83,7 @@ func (repo *UserRepo) FindUserByUsername(username string) (*models.UserModel, er
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet FROM users WHERE username = $1"
+	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet,created_time FROM users WHERE username = $1"
 
 	row := repo.PG.QueryRow(ctx, query, username)
 
@@ -94,7 +94,7 @@ func (repo *UserRepo) FindUserByEmail(email string) (*models.UserModel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet FROM users WHERE email = $1"
+	query := "SELECT id,username,password,firstname,lastname,bio,email,is_verified,phone,wallet,created_time FROM users WHERE email = $1"
 
 	row := repo.PG.QueryRow(ctx, query, email)
 
