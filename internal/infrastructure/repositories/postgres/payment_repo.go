@@ -21,6 +21,28 @@ func NewPaymentRepo(PG *pgxpool.Pool) *PaymentRepo {
 	}
 }
 
+func (paymentRepo *PaymentRepo) GetTransactionCount(userID int) int {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var count int
+
+	query := "SELECT COUNT(*) FROM transaction WHERE (from_user_id = $1 OR to_user_id = $1)"
+
+	err := paymentRepo.PG.QueryRow(ctx, query, userID).Scan(&count)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return count
+}
+
 func (paymentRepo *PaymentRepo) GetUserTransactions(userID int, offset, limit int, sortBy, order string) ([]models.TransactionModel, error) {
 	var transactions []models.TransactionModel
 

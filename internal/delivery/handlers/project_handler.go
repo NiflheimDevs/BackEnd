@@ -55,6 +55,8 @@ func (projectHandler *ProjectHandler) LandingProps(w http.ResponseWriter, r *htt
 
 func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
+	targetUserIDString := chi.URLParam(r, "user_id")
+	targetUserID, _ := strconv.Atoi(targetUserIDString)
 
 	query := r.URL.Query()
 	offset, err := strconv.Atoi(query.Get("offset"))
@@ -66,7 +68,7 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 		limit = projectHandler.Constants.Pagination.Limit
 	}
 
-	projects := projectHandler.ProjectService.GetUserProjects(userID, offset, limit)
+	projects, count := projectHandler.ProjectService.GetUserProjects(userID, targetUserID, offset, limit)
 	userInfo := projectHandler.UserService.GetUserInfo(userID, 0)
 
 	var projectsDTO dto.UserProject
@@ -87,6 +89,7 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 	projectsDTO.FirstName = userInfo.FirstName
 	projectsDTO.LastName = userInfo.LastName
 	projectsDTO.Username = userInfo.Username
+	projectsDTO.Count = count
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

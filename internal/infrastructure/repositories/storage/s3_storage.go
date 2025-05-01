@@ -38,46 +38,46 @@ func NewS3Storage(
 	}
 }
 
-func (s3StorageS3Storage *S3Storage) setS3Client(bucketType enums.BucketType) {
+func (s3Storage *S3Storage) setS3Client(bucketType enums.BucketType) {
 	bucketTypes := enums.GetAllBucketTypes()
 	if !slices.Contains(bucketTypes, bucketType) {
 		panic(fmt.Errorf("bucket not exist"))
 	}
-	if s3StorageS3Storage.uploader != nil && s3StorageS3Storage.clients != nil {
+	if s3Storage.uploader != nil && s3Storage.clients != nil {
 		return
 	}
 	sess, err := session.NewSession(&aws.Config{
-		Credentials: credentials.NewStaticCredentials(s3StorageS3Storage.storage.AccessKey, s3StorageS3Storage.storage.SecretKey, ""),
-		Region:      aws.String(s3StorageS3Storage.storage.Region),
-		Endpoint:    aws.String(s3StorageS3Storage.storage.Endpoint),
+		Credentials: credentials.NewStaticCredentials(s3Storage.storage.AccessKey, s3Storage.storage.SecretKey, ""),
+		Region:      aws.String(s3Storage.storage.Region),
+		Endpoint:    aws.String(s3Storage.storage.Endpoint),
 	})
 
 	if err != nil {
 		panic(fmt.Errorf("unable to create AWS session, %w", err))
 	}
 
-	s3StorageS3Storage.uploader = s3manager.NewUploader(sess)
-	s3StorageS3Storage.clients = s3.New(sess)
+	s3Storage.uploader = s3manager.NewUploader(sess)
+	s3Storage.clients = s3.New(sess)
 }
 
-func (s3StorageS3Storage *S3Storage) UploadObject(bucketType enums.BucketType, key string, data []byte) {
-	s3StorageS3Storage.setS3Client(bucketType)
-	bucket := s3StorageS3Storage.buckets[bucketType]
+func (s3Storage *S3Storage) UploadObject(bucketType enums.BucketType, key string, data []byte) {
+	s3Storage.setS3Client(bucketType)
+	bucket := s3Storage.buckets[bucketType]
 
-	_, err := s3StorageS3Storage.clients.HeadBucket(&s3.HeadBucketInput{
+	_, err := s3Storage.clients.HeadBucket(&s3.HeadBucketInput{
 		Bucket: aws.String(bucket),
 	})
 
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeNoSuchBucket || aerr.Code() == "NotFound") {
-			_, err = s3StorageS3Storage.clients.CreateBucket(&s3.CreateBucketInput{
+			_, err = s3Storage.clients.CreateBucket(&s3.CreateBucketInput{
 				Bucket: aws.String(bucket),
 			})
 			if err != nil {
 				panic(fmt.Errorf("unable to create bucket %q, %w", bucket, err))
 			}
 
-			err = s3StorageS3Storage.clients.WaitUntilBucketExists(&s3.HeadBucketInput{
+			err = s3Storage.clients.WaitUntilBucketExists(&s3.HeadBucketInput{
 				Bucket: aws.String(bucket),
 			})
 			if err != nil {
@@ -88,7 +88,7 @@ func (s3StorageS3Storage *S3Storage) UploadObject(bucketType enums.BucketType, k
 		}
 	}
 
-	_, err = s3StorageS3Storage.uploader.Upload(&s3manager.UploadInput{
+	_, err = s3Storage.uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 		Body:   bytes.NewReader(data),
@@ -98,11 +98,11 @@ func (s3StorageS3Storage *S3Storage) UploadObject(bucketType enums.BucketType, k
 	}
 }
 
-func (s3StorageS3Storage *S3Storage) DeleteObject(bucketType enums.BucketType, key string) error {
-	s3StorageS3Storage.setS3Client(bucketType)
-	bucket := s3StorageS3Storage.buckets[bucketType]
+func (s3Storage *S3Storage) DeleteObject(bucketType enums.BucketType, key string) error {
+	s3Storage.setS3Client(bucketType)
+	bucket := s3Storage.buckets[bucketType]
 
-	_, err := s3StorageS3Storage.clients.DeleteObject(&s3.DeleteObjectInput{
+	_, err := s3Storage.clients.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -110,7 +110,7 @@ func (s3StorageS3Storage *S3Storage) DeleteObject(bucketType enums.BucketType, k
 		return fmt.Errorf("unable to delete %q from %q, %w", key, bucket, err)
 	}
 
-	err = s3StorageS3Storage.clients.WaitUntilObjectNotExists(&s3.HeadObjectInput{
+	err = s3Storage.clients.WaitUntilObjectNotExists(&s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -120,11 +120,11 @@ func (s3StorageS3Storage *S3Storage) DeleteObject(bucketType enums.BucketType, k
 	return nil
 }
 
-func (s3StorageS3Storage *S3Storage) GetPresignedURL(bucketType enums.BucketType, objectKey string, expiration time.Duration) string {
-	s3StorageS3Storage.setS3Client(bucketType)
-	bucket := s3StorageS3Storage.buckets[bucketType]
+func (s3Storage *S3Storage) GetPresignedURL(bucketType enums.BucketType, objectKey string, expiration time.Duration) string {
+	s3Storage.setS3Client(bucketType)
+	bucket := s3Storage.buckets[bucketType]
 
-	req, _ := s3StorageS3Storage.clients.GetObjectRequest(&s3.GetObjectInput{
+	req, _ := s3Storage.clients.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(objectKey),
 	})
@@ -135,4 +135,24 @@ func (s3StorageS3Storage *S3Storage) GetPresignedURL(bucketType enums.BucketType
 	}
 
 	return url
+}
+
+func (s3Storage *S3Storage) GetObjectList(bucketType enums.BucketType) []string {
+	s3Storage.setS3Client(bucketType)
+	bucket := s3Storage.buckets[bucketType]
+
+	resp, err := s3Storage.clients.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+	})
+
+	if err != nil {
+		panic(fmt.Errorf("unable to list items in bucket %q, %v", bucket, err))
+	}
+
+	var objects []string
+
+	for _, item := range resp.Contents {
+		objects = append(objects, *item.Key)
+	}
+	return objects
 }

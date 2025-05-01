@@ -65,19 +65,32 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 	return project
 }
 
-func (projectService *ProjectService) GetUserProjects(userID, offset, limit int) []models.ProjectModel {
-	if userID == -1 || userID == -2 {
-		panic(exceptions.Exception{
-			Tag: exceptions.UNAUTHORIZED,
-			Errors: []exceptions.SpecificError{
-				exceptions.AUTH_ACCESS_DENIED,
-			},
-		})
+func (projectService *ProjectService) GetUserProjects(userID, targetuserID, offset, limit int) ([]models.ProjectModel, int) {
+	var projects []models.ProjectModel
+	var count int
+
+	if targetuserID == 0 {
+		if userID == -1 || userID == -2 {
+			panic(exceptions.Exception{
+				Tag: exceptions.UNAUTHORIZED,
+				Errors: []exceptions.SpecificError{
+					exceptions.AUTH_ACCESS_DENIED,
+				},
+			})
+		}
+		projects = projectService.ProjectRepo.GetUserProject(userID, offset, limit)
+		count = projectService.GetProjectCount(userID)
+	} else {
+		projects = projectService.ProjectRepo.GetUserProject(targetuserID, offset, limit)
+		count = projectService.GetProjectCount(targetuserID)
 	}
 
-	projects := projectService.ProjectRepo.GetUserProject(userID, offset, limit)
+	return projects, count
+}
 
-	return projects
+func (projectService *ProjectService) GetProjectCount(userID int) int {
+	count := projectService.ProjectRepo.GetProjectCount(userID)
+	return count
 }
 
 func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, price int64, tags []int) int {
