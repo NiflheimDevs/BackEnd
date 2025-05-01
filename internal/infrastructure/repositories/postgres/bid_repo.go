@@ -4,9 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
 
 type BidRepo struct {
@@ -17,6 +20,32 @@ func NewBidRepo(pg *pgxpool.Pool) *BidRepo {
 	return &BidRepo{
 		PG: pg,
 	}
+}
+
+func (br *BidRepo) GetBidInfo(bidID int) (*models.BidModel, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var bid models.BidModel
+
+	query := "SELECT id,team_id,project_id,prepayment,total,description,expected_time,created_time FROM bid WHERE id = $1"
+
+	err := br.PG.QueryRow(ctx, query, bidID).Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &bid.CreatedTime)
+
+	if err == pgx.ErrNoRows {
+		return nil, err
+	}
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return &bid, nil
 }
 
 func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
@@ -55,14 +84,14 @@ func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
 	return bids
 }
 
-func (br *BidRepo) PutBid(teamID int, projectID int, pp int64, total int64, description string, expected_time time.Time) int {
+func (br *BidRepo) PutBid(info dto.BidInfo) int {
 	var bidid int
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := "INSERT INTO bid(team_id,project_id,prepayment,total,description,expected_time) VALUE ($1,$2,$3,$4,$5,$6) RETURNING id"
 
-	err := br.PG.QueryRow(ctx, query, teamID, projectID, pp, total, description, expected_time.Format("2006-01-02 15:04:05")).Scan(&bidid)
+	err := br.PG.QueryRow(ctx, query, info.TeamID, info.ProjectID, info.PP, info.Total, info.Description, info.ExpectedTime.Format("2006-01-02 15:04:05")).Scan(&bidid)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -76,13 +105,28 @@ func (br *BidRepo) PutBid(teamID int, projectID int, pp int64, total int64, desc
 	return bidid
 }
 
-func (br *BidRepo) AcceptBid(bidID int, projectID int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func (br *BidRepo) AcceptBid(ctx context.Context, tx transaction.Tx, bidID int, projectID int) {
 	query := "UPDATE prject SET selected_bid_id = $1 WHERE id = $2"
 
 	_, err := br.PG.Exec(ctx, query, bidID, projectID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+}
+
+func (br *BidRepo) UpdateBid(bidID int, info dto.BidInfo) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `UPDATE bid SET team_id = $1, project_id = $2, prepayment = $3, total = $4, description = $5, expected_time = $6 WHERE id = $7`
+
+	_, err := br.PG.Exec(ctx, query, info.TeamID, info.ProjectID, info.PP, info.Total, info.Description, info.ExpectedTime.Format("2006-01-02 15:04:05"), bidID)
 
 	if err != nil {
 		panic(exceptions.Exception{

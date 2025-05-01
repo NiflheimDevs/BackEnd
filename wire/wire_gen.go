@@ -61,7 +61,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	generalHandler := handlers.NewGeneralHandler(tagService, careerService, labelService, jwt, constants, validate)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, constants, validate)
 	bidRepo := repositoriesimpl.NewBidRepo(pool)
-	bidService := servicesimpl.NewBidService(projectService, bidRepo)
+	bidService := servicesimpl.NewBidService(projectService, paymentService, bidRepo, pgxTxManager)
 	bidHandler := handlers.NewBidHandler(constants, validate, bidService)
 	wireHandlers := &Handlers{
 		FileHandler:    fileHandler,

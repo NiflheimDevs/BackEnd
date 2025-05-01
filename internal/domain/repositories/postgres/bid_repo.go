@@ -1,13 +1,17 @@
 package repositories
 
 import (
-	"time"
+	"context"
 
+	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
 
 type BidRepo interface {
-	PutBid(teamID int, projectID int, pp int64, total int64, description string, expected_time time.Time) int
+	GetBidInfo(bidID int) (*models.BidModel, error)
+	PutBid(info dto.BidInfo) int
 	GetBidOfProject(projectID int) []models.BidModel
-	AcceptBid(bidID int, projectID int)
+	AcceptBid(ctx context.Context, tx transaction.Tx, bidID int, projectID int)
+	UpdateBid(bidID int, info dto.BidInfo)
 }
