@@ -33,7 +33,9 @@ func (bh *BidHandler) PutBid(w http.ResponseWriter, r *http.Request) {
 	type BidParams struct {
 		TeamID       int       `json:"team_id" validate:"required"`
 		ProjectID    int       `json:"project_id" validate:"required"`
-		Value        int64     `json:"value" validate:"required"`
+		PrePayment   int64     `json:"pre_payment" validate:"required"`
+		Total        int64     `json:"total" validate:"required"`
+		Description  string    `json:"description" validate:""`
 		ExpectedTime time.Time `json:"expected_time" validate:"required"`
 	}
 
@@ -41,7 +43,7 @@ func (bh *BidHandler) PutBid(w http.ResponseWriter, r *http.Request) {
 
 	userid := r.Context().Value(bh.Constants.Context.UserID).(int)
 
-	bidid := bh.BidService.PutBidOnProject(userid, params.TeamID, params.ProjectID, params.Value, params.ExpectedTime)
+	bidid := bh.BidService.PutBidOnProject(userid, params.TeamID, params.ProjectID, params.PrePayment, params.Total, params.Description, params.ExpectedTime)
 
 	id := dto.PutBid{
 		BidID: bidid,

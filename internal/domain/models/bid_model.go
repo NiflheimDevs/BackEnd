@@ -4,7 +4,9 @@ type BidModel struct {
 	ID           int
 	TeamID       int
 	ProjectID    int
-	Value        int64
+	PrePayment   int64
+	Total        int64
+	Description  string
 	ExpectedTime string
 	CreatedTime  string
 }

@@ -2,6 +2,7 @@ package repositoriesimpl
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"time"
 
@@ -71,13 +72,20 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE id = $1"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,duration FROM project WHERE id = $1"
 
 	var duration time.Time
-	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &duration)
+	var selectedBid sql.NullInt32
+	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &duration)
 
 	if err == pgx.ErrNoRows {
 		return nil, err
+	}
+
+	if selectedBid.Valid {
+		project.SelectedBid = int(selectedBid.Int32)
+	} else {
+		project.SelectedBid = 0
 	}
 
 	project.Duration = duration.Format("2006-01-02 15:04:05")
@@ -100,7 +108,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,duration FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
 
 	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
 
@@ -118,13 +126,20 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	for result.Next() {
 		var project models.ProjectModel
 		var duration time.Time
-		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &duration); err != nil {
+		var selectedBid sql.NullInt32
+		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &duration); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
 					exceptions.DATABASE_ERROR,
 				},
 			})
+		}
+
+		if selectedBid.Valid {
+			project.SelectedBid = int(selectedBid.Int32)
+		} else {
+			project.SelectedBid = 0
 		}
 
 		project.Duration = duration.Format("2006-01-02 15:04:05")

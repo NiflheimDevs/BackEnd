@@ -6,6 +6,7 @@ type ProjectModel struct {
 	Title       string
 	Description string
 	Label       int
+	SelectedBid int
 	Tags        []TagModel
 	Duration    string
 }

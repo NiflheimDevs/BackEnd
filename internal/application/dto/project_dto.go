@@ -15,6 +15,7 @@ type Project struct {
 	Title       string            `json:"title"`
 	Description string            `json:"description"`
 	Label       models.LabelModel `json:"label"`
+	SelectedBid int               `json:"selected_bid"`
 	Tags        []models.TagModel `json:"tags"`
 	FirstName   string            `json:"first_name"`
 	LastName    string            `json:"last_name"`

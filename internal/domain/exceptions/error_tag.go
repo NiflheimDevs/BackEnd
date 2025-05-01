@@ -52,6 +52,8 @@ const (
 
 	USER_NOT_OWNER SpecificError = "USER_NOT_OWNER"
 
+	ALREADY_HAS_BID SpecificError = "ALREADY_HAS_BID"
+
 	INSUFFICIENT_BALANCE SpecificError = "INSUFFICIENT_BALANCE"
 )
 
