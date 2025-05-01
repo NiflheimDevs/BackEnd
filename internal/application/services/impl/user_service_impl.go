@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
@@ -101,7 +99,7 @@ func (us *UserService) CacheUserInfo(phonenumber string, username string, passwo
 		})
 	}
 
-	session := uuid.New().String()
+	session := pkg.NewUniqueID()
 
 	userdata := models.UserCacheData{
 		Phone:    phonenumber,
@@ -283,7 +281,7 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 		})
 	}
 
-	session := uuid.New().String()
+	session := pkg.NewUniqueID()
 	val := models.UserCacheData{
 		Phone: fmt.Sprintf("%d", userdata.ID),
 		OTP:   code,
@@ -295,7 +293,7 @@ func (us *UserService) SetupOTP(phonenumber string, code string) string {
 }
 
 func (us *UserService) SetForgetPasswordFlag(userID string) string {
-	session := uuid.New().String()
+	session := pkg.NewUniqueID()
 	us.CacheRepo.PostSessionFlag(session, userID)
 	return session
 }
@@ -388,7 +386,7 @@ func (us *UserService) UpdatePhoneSendOTP(phone string, userid int, code string)
 		})
 	}
 
-	session = uuid.New().String()
+	session = pkg.NewUniqueID()
 	val := models.UserCacheData{
 		Phone:    phone,
 		Username: fmt.Sprintf("%d", userid),
@@ -426,13 +424,17 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		})
 	}
 
+	highpath := us.FileService.GetProfilePhotoURL(targetUserid, true)
+	lowPath := us.FileService.GetProfilePhotoURL(targetUserid, false)
+
 	response := dto.UserProfileDTO{
-		Phone:          targetInfo.Phone,
-		FirstName:      targetInfo.FirstName,
-		LastName:       targetInfo.LastName,
-		Bio:            targetInfo.Bio,
-		Username:       targetInfo.Username,
-		ProfilePicture: fmt.Sprintf("%s/%s%s", us.Env.Server.IP_Addr, us.Constants.StorageDir, us.FileService.GetUserProfileName(targetUserid, true)),
+		Phone:              targetInfo.Phone,
+		FirstName:          targetInfo.FirstName,
+		LastName:           targetInfo.LastName,
+		Bio:                targetInfo.Bio,
+		Username:           targetInfo.Username,
+		HighProfilePicture: highpath,
+		LowProfilePicture:  lowPath,
 	}
 	if userid == targetUserid {
 		response.Email = targetInfo.Email

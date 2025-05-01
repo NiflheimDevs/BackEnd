@@ -7,4 +7,5 @@ import (
 type JWT interface {
 	GenerateToken(userID int) (string, string)
 	VerifyToken(tokenString string) jwt.MapClaims
+	RefreshToken(token string) string
 }

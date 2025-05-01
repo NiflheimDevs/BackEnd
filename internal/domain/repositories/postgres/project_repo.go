@@ -12,6 +12,7 @@ type ProjectRepo interface {
 	LandingProps() []dto.ProjectLanding
 	GetProject(projectID int) (*models.ProjectModel, error)
 	GetUserProject(userID, offset, limit int) []models.ProjectModel
+	GetProjectCount(userID int) int
 	CreateProject(ctx context.Context, tx transaction.Tx, userID, label int, title, description, duration string) int
 	UpdateProject(projectID, UserID int, title, description string)
 	DeleteProject(ctx context.Context, tx transaction.Tx, projectID int)

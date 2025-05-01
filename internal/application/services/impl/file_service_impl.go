@@ -8,21 +8,22 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
+	"time"
 
-	"github.com/chai2010/webp"
-	"github.com/nfnt/resize"
+	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
-	"github.com/pixiv/go-libjpeg/jpeg"
+	"github.com/niflheimdevs/backend/internal/utils"
+	"github.com/niflheimdevs/backend/pkg"
 )
 
 type FileService struct {
-	FileStorage storage.FileStorage
+	S3Storage storage.S3Storage
 }
 
-func NewFileService(fileStorage storage.FileStorage) *FileService {
+func NewFileService(s3storage storage.S3Storage) *FileService {
 	return &FileService{
-		FileStorage: fileStorage,
+		S3Storage: s3storage,
 	}
 }
 
@@ -33,6 +34,20 @@ func (fs *FileService) GetUserProfileName(userid int, wantHighQual bool) string 
 		return fmt.Sprintf("userprofile%d_high.jpeg", userid)
 	}
 
+}
+
+func (fs *FileService) GetProfilePhotoURL(userid int, wantHighQual bool) string {
+	return fs.S3Storage.GetPresignedURL(enums.ProfilePic, fs.GetUserProfileName(userid, wantHighQual), 8*time.Hour)
+}
+
+func (fs *FileService) GetResumeURL(userid int) string {
+	outputName := fmt.Sprintf("resume%d.pdf", userid)
+	objects := fs.S3Storage.GetObjectList(enums.Resume)
+	if utils.Contains(objects, outputName) {
+		return fs.S3Storage.GetPresignedURL(enums.Resume, outputName, 8*time.Hour)
+	} else {
+		return ""
+	}
 }
 
 func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
@@ -56,9 +71,9 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	var webpBuffer, jpegBuffer bytes.Buffer
-	resizedImg := resize.Resize(512, 512, img, resize.Lanczos2)
+	resizedImg := pkg.Resize(512, 512, img)
 
-	err = webp.Encode(&webpBuffer, resizedImg, &webp.Options{Lossless: false, Quality: 85})
+	err = pkg.ImageEncode(&webpBuffer, resizedImg, 1)
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -66,17 +81,12 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	outputName := fs.GetUserProfileName(userid, false)
-	fs.FileStorage.StoreFile(webpBuffer.Bytes(), outputName)
+	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, webpBuffer.Bytes())
 
 	rgbaImg := image.NewRGBA(img.Bounds())
 	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
 
-	options := &jpeg.EncoderOptions{
-		Quality:         85,
-		ProgressiveMode: true,
-	}
-
-	err = jpeg.Encode(&jpegBuffer, rgbaImg, options)
+	err = pkg.ImageEncode(&jpegBuffer, rgbaImg, 2)
 	if err != nil {
 		log.Println("jpeg", err)
 		panic(exceptions.Exception{
@@ -84,7 +94,7 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 		})
 	}
 	outputName = fs.GetUserProfileName(userid, true)
-	fs.FileStorage.StoreFile(jpegBuffer.Bytes(), outputName)
+	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, jpegBuffer.Bytes())
 	return outputName
 }
 
@@ -99,7 +109,7 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 	}
 
 	target := fs.GetUserProfileName(userid, false)
-	err := fs.FileStorage.DeleteFile(target)
+	err := fs.S3Storage.DeleteObject(enums.ProfilePic, target)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNPROCESSABLE,
@@ -108,8 +118,43 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 	}
 
 	target = fs.GetUserProfileName(userid, true)
+	err = fs.S3Storage.DeleteObject(enums.ProfilePic, target)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.MISSING_FILE},
+		})
+	}
+}
 
-	err = fs.FileStorage.DeleteFile(target)
+func (fs *FileService) UploadResume(data []byte, userid int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	outputName := fmt.Sprintf("resume%d.pdf", userid)
+
+	fs.S3Storage.UploadObject(enums.Resume, outputName, data)
+}
+
+func (fs *FileService) DeleteResume(userid int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	outputName := fmt.Sprintf("resume%d.pdf", userid)
+
+	err := fs.S3Storage.DeleteObject(enums.Resume, outputName)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNPROCESSABLE,

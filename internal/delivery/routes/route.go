@@ -49,7 +49,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/user/career", app.Handlers.GeneralHandler.UpdateCareer)
 	mux.Put("/user/tag", app.Handlers.GeneralHandler.UpdateUserTag)
 
-	mux.Get("/project", app.Handlers.ProjectHandler.GetUserProject)
+	mux.Get("/project/user/{user_id}", app.Handlers.ProjectHandler.GetUserProject)
 	mux.Get("/project/{project_id}", app.Handlers.ProjectHandler.GetSpeceficProject)
 	mux.Post("/project/create", app.Handlers.ProjectHandler.CreateProject)
 	mux.Put("/project/{project_id}", app.Handlers.ProjectHandler.UpdateProject)
@@ -63,8 +63,6 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/transaction/deposit", app.Handlers.PaymentHandler.Deposit)
 	mux.Post("/transaction/withdraw", app.Handlers.PaymentHandler.Withdraw)
 
-	mux.Get("/error/{code}", app.Handlers.ErrorHandler.ReturnError)
-
 	mux.Get("/user/{id}", app.Handlers.UserHandler.GetUserInfo)
 	mux.Put("/user/update-info", app.Handlers.UserHandler.UpdateUserData)
 	mux.Put("/user/update-username", app.Handlers.UserHandler.UpdateUsername)
@@ -74,6 +72,13 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Post("/user/profile", app.Handlers.FileHandler.UploadProfilePhoto)
 	mux.Delete("/user/profile", app.Handlers.FileHandler.DeleteProfilePhoto)
+	mux.Post("/user/resume", app.Handlers.FileHandler.UploadUserResume)
+	mux.Delete("/user/resume", app.Handlers.FileHandler.DeleteUserResume)
+
+	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
+	mux.Get("/user/resume", app.Handlers.FileHandler.GetResume)
+
+	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
 	mux.Get("/storage/*", app.Handlers.FileHandler.GetFile)
 

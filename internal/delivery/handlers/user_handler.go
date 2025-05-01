@@ -287,3 +287,16 @@ func (uh *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (uh *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	type RefreshTokenParam struct {
+		RefreshToken string `json:"refresh_token" validate:"required"`
+	}
+
+	params := Validated[RefreshTokenParam](uh.Validator, r)
+
+	newaccesstoken := uh.JWTService.RefreshToken(params.RefreshToken)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(newaccesstoken))
+}

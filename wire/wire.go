@@ -49,7 +49,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewPaymentRepo,
 	repositoriesimpl.NewTeamRepo,
 	repositoriesimpl.NewRoleRepo,
-	storageimpl.NewFileStorage,
+  storageimpl.NewS3Storage,
 
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -60,7 +60,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
 	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
-	wire.Bind(new(storage.FileStorage), new(*storageimpl.FileStorage)),
+	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
 
@@ -92,12 +92,12 @@ var ServiceProviderSet = wire.NewSet(
 
 	ProvideConstants,
 	ProvideEnv,
+	ProvideS3,
 )
 
 var HandlerProviderSet = wire.NewSet(
 	handlers.NewFileHandler,
 	handlers.NewUserHandler,
-	handlers.NewErrorHandler,
 	handlers.NewProjectHandler,
 	handlers.NewGeneralHandler,
 	handlers.NewPaymentHandler,
@@ -121,6 +121,10 @@ func ProvideEnv(container *bootstrap.Di) *bootstrap.Env {
 	return container.Env
 }
 
+func ProvideS3(container *bootstrap.Di) *bootstrap.S3 {
+	return &container.Env.Storage
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	PkgProviderSet,
@@ -141,7 +145,6 @@ type Middlewares struct {
 type Handlers struct {
 	FileHandler    *handlers.FileHandler
 	UserHandler    *handlers.UserHandler
-	ErrorHandler   *handlers.ErrorHandler
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
