@@ -34,6 +34,24 @@ var rolePermissions = map[RoleType][]PermType{
 	TEAM_NEWBIE:     {},
 }
 
+func GetAllRoles() []RoleType {
+	return []RoleType{
+		TEAM_OWNER,
+		TEAM_ADMIN,
+		TEAM_CRAWLER,
+		TEAM_MAINTAINER,
+		TEAM_NEWBIE,
+	}
+}
+
+var TeamRoles []RoleType = []RoleType{
+	TEAM_OWNER,
+	TEAM_ADMIN,
+	TEAM_CRAWLER,
+	TEAM_MAINTAINER,
+	TEAM_NEWBIE,
+}
+
 func (r RoleType) String() string {
 	if name, ok := roleNames[r]; ok {
 		return name
@@ -62,14 +80,4 @@ func NameToRole(name string) RoleType {
 		return role
 	}
 	return 0
-}
-
-func GetAllRoles() []RoleType {
-	return []RoleType{
-		TEAM_OWNER,
-		TEAM_ADMIN,
-		TEAM_CRAWLER,
-		TEAM_MAINTAINER,
-	}
-
 }

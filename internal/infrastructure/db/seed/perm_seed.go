@@ -56,22 +56,23 @@ func SeedPerms(tx transaction.Tx) {
 		panic(err)
 	}
 
-	query = `ALTER SEQUENCE permission_id_seq RESTART WITH 0`
-	_, err = tx.Exec(ctx, query)
-
-	if err != nil {
-		panic(err)
-	}
 	for _, seed := range enums.GetAllPerms() {
 
-		query = `INSERT INTO permisiion (id,name) VALUES ($1,$2)`
-		tx.Exec(ctx, query, seed, seed.String())
+		query = `INSERT INTO permission (id,name) VALUES ($1,$2)`
+		_, err := tx.Exec(ctx, query, seed, seed.String())
 
+		if err != nil {
+			panic(err)
+		}
 		if previousPerms[seed.String()] != 0 {
 			query = `UPDATE role_permission
 				SET permission_id = $1
 				WHERE permission_id = $2`
-			tx.Exec(ctx, query, seed, previousPerms[seed.String()])
+			_, err := tx.Exec(ctx, query, seed, previousPerms[seed.String()])
+
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 
