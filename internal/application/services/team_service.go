@@ -19,6 +19,6 @@ type TeamService interface {
 	// GetTeamWithRole(userid int, teamid int64) *dto.GetTeamDto
 	AddMembers(userid int, teamid int64, members []int)
 	LeaveTeam(userid int, teamid int64)
-	KickMemebr(commanderid int, poorGuyid int, teamid int64)
+	KickMemebr(commanderid int, poorGuysid []int, teamid int64)
 	GetMembers(commanderid int, teamid int64) []dto.SendMemberDto
 }

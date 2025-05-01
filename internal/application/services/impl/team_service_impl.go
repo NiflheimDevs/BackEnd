@@ -98,6 +98,11 @@ func (ts *TeamService) GetTeam(commanderid int, teamid int64) *dto.GetTeamDto {
 	var res dto.GetTeamDto
 
 	res.Info = ts.TeamRepo.GetTeam(teamid)
+	if res.Info == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+		})
+	}
 
 	members := ts.TeamRepo.GetMembersForTeam(teamid)
 	res.Members = make([]dto.SendMemberDto, len(members))
@@ -204,8 +209,12 @@ func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
 }
 
 func addMembersFunc(teamid int64, members []int, ts *TeamService) {
+	var err error
 	for _, id := range members {
-		ts.TeamRepo.AddMember(id, teamid, "", enums.TEAM_NEWBIE)
+		err = ts.TeamRepo.AddMember(id, teamid, "", enums.TEAM_NEWBIE)
+		if err != nil {
+			log.Println("AddMemberError: teamid:", teamid, "member:", id, "datail:", err)
+		}
 	}
 }
 
@@ -218,17 +227,19 @@ func (ts *TeamService) LeaveTeam(userid int, teamid int64) {
 	}
 }
 
-func (ts *TeamService) KickMemebr(commanderid int, poorGuyid int, teamid int64) {
-	if commanderid == poorGuyid {
-		ts.LeaveTeam(commanderid, teamid)
-		return
-	}
+func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int64) {
+	var isLeaving bool = false
 
 	member := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
 	if member == nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 		})
+	}
+
+	if len(poorGuysid) == 1 && poorGuysid[0] == commanderid {
+		ts.LeaveTeam(commanderid, teamid)
+		return
 	}
 
 	if !utils.Contains(member.Role.GetPermissionsForRole(), enums.REMOVE_MEMEBER) {
@@ -238,13 +249,22 @@ func (ts *TeamService) KickMemebr(commanderid int, poorGuyid int, teamid int64) 
 		})
 	}
 
-	err := ts.TeamRepo.RemoveMember(poorGuyid, teamid)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: exceptions.INTERNAL_ERROR,
-		})
+	for _, poorGuyid := range poorGuysid {
+		if commanderid == poorGuyid {
+			isLeaving = true
+			continue
+		}
+		err := ts.TeamRepo.RemoveMember(poorGuyid, teamid)
+		if err != nil {
+			// panic(exceptions.Exception{
+			// 	Tag: exceptions.INTERNAL_ERROR,
+			// })
+			log.Println("KickMemberError: coudldn't kick member", poorGuyid, "by", commanderid, "at team", teamid, "detail:", err)
+		}
 	}
-
+	if isLeaving {
+		ts.LeaveTeam(commanderid, teamid)
+	}
 }
 
 func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMemberRoleDto) {

@@ -36,10 +36,18 @@ func (th *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 
 	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
 
-	th.TeamService.CreateTeam(userid, &params)
-	// TODO: send smthg to front. sobhan is pain
+	type Response struct {
+		TeamID int64 `json:"teamid"`
+	}
 
-	w.WriteHeader(http.StatusNoContent)
+	var res Response
+
+	res.TeamID = th.TeamService.CreateTeam(userid, &params)
+
+	// TODO: send smthg to front. sobhan is pain
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
 }
 
 func (th *TeamHandler) UpdateTeamInfo(w http.ResponseWriter, r *http.Request) {
@@ -121,26 +129,32 @@ func (th *TeamHandler) UpdateMemberPosition(w http.ResponseWriter, r *http.Reque
 
 func (th *TeamHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 	type Params struct {
-		UserID int   `json:"user_id" validate:"required,numeric"`
-		TeamID int64 `json:"team_id" validate:"required,numeric"`
+		Members []int `json:"members" validate:"required"`
+		TeamID  int64 `json:"team_id" validate:"required,numeric"`
 	}
 
 	params := Validated[Params](th.Validator, r)
 
 	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
 
-	if params.UserID == 0 {
-		params.UserID = userid
+	for i := 0; i < len(params.Members); i++ {
+		if params.Members[i] == 0 {
+			params.Members[i] = userid
+		}
 	}
 
-	th.TeamService.KickMemebr(userid, params.UserID, params.TeamID)
+	// if len(params.Members) == 1 && params.Members[0] == 0 {
+	// 	params.Members[0] = userid
+	// }
+
+	th.TeamService.KickMemebr(userid, params.Members, params.TeamID)
 
 	w.WriteHeader(http.StatusNoContent)
 }
 func (th *TeamHandler) AddMembers(w http.ResponseWriter, r *http.Request) {
 	type Param struct {
 		TeamID     int64 `json:"team_id" validate:"required,numeric"`
-		NewMembers []int `json:"new_members" validate:"required"`
+		NewMembers []int `json:"members" validate:"required"`
 	}
 
 	params := Validated[Param](th.Validator, r)

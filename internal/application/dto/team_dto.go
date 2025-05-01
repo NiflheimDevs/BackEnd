@@ -6,9 +6,9 @@ import (
 )
 
 type TeamCreateDto struct {
-	Title       string `json:"title" validate:"reqiured"`
+	Title       string `json:"title" validate:"required"`
 	Description string `json:"description" validate:"required"`
-	Members     []int  `json:"members" validate:"required"`
+	Members     []int  `json:"members"`
 }
 
 // type TeamPreviewDto struct {
@@ -27,7 +27,7 @@ type GetTeamPreviewDto struct {
 }
 
 type UpdateTeamInfoDto struct {
-	Title       string `json:"title" validate:"reqiured,lt=25"`
+	Title       string `json:"title" validate:"required,lt=25"`
 	Description string `json:"description" validate:"required,lt=4000"`
 	ID          int64  `json:"id" validate:"required,numeric"`
 }
@@ -40,7 +40,7 @@ type UpdateMemberRoleDto struct {
 
 type UpdateMemberPositionDto struct {
 	Userid      int    `json:"user_id" validate:"required,numeric"`
-	NewPosition string `json:"new_posotion" validate:"required,lt=20"`
+	NewPosition string `json:"position" validate:"required,lt=20"`
 	Teamid      int64  `json:"team_id" validate:"required,numeric"`
 }
 

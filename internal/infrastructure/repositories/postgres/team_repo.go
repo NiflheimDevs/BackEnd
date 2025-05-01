@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -38,7 +39,7 @@ func (tr *TeamRepo) CreateOneManTeam(ctx context.Context, tx transaction.Tx, use
 
 	var teamid int64
 
-	row := tx.QueryRow(ctx, query, userid).(pgx.Row)
+	row := tx.QueryRow(ctx, query, strconv.Itoa(userid)).(pgx.Row)
 	err := row.Scan(&teamid)
 
 	if err != nil {
@@ -168,7 +169,7 @@ func (tr *TeamRepo) DeleteTeam(teamid int64) error {
 	defer cancel()
 
 	query := `DELETE FROM team
-	WHERE id = $2 AND type = 0`
+	WHERE id = $1 AND type = 0`
 
 	_, err := tr.PG.Exec(ctx, query, teamid)
 
@@ -181,13 +182,14 @@ func (tr *TeamRepo) GetTeam(teamid int64) *models.TeamModel {
 
 	query := `SELECT t.id, t.title, t.description, t.created_at
 		FROM team as t
-		WHERE t.id = $2 AND t.type = 0`
+		WHERE t.id = $1 AND t.type = 0`
 
 	var team models.TeamModel
 
 	err := tr.PG.QueryRow(ctx, query, teamid).Scan(&team.ID, &team.Title, &team.Description, &team.Created_at)
 
 	if err != nil {
+		log.Println("TeamError: Team id", teamid, "not found. details:", err)
 		if errors.Is(err, context.DeadlineExceeded) {
 			panic(exceptions.Exception{
 				Tag:    exceptions.INTERNAL_ERROR,
@@ -267,7 +269,7 @@ func (tr *TeamRepo) GetMembersForTeam(teamid int64) []dto.ReadMemberDto {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
 
-	query := `SELECT u.id, u.username, u.firstname, u.lastname, ut.position, ut.role
+	query := `SELECT u.id, u.username, u.firstname, u.lastname, ut.position, ut.role_id
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
@@ -289,8 +291,8 @@ func (tr *TeamRepo) GetMembersForTeam(teamid int64) []dto.ReadMemberDto {
 		var member dto.ReadMemberDto
 		var info dto.MemberInfoDto
 		var role sql.NullInt64
-
-		if err := rows.Scan(&info.Userid, &info.Username, &info.FirstName, &info.LastName, &info.Position, &role); err != nil {
+		var firstname, lastname, position sql.NullString
+		if err := rows.Scan(&info.Userid, &info.Username, &firstname, &lastname, &position, &role); err != nil {
 			log.Println("TeamError: error scanning users for team", teamid, "error detail:", err)
 			panic(exceptions.Exception{
 				Tag:    exceptions.INTERNAL_ERROR,
@@ -302,6 +304,16 @@ func (tr *TeamRepo) GetMembersForTeam(teamid int64) []dto.ReadMemberDto {
 		if role.Valid {
 			member.Role = enums.RoleType(role.Int64)
 		}
+		if firstname.Valid {
+			info.FirstName = firstname.String
+		}
+		if lastname.Valid {
+			info.LastName = lastname.String
+		}
+		if position.Valid {
+			info.Position = position.String
+		}
+
 		members = append(members, member)
 	}
 
@@ -312,7 +324,7 @@ func (tr *TeamRepo) GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDt
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
 
-	query := `SELECT u.id, u.username, u.firstname, u.lastname, ut.position, ut.role
+	query := `SELECT u.id, u.username, u.firstname, u.lastname, ut.position, ut.role_id
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
@@ -320,9 +332,11 @@ func (tr *TeamRepo) GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDt
 	var member dto.ReadMemberDto
 	var info dto.MemberInfoDto
 	var role sql.NullInt64
+	var firstname, lastname, position sql.NullString
 
-	if err := tr.PG.QueryRow(ctx, query, teamid, userid).Scan(&info.Userid, &info.Username, &info.FirstName, &info.LastName, &info.Position, &role); err != nil {
+	if err := tr.PG.QueryRow(ctx, query, teamid, userid).Scan(&info.Userid, &info.Username, &firstname, &lastname, &position, &role); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			log.Println(err, teamid, userid)
 			return nil
 		} else {
 			log.Println("TeamError: error scanning users for team", teamid, "error detail:", err)
@@ -336,6 +350,15 @@ func (tr *TeamRepo) GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDt
 	member.Info = &info
 	if role.Valid {
 		member.Role = enums.RoleType(role.Int64)
+	}
+	if firstname.Valid {
+		info.FirstName = firstname.String
+	}
+	if lastname.Valid {
+		info.LastName = lastname.String
+	}
+	if position.Valid {
+		info.Position = position.String
 	}
 	return &member
 }

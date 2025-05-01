@@ -85,7 +85,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Patch("/team/member/pos", app.Handlers.TeamHandler.UpdateMemberPosition)
 	mux.Patch("/team/member/role", app.Handlers.TeamHandler.UpdateMemberRole)
 	mux.Delete("/team/member", app.Handlers.TeamHandler.RemoveMember)
-	mux.Post("/team/mamber", app.Handlers.TeamHandler.AddMembers)
+	mux.Post("/team/member", app.Handlers.TeamHandler.AddMembers)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
