@@ -1,4 +1,4 @@
 CREATE TABLE IF NOT EXISTS "role" (
   "id" int PRIMARY KEY,
-  "name" varchar UNIQUE NOT NULL 
+  "name" varchar NOT NULL -- didn't put unique because of seeding
 );

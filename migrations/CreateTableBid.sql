@@ -5,9 +5,9 @@ CREATE TABLE IF NOT EXISTS "bid" (
   "value" numeric NOT NULL,
   "expected_time" TIMESTAMP WITH TIME ZONE NOT NULL,
   "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("team_id") REFERENCES "team" ("id")
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id"),
+  UNIQUE ("team_id", "project_id")
 );
-
 ALTER TABLE bid
 ADD FOREIGN KEY ("project_id")
 REFERENCES "project" ("id");
