@@ -91,7 +91,17 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 }
 
 func (ts *TeamService) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
-	return ts.TeamRepo.GetTeamsForUser(userid)
+	res := ts.TeamRepo.GetTeamsForUser(userid)
+	var owners []dto.ReadMemberDto
+	for i := 0; i < len(res); i++ {
+		owners = ts.TeamRepo.GetMembersForTeamFilterdByRole(res[i].ID, enums.TEAM_OWNER)
+		if len(owners) == 1 {
+			res[i].OwnerInfo = owners[0].Info
+		} else {
+			log.Panicln("MemberOwnerError: check owners for team", res[i].ID)
+		}
+	}
+	return res
 }
 
 func (ts *TeamService) GetTeam(commanderid int, teamid int64) *dto.GetTeamDto {

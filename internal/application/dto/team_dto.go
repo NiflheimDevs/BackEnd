@@ -19,11 +19,12 @@ type TeamCreateDto struct {
 // }
 
 type GetTeamPreviewDto struct {
-	ID          int64  `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Position    string `json:"position"`
-	Profile     string `json:"profile"`
+	ID          int64          `json:"id"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	Position    string         `json:"position"`
+	Profile     string         `json:"profile"`
+	OwnerInfo   *MemberInfoDto `json:"owner"`
 }
 
 type UpdateTeamInfoDto struct {
