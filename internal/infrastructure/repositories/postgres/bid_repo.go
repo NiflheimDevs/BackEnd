@@ -120,13 +120,13 @@ func (br *BidRepo) AcceptBid(ctx context.Context, tx transaction.Tx, bidID int, 
 	}
 }
 
-func (br *BidRepo) UpdateBid(bidID int, info dto.BidInfo) {
+func (br *BidRepo) UpdateBid(info dto.BidInfo) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := `UPDATE bid SET team_id = $1, project_id = $2, prepayment = $3, total = $4, description = $5, expected_time = $6 WHERE id = $7`
 
-	_, err := br.PG.Exec(ctx, query, info.TeamID, info.ProjectID, info.PP, info.Total, info.Description, info.ExpectedTime.Format("2006-01-02 15:04:05"), bidID)
+	_, err := br.PG.Exec(ctx, query, info.TeamID, info.ProjectID, info.PP, info.Total, info.Description, info.ExpectedTime.Format("2006-01-02 15:04:05"), info.BidID)
 
 	if err != nil {
 		panic(exceptions.Exception{

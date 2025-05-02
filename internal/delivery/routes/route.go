@@ -80,6 +80,10 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
+	mux.Post("/bid", app.Handlers.BidHandler.PutBid)
+	mux.Post("/bid/{id}/accept", app.Handlers.BidHandler.AcceptBid)
+	mux.Put("/bid/{id}", app.Handlers.BidHandler.UpdateBid)
+
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})

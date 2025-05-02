@@ -7,7 +7,6 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
-	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
@@ -33,12 +32,24 @@ func NewBidService(
 	}
 }
 
-func (bs BidService) GetBidsOfProject(projectID int) []models.BidModel {
-	// check that who is the owner of project
-	bids := bs.BidRepo.GetBidOfProject(projectID)
+// func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidInfo {
+// 	bids := bs.BidRepo.GetBidOfProject(projectID)
 
-	return bids
-}
+// 	return bids
+// }
+
+// func (bs BidService) GetPriateProjectBids(userID int, projectID int) []dto.PrivateProjectBidInfo {
+// 	if userID == -1 || userID == -2 {
+// 		panic(exceptions.Exception{
+// 			Tag:    exceptions.UNAUTHORIZED,
+// 			Errors: []exceptions.SpecificError{exceptions.AUTH_ACCESS_DENIED},
+// 		})
+// 	}
+
+// 	bids := bs.BidRepo.GetBidOfProject(projectID)
+
+// 	return bids
+// }
 
 func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	if info.UserID == -1 || info.UserID == -2 {
@@ -94,6 +105,8 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 		})
 	}
 
+	//check project state
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -128,8 +141,8 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 	}
 }
 
-func (bs BidService) UpdateBid(bidID int, info dto.BidInfo) {
-	bid, err := bs.BidRepo.GetBidInfo(bidID)
+func (bs BidService) UpdateBid(info dto.BidInfo) {
+	bid, err := bs.BidRepo.GetBidInfo(info.BidID)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.NOT_FOUND,
@@ -148,9 +161,9 @@ func (bs BidService) UpdateBid(bidID int, info dto.BidInfo) {
 		})
 	}
 
-	//check permission
+	//check permission that user is in group and have permission to edit
 
-	if info.PP+info.Total > bid.PrePayment+bid.Total {
+	if info.Total > bid.Total {
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 			Errors: []exceptions.SpecificError{
@@ -159,5 +172,9 @@ func (bs BidService) UpdateBid(bidID int, info dto.BidInfo) {
 		})
 	}
 
-	bs.BidRepo.UpdateBid(bidID, info)
+	//project := bs.ProjectService.GetProject(bid.ProjectID)
+
+	//check project state
+
+	bs.BidRepo.UpdateBid(info)
 }

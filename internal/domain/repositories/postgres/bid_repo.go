@@ -10,8 +10,8 @@ import (
 
 type BidRepo interface {
 	GetBidInfo(bidID int) (*models.BidModel, error)
-	PutBid(info dto.BidInfo) int
 	GetBidOfProject(projectID int) []models.BidModel
+	PutBid(info dto.BidInfo) int
 	AcceptBid(ctx context.Context, tx transaction.Tx, bidID int, projectID int)
-	UpdateBid(bidID int, info dto.BidInfo)
+	UpdateBid(info dto.BidInfo)
 }
