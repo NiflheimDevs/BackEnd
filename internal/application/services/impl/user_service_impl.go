@@ -404,13 +404,17 @@ func (us *UserService) UpdatePhone(phone string, userid string) {
 }
 
 func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfileDTO {
-
 	if targetUserid == userid && userid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
 			Errors: []exceptions.SpecificError{
 				exceptions.AUTH_TOKEN_EXPIRED,
 			},
+
+	// ! hardcode
+	if targetUserid < 3 {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
 		})
 	}
 
@@ -435,6 +439,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		Username:           targetInfo.Username,
 		HighProfilePicture: highpath,
 		LowProfilePicture:  lowPath,
+		CreatedAt:          targetInfo.CreatedAt,
 	}
 	if userid == targetUserid {
 		response.Email = targetInfo.Email

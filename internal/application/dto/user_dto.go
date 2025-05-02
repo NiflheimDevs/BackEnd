@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type LoginDTO struct {
 	Username     string `json:"username"`
 	FirstName    string `json:"first_name"`
@@ -9,15 +11,16 @@ type LoginDTO struct {
 }
 
 type UserProfileDTO struct {
-	FirstName          string `json:"firstname"`
-	LastName           string `json:"lastname"`
-	Username           string `json:"username"`
-	Email              string `json:"email"`
-	Is_verified        bool   `json:"is_verified"`
-	Bio                string `json:"bio"`
-	Phone              string `json:"phonenumber"`
-	HighProfilePicture string `json:"high_profile"`
-	LowProfilePicture  string `json:"low_profile"`
+	FirstName          string    `json:"firstname"`
+	LastName           string    `json:"lastname"`
+	Username           string    `json:"username"`
+	Email              string    `json:"email"`
+	Is_verified        bool      `json:"is_verified"`
+	Bio                string    `json:"bio"`
+	Phone              string    `json:"phonenumber"`
+	HighProfilePicture string    `json:"high_profile"`
+	LowProfilePicture  string    `json:"low_profile"`
+	CreatedAt          time.Time `json:"created_at"`
 }
 
 type UpdateUserDTO struct {

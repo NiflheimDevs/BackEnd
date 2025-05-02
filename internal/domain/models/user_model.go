@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type UserModel struct {
 	ID          int
 	FirstName   string
@@ -11,6 +13,7 @@ type UserModel struct {
 	Bio         string
 	Phone       string
 	Wallet      float64
+	CreatedAt   time.Time
 }
 
 type UserCacheData struct {
