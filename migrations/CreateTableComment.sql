@@ -5,5 +5,7 @@ CREATE TABLE IF NOT EXISTS "comment" (
   "content" text,
   "rating" int NOT NULL,
   FOREIGN KEY ("project_id") REFERENCES "project" ("id"),
-  FOREIGN KEY ("bid_id") REFERENCES "bid" ("id")
+  FOREIGN KEY ("bid_id") REFERENCES "bid" ("id"),
+  UNIQUE ("bid_id", "project_id")
 );
+

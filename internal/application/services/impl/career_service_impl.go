@@ -1,6 +1,8 @@
 package servicesimpl
 
 import (
+	"log"
+
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
@@ -98,6 +100,7 @@ func (cs *CareerService) UpdateCareers(userid int, params []dto.CareerDTO) []dto
 			params[i].ID, err = cs.CareerRepo.CreateCareer(userid, &params[i])
 			// couldn't create. remove from response
 			if err != nil {
+				log.Println("CareerError: can't create for user", userid, ". detail:", err)
 				newCareerSet[params[i].ID] = false
 				params = utils.RemoveUnordered(params, &i)
 			} else {

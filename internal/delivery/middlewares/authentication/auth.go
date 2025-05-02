@@ -31,11 +31,12 @@ func (am *Authentication) AuthRequired(next http.Handler) http.Handler {
 			userID = -2
 		} else {
 			tokenString := authHeader[7:]
-			claims := am.JWTService.VerifyToken(tokenString)
-			if claims == nil {
+			claims, err := am.JWTService.VerifyToken(tokenString)
+			if err != nil {
+				userID = -2
+			} else if claims == nil {
 				userID = -1
 			} else {
-
 				userID = int(claims["sub"].(float64))
 			}
 		}

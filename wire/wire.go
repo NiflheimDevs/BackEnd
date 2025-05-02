@@ -11,13 +11,14 @@ import (
 	panicwall "github.com/niflheimdevs/backend/internal/delivery/middlewares/exceptions"
 	midratelimit "github.com/niflheimdevs/backend/internal/delivery/middlewares/ratelimit"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
+	"github.com/niflheimdevs/backend/internal/infrastructure/db/seed"
 	db "github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
 	repositoriesimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	redisimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
 	"github.com/niflheimdevs/backend/pkg"
 
-	repositries "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
+	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
@@ -46,14 +47,19 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewTagRepo,
 	repositoriesimpl.NewLabelRepo,
 	repositoriesimpl.NewPaymentRepo,
-	storageimpl.NewS3Storage,
+	repositoriesimpl.NewTeamRepo,
+	repositoriesimpl.NewRoleRepo,
+  storageimpl.NewS3Storage,
+
 	redisimpl.NewUserCache,
-	wire.Bind(new(repositries.UserRepo), new(*repositoriesimpl.UserRepo)),
-	wire.Bind(new(repositries.TagRepo), new(*repositoriesimpl.TagRepo)),
-	wire.Bind(new(repositries.CareerRepo), new(*repositoriesimpl.CareerRepo)),
-	wire.Bind(new(repositries.LabelRepo), new(*repositoriesimpl.LabelRepo)),
-	wire.Bind(new(repositries.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
-	wire.Bind(new(repositries.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
+	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
+	wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)),
+	wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)),
+	wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)),
+	wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
+	wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
+	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
+	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -70,6 +76,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewLabelService,
 	servicesimpl.NewProjectService,
 	servicesimpl.NewPaymentService,
+	servicesimpl.NewTeamService,
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
 
@@ -79,6 +86,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)),
 	wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)),
 	wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)),
+	wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 
@@ -93,6 +101,8 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewProjectHandler,
 	handlers.NewGeneralHandler,
 	handlers.NewPaymentHandler,
+	handlers.NewTeamHandler,
+
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -123,6 +133,7 @@ var ProviderSet = wire.NewSet(
 	ServiceProviderSet,
 	HandlerProviderSet,
 	MiddlewareProviderSet,
+	seed.NewSeeder,
 )
 
 type Middlewares struct {
@@ -137,11 +148,13 @@ type Handlers struct {
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
+	TeamHandler    *handlers.TeamHandler
 }
 
 type Application struct {
 	Handlers    *Handlers
 	Middlewares *Middlewares
+	Seeder      *seed.Seeder
 }
 
 func InitializeApplication(container *bootstrap.Di) (*Application, error) {
