@@ -364,6 +364,13 @@ func (us *UserService) UpdatePhone(phone string, userid string) {
 }
 
 func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfileDTO {
+	// ! hardcode
+	if targetUserid < 3 {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+		})
+	}
+
 	targetInfo, err := us.UserRepo.FindUserByID(targetUserid)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -385,6 +392,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		Username:           targetInfo.Username,
 		HighProfilePicture: highpath,
 		LowProfilePicture:  lowPath,
+		CreatedAt:          targetInfo.CreatedAt,
 	}
 	if userid == targetUserid {
 		response.Email = targetInfo.Email

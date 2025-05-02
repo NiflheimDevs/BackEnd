@@ -69,7 +69,6 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 	}
 
 	projects, count := projectHandler.ProjectService.GetUserProjects(userID, targetUserID, offset, limit)
-	userInfo := projectHandler.UserService.GetUserInfo(userID, 0)
 
 	var projectsDTO dto.UserProject
 
@@ -86,9 +85,6 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 		})
 	}
 
-	projectsDTO.FirstName = userInfo.FirstName
-	projectsDTO.LastName = userInfo.LastName
-	projectsDTO.Username = userInfo.Username
 	projectsDTO.Count = count
 
 	w.Header().Set("Content-Type", "application/json")
