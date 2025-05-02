@@ -20,6 +20,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
+	"github.com/niflheimdevs/backend/internal/infrastructure/db/seed"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
@@ -42,8 +43,12 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	userRepo := repositoriesimpl.NewUserRepo(pool)
 	client := driver.ConncetRedis(container)
 	userCache := redisimpl.NewUserCache(client)
+	pgxTxManager := db.NewTxManager(pool)
+	teamRepo := repositoriesimpl.NewTeamRepo(pool)
+	roleRepo := repositoriesimpl.NewRoleRepo(pool)
+	teamService := servicesimpl.NewTeamService(teamRepo, roleRepo, pgxTxManager, fileService)
 	secretSauce := pkg.NewSecretSauce()
-	userService := servicesimpl.NewUserService(userRepo, userCache, constants, env, fileService, secretSauce)
+	userService := servicesimpl.NewUserService(userRepo, userCache, pgxTxManager, constants, env, fileService, teamService, secretSauce)
 	tagRepo := repositoriesimpl.NewTagRepo(pool)
 	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
 	careerRepo := repositoriesimpl.NewCareerRepo(pool)
@@ -52,7 +57,6 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
 	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
-	pgxTxManager := db.NewTxManager(pool)
 	paymentService := servicesimpl.NewPaymentService(paymentRepo, pgxTxManager)
 	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, tagService, pgxTxManager)
 	labelRepo := repositoriesimpl.NewLabelRepo(pool)
@@ -63,6 +67,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	bidRepo := repositoriesimpl.NewBidRepo(pool)
 	bidService := servicesimpl.NewBidService(projectService, paymentService, bidRepo, pgxTxManager)
 	bidHandler := handlers.NewBidHandler(constants, validate, bidService)
+	teamHandler := handlers.NewTeamHandler(teamService, constants, validate)
 	wireHandlers := &Handlers{
 		FileHandler:    fileHandler,
 		UserHandler:    userHandler,
@@ -70,6 +75,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		GeneralHandler: generalHandler,
 		PaymentHandler: paymentHandler,
 		BidHandler:     bidHandler,
+		TeamHandler:    teamHandler,
 	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit(constants)
@@ -79,9 +85,11 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		RateLimit:      rateLimit,
 		Authentication: authentication,
 	}
+	seeder := seed.NewSeeder(pgxTxManager)
 	application := &Application{
 		Handlers:    wireHandlers,
 		Middlewares: middlewares,
+		Seeder:      seeder,
 	}
 	return application, nil
 }
@@ -92,16 +100,16 @@ var DatabaseProviderSet = wire.NewSet(driver.ConnectSQL, driver.ConncetRedis, db
 
 var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
-var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewBidRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, repositoriesimpl.NewBidRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
-var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewBidService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), ProvideConstants,
+var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewBidService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), ProvideConstants,
 	ProvideEnv,
 	ProvideS3,
 )
 
-var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, wire.Struct(new(Handlers), "*"))
+var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, wire.Struct(new(Handlers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
 
@@ -124,7 +132,7 @@ var ProviderSet = wire.NewSet(
 	FileServiceProviderSet,
 	ServiceProviderSet,
 	HandlerProviderSet,
-	MiddlewareProviderSet,
+	MiddlewareProviderSet, seed.NewSeeder,
 )
 
 type Middlewares struct {
@@ -140,9 +148,11 @@ type Handlers struct {
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
 	BidHandler     *handlers.BidHandler
+	TeamHandler    *handlers.TeamHandler
 }
 
 type Application struct {
 	Handlers    *Handlers
 	Middlewares *Middlewares
+	Seeder      *seed.Seeder
 }

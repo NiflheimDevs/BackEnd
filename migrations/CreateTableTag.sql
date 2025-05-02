@@ -1,4 +1,4 @@
 CREATE TABLE IF NOT EXISTS "tag" (
-  "id" serial PRIMARY KEY,
+  "id" int PRIMARY KEY,
   "name" varchar NOT NULL
 );

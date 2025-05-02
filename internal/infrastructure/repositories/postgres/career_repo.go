@@ -69,6 +69,11 @@ func (cr *CareerRepo) CreateCareer(userid int, params *dto.CareerDTO) (int, erro
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	var endDatePtr *time.Time
+	if !params.EndDate.IsZero() {
+		endDatePtr = &params.EndDate
+	}
+
 	var careerid int
 
 	query := `INSERT INTO career 
@@ -76,7 +81,7 @@ func (cr *CareerRepo) CreateCareer(userid int, params *dto.CareerDTO) (int, erro
 	VALUES ($1,$2,$3,$4,$5,$6) 
 	RETURNING id`
 
-	err := cr.PG.QueryRow(ctx, query, userid, params.Company, params.StartDate, params.EndDate, params.Role, params.Website).Scan(&careerid)
+	err := cr.PG.QueryRow(ctx, query, userid, params.Company, params.StartDate, endDatePtr, params.Role, params.Website).Scan(&careerid)
 
 	return careerid, err
 }

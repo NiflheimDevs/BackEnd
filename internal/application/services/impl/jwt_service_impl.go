@@ -2,6 +2,7 @@ package servicesimpl
 
 import (
 	"crypto/rsa"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -87,35 +88,34 @@ func (j *JWT) GenerateToken(userID int) (string, string) {
 	return accessTokenString, refreshTokenString
 }
 
-func (j *JWT) VerifyToken(tokenString string) jwt.MapClaims {
-	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+func (j *JWT) VerifyToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
 		}
 		return j.PublicKey, nil
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		panic(exceptions.Exception{
-			Tag: exceptions.FORBIDDEN,
-			Errors: []exceptions.SpecificError{
-				exceptions.AUTH_ACCESS_DENIED,
-			},
-		})
+		return nil, errors.New("saman says he doesn't like this")
 	}
 	if exp, ok := claims["exp"].(float64); ok {
 		if time.Now().Unix() > int64(exp) {
-			return nil
+			return nil, nil
 		}
 	}
-	return claims
+	return claims, nil
 
 }
 
 func (j *JWT) RefreshToken(tokenString string) string {
-	claims := j.VerifyToken(tokenString)
-	if claims == nil {
+	claims, err := j.VerifyToken(tokenString)
+	if claims == nil || err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
 			Errors: []exceptions.SpecificError{

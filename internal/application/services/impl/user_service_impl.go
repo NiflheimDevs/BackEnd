@@ -1,9 +1,11 @@
 package servicesimpl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/application/dto"
@@ -11,6 +13,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
 	"github.com/niflheimdevs/backend/pkg"
 )
@@ -18,26 +21,32 @@ import (
 type UserService struct {
 	UserRepo    repositories.UserRepo
 	CacheRepo   redis.UserCache
+	TxManager   transaction.TxManager
 	Constants   *bootstrap.Constants
 	Env         *bootstrap.Env
 	FileService services.FileService
+	TeamService services.TeamService
 	SecretSauce *pkg.SecretSauce
 }
 
 func NewUserService(
 	userRepo repositories.UserRepo,
 	cacheRepo redis.UserCache,
+	txManager transaction.TxManager,
 	constants *bootstrap.Constants,
 	Env *bootstrap.Env,
 	fileService services.FileService,
+	teamService services.TeamService,
 	secretSauce *pkg.SecretSauce,
 ) *UserService {
 	return &UserService{
 		UserRepo:    userRepo,
 		CacheRepo:   cacheRepo,
+		TxManager:   txManager,
 		Constants:   constants,
 		Env:         Env,
 		FileService: fileService,
+		TeamService: teamService,
 		SecretSauce: secretSauce,
 	}
 }
@@ -136,13 +145,44 @@ func (us *UserService) Register(phonenumber string, username string, password []
 	//? before creation in main?
 	us.CacheRepo.ClearUserCreds(phonenumber, username)
 
-	userid, err := us.UserRepo.PostUser(phonenumber, username, password)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := us.TxManager.Begin(ctx)
 	if err != nil {
 		panic(exceptions.Exception{
-			Tag:    exceptions.INTERNAL_ERROR,
-			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
 		})
 	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	userid, err := us.UserRepo.PostUser(ctx, tx, phonenumber, username, password)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.CONFLICT_ERROR,
+		})
+	}
+
+	us.TeamService.BehindCurtainTeam(ctx, tx, userid)
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
 	return userid
 }
 
@@ -364,6 +404,22 @@ func (us *UserService) UpdatePhone(phone string, userid string) {
 }
 
 func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfileDTO {
+	if targetUserid == userid && userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_TOKEN_EXPIRED,
+			},
+		})
+	}
+
+	// ! hardcode
+	if targetUserid < 3 {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+		})
+	}
+
 	targetInfo, err := us.UserRepo.FindUserByID(targetUserid)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -385,6 +441,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		Username:           targetInfo.Username,
 		HighProfilePicture: highpath,
 		LowProfilePicture:  lowPath,
+		CreatedAt:          targetInfo.CreatedAt,
 	}
 	if userid == targetUserid {
 		response.Email = targetInfo.Email

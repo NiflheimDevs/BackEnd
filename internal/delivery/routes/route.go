@@ -84,6 +84,16 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/bid/{id}/accept", app.Handlers.BidHandler.AcceptBid)
 	mux.Put("/bid/{id}", app.Handlers.BidHandler.UpdateBid)
 
+	mux.Post("/team", app.Handlers.TeamHandler.CreateTeam)
+	mux.Patch("/team", app.Handlers.TeamHandler.UpdateTeamInfo)
+	mux.Delete("/team/{team_id}", app.Handlers.TeamHandler.DeleteTeam)
+	mux.Get("/team/user/{user_id}", app.Handlers.TeamHandler.GetTeamsForUser)
+	mux.Get("/team/{team_id}", app.Handlers.TeamHandler.GetTeam)
+	mux.Patch("/team/member/pos", app.Handlers.TeamHandler.UpdateMemberPosition)
+	mux.Patch("/team/member/role", app.Handlers.TeamHandler.UpdateMemberRole)
+	mux.Delete("/team/member", app.Handlers.TeamHandler.RemoveMember)
+	mux.Post("/team/member", app.Handlers.TeamHandler.AddMembers)
+
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
