@@ -2,7 +2,6 @@
 -- CREATE USER niflheim WITH PASSWORD 'niflguard';
 -- ALTER ROLE niflheim WITH CREATEDB;
 
-
 -- DO $$
 -- BEGIN
 --     IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'bidlancer') THEN
@@ -11,6 +10,43 @@
 -- END $$;
 
 -- \c bidlancer;
+
+CREATE TABLE IF NOT EXISTS "permission" (
+  "id" int PRIMARY KEY,
+  "name" varchar UNIQUE NOT NULL,
+  "description" text
+);
+
+CREATE TABLE IF NOT EXISTS "role" (
+  "id" int PRIMARY KEY,
+  "name" varchar NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "label" (
+  "id" int PRIMARY KEY,
+  "name" varchar NOT NULL,
+  "description" text,
+  "price" numeric NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "chat" (
+  "id" serial PRIMARY KEY,
+  "title" varchar,
+  "description" text
+);
+
+CREATE TABLE IF NOT EXISTS "tag" (
+  "id" int PRIMARY KEY,
+  "name" varchar NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "team" (
+  "id" serial PRIMARY KEY,
+  "type" int DEFAULT 0,
+  "title" varchar,
+  "description" text,
+  "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS "permission" (
   "id" int PRIMARY KEY,
@@ -72,7 +108,8 @@ CREATE TABLE IF NOT EXISTS "bid" (
   "description" text,
   "expected_time" TIMESTAMP WITH TIME ZONE NOT NULL,
   "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("team_id") REFERENCES "team" ("id")
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id"),
+  UNIQUE ("team_id", "project_id")
 );
 
 
