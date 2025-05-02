@@ -410,6 +410,8 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 			Errors: []exceptions.SpecificError{
 				exceptions.AUTH_TOKEN_EXPIRED,
 			},
+		})
+	}
 
 	// ! hardcode
 	if targetUserid < 3 {
