@@ -70,7 +70,7 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 
 	teamid := ts.TeamRepo.CreateTeam(ctx, tx, teamInfo.Title, teamInfo.Description)
 
-	err = ts.TeamRepo.AddMemberWithTx(ctx, tx, userid, teamid, "master", enums.TEAM_OWNER)
+	err = ts.TeamRepo.AddMemberWithTx(ctx, tx, userid, teamid, "", enums.TEAM_OWNER)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.CONFLICT_ERROR,
@@ -85,7 +85,7 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
-	addMembersFunc(teamid, teamInfo.Members, ts)
+	ts.addMembersFunc(teamid, teamInfo.Members)
 
 	return teamid
 }
@@ -184,18 +184,6 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 
 }
 
-// func (ts *TeamService) GetTeamWithRole(userid int, teamid int64) *dto.GetTeamPreviewDto {
-// 	var res dto.GetTeamDto
-
-// 	res.Info = ts.TeamRepo.GetTeamForUser(userid, teamid)
-// 	member := ts.TeamRepo.GetMemberForTeam(teamid, userid)
-// 	if member != nil {
-// 		res.Role = member.Role.String()
-// 	}
-
-// 	return &res
-// }
-
 // TODO: email? some sort of request must be sent and then when it is accepted, the member gets added
 // ! this version is naive
 func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
@@ -214,11 +202,11 @@ func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
 		})
 	}
 
-	addMembersFunc(teamid, members, ts)
+	ts.addMembersFunc(teamid, members)
 
 }
 
-func addMembersFunc(teamid int64, members []int, ts *TeamService) {
+func (ts *TeamService) addMembersFunc(teamid int64, members []int) {
 	var err error
 	for _, id := range members {
 		err = ts.TeamRepo.AddMember(id, teamid, "", enums.TEAM_NEWBIE)
@@ -266,9 +254,6 @@ func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int6
 		}
 		err := ts.TeamRepo.RemoveMember(poorGuyid, teamid)
 		if err != nil {
-			// panic(exceptions.Exception{
-			// 	Tag: exceptions.INTERNAL_ERROR,
-			// })
 			log.Println("KickMemberError: coudldn't kick member", poorGuyid, "by", commanderid, "at team", teamid, "detail:", err)
 		}
 	}
