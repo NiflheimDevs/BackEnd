@@ -50,6 +50,12 @@ func (ts *TeamService) BehindCurtainTeam(ctx context.Context, tx transaction.Tx,
 }
 
 func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64 {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
 
@@ -133,6 +139,11 @@ func (ts *TeamService) GetTeam(commanderid int, teamid int64) *dto.GetTeamDto {
 }
 
 func (ts *TeamService) UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
 
 	member := ts.TeamRepo.GetMemberForTeam(info.ID, userid)
 	if member == nil {
@@ -159,6 +170,11 @@ func (ts *TeamService) UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto) {
 }
 
 func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
 
 	member := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
 	if member == nil {
@@ -187,6 +203,11 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 // TODO: email? some sort of request must be sent and then when it is accepted, the member gets added
 // ! this version is naive
 func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
 	member := ts.TeamRepo.GetMemberForTeam(teamid, userid)
 	if member == nil {
 		panic(exceptions.Exception{
@@ -226,6 +247,12 @@ func (ts *TeamService) LeaveTeam(userid int, teamid int64) {
 }
 
 func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int64) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
+
 	var isLeaving bool = false
 
 	member := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
@@ -263,6 +290,12 @@ func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int6
 }
 
 func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMemberRoleDto) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
+
 	role := enums.NameToRole(info.Role)
 
 	if role == 0 {
@@ -298,6 +331,12 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 }
 
 func (ts *TeamService) UpdatePosition(commanderid int, req *dto.UpdateMemberPositionDto) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
+
 	member := ts.TeamRepo.GetMemberForTeam(req.Teamid, commanderid)
 	if member == nil {
 		panic(exceptions.Exception{
