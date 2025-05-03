@@ -53,6 +53,9 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
 
@@ -142,6 +145,9 @@ func (ts *TeamService) UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto) {
 	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
 
@@ -173,6 +179,9 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 	if commanderid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
 
@@ -206,6 +215,9 @@ func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
 	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
 	member := ts.TeamRepo.GetMemberForTeam(teamid, userid)
@@ -293,6 +305,9 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 	if commanderid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
 
@@ -341,6 +356,9 @@ func (ts *TeamService) UpdatePosition(commanderid int, req *dto.UpdateMemberPosi
 	if member == nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
 
