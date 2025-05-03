@@ -33,9 +33,9 @@ func NewBidHandler(
 func (bh *BidHandler) PutBid(w http.ResponseWriter, r *http.Request) {
 	params := Validated[dto.BidInfo](bh.Validator, r)
 
-	userid := r.Context().Value(bh.Constants.Context.UserID).(int)
+	userID := r.Context().Value(bh.Constants.Context.UserID).(int)
 
-	params.UserID = userid
+	params.UserID = userID
 
 	bidid := bh.BidService.PutBidOnProject(params)
 
@@ -79,4 +79,27 @@ func (bh *BidHandler) UpdateBid(w http.ResponseWriter, r *http.Request) {
 	bh.BidService.UpdateBid(params)
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (bh *BidHandler) GetProjectBids(w http.ResponseWriter, r *http.Request) {
+	projectIDString := chi.URLParam(r, "project_id")
+	projectID, _ := strconv.Atoi(projectIDString)
+
+	result := bh.BidService.GetPublicProjectBids(projectID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
+}
+
+func (bh *BidHandler) ViewBidsOfTheProject(w http.ResponseWriter, r *http.Request) {
+	projectIDString := chi.URLParam(r, "project_id")
+	projectID, _ := strconv.Atoi(projectIDString)
+	userID := r.Context().Value(bh.Constants.Context.UserID).(int)
+
+	result := bh.BidService.GetPrivateProjectBids(userID, projectID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }

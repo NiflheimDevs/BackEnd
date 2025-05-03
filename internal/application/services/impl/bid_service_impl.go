@@ -7,6 +7,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
@@ -14,6 +15,7 @@ import (
 type BidService struct {
 	ProjectService services.ProjectService
 	PaymentService services.PaymentService
+	TeamService    services.TeamService
 	TxManager      transaction.TxManager
 	BidRepo        repositories.BidRepo
 }
@@ -21,35 +23,66 @@ type BidService struct {
 func NewBidService(
 	projectservice services.ProjectService,
 	paymentservice services.PaymentService,
+	teamservice services.TeamService,
 	bidRepo repositories.BidRepo,
 	txManager transaction.TxManager,
 ) *BidService {
 	return &BidService{
 		ProjectService: projectservice,
 		PaymentService: paymentservice,
+		TeamService:    teamservice,
 		BidRepo:        bidRepo,
 		TxManager:      txManager,
 	}
 }
 
-// func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidInfo {
-// 	bids := bs.BidRepo.GetBidOfProject(projectID)
+func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidInfo {
+	var bidInfos []dto.PublicProjectBidInfo
+	bids := bs.BidRepo.GetBidOfProject(projectID)
 
-// 	return bids
-// }
+	for _, bid := range bids {
+		var bidInfo dto.PublicProjectBidInfo
+		teamInfo := bs.TeamService.GetTeam(0, bid.TeamID)
+		bidInfo.BidID = bid.ID
+		bidInfo.Title = teamInfo.Info.Title
+		bidInfo.Total = bid.Total
+		bidInfo.ExpectedTime = bid.ExpectedTime.Format("2006-01-02 15:04:05")
+		bidInfo.ProfilePic = ""
+		bidInfos = append(bidInfos, bidInfo)
+	}
 
-// func (bs BidService) GetPriateProjectBids(userID int, projectID int) []dto.PrivateProjectBidInfo {
-// 	if userID == -1 || userID == -2 {
-// 		panic(exceptions.Exception{
-// 			Tag:    exceptions.UNAUTHORIZED,
-// 			Errors: []exceptions.SpecificError{exceptions.AUTH_ACCESS_DENIED},
-// 		})
-// 	}
+	return bidInfos
+}
 
-// 	bids := bs.BidRepo.GetBidOfProject(projectID)
+func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.PrivateProjectBidInfo {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag:    exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{exceptions.AUTH_ACCESS_DENIED},
+		})
+	}
 
-// 	return bids
-// }
+	var bidInfos []dto.PrivateProjectBidInfo
+	bids := bs.BidRepo.GetBidOfProject(projectID)
+
+	for _, bid := range bids {
+		var bidInfo dto.PrivateProjectBidInfo
+		teamInfo := bs.TeamService.GetTeam(0, bid.TeamID)
+		bidInfo.BidID = bid.ID
+		bidInfo.TeamInfo = teamInfo
+		bidInfo.Total = bid.Total
+		bidInfo.ExpectedTime = bid.ExpectedTime.Format("2006-01-02 15:04:05")
+		bidInfos = append(bidInfos, bidInfo)
+	}
+
+	return bidInfos
+}
+
+func (bs BidService) GetTeamBid(teamID int64) []models.BidModel {
+	bids := bs.BidRepo.GetTeamBids(teamID)
+
+	return bids
+}
 
 func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	if info.UserID == -1 || info.UserID == -2 {
@@ -62,6 +95,12 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	}
 
 	//check permission
+
+	if info.PP > info.Total {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
 
 	bs.ProjectService.GetProject(info.ProjectID)
 
@@ -98,7 +137,7 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 		})
 	}
 
-	if project.SelectedBid != 0 {
+	if project.State != 2 {
 		panic(exceptions.Exception{
 			Tag:    exceptions.FORBIDDEN,
 			Errors: []exceptions.SpecificError{exceptions.ALREADY_HAS_BID},

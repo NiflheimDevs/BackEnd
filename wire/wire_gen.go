@@ -65,7 +65,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	generalHandler := handlers.NewGeneralHandler(tagService, careerService, labelService, jwt, constants, validate)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, constants, validate)
 	bidRepo := repositoriesimpl.NewBidRepo(pool)
-	bidService := servicesimpl.NewBidService(projectService, paymentService, bidRepo, pgxTxManager)
+	bidService := servicesimpl.NewBidService(projectService, paymentService, teamService, bidRepo, pgxTxManager)
 	bidHandler := handlers.NewBidHandler(constants, validate, bidService)
 	teamHandler := handlers.NewTeamHandler(teamService, constants, validate)
 	wireHandlers := &Handlers{
@@ -104,7 +104,7 @@ var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
-var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewBidService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), ProvideConstants,
+var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewBidService, servicesimpl.NewSmsService, servicesimpl.NewJWT, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), ProvideConstants,
 	ProvideEnv,
 	ProvideS3,
 )

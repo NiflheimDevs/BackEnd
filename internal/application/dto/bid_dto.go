@@ -5,7 +5,7 @@ import "time"
 type BidInfo struct {
 	BidID        int       `json:"bid_id" validate:""`
 	UserID       int       `json:"user_id" validate:""`
-	TeamID       int       `json:"team_id" validate:"required"`
+	TeamID       int64     `json:"team_id" validate:"required"`
 	ProjectID    int       `json:"project_id" validate:"required"`
 	PP           int64     `json:"pre_payment" validate:"required"`
 	Total        int64     `json:"total" validate:"required"`
@@ -26,9 +26,9 @@ type PublicProjectBidInfo struct {
 }
 
 type PrivateProjectBidInfo struct {
-	BidID        int            `json:"bid_id"`
-	UserInfo     UserProfileDTO `json:"user_info"`
-	PrePayment   int64          `json:"pre_payment"`
-	Total        int64          `json:"total"`
-	ExpectedTime string         `json:"expected_time"`
+	BidID        int         `json:"bid_id"`
+	TeamInfo     *GetTeamDto `json:"team_info"`
+	PrePayment   int64       `json:"pre_payment"`
+	Total        int64       `json:"total"`
+	ExpectedTime string      `json:"expected_time"`
 }

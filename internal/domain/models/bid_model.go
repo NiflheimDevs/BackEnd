@@ -1,12 +1,14 @@
 package models
 
+import "time"
+
 type BidModel struct {
 	ID           int
-	TeamID       int
+	TeamID       int64
 	ProjectID    int
 	PrePayment   int64
 	Total        int64
 	Description  string
-	ExpectedTime string
-	CreatedTime  string
+	ExpectedTime time.Time
+	CreatedTime  time.Time
 }

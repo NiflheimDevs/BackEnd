@@ -10,6 +10,7 @@ import (
 
 type BidRepo interface {
 	GetBidInfo(bidID int) (*models.BidModel, error)
+	GetTeamBids(teamID int64) []models.BidModel
 	GetBidOfProject(projectID int) []models.BidModel
 	PutBid(info dto.BidInfo) int
 	AcceptBid(ctx context.Context, tx transaction.Tx, bidID int, projectID int)

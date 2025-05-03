@@ -78,9 +78,9 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewProjectService,
 	servicesimpl.NewPaymentService,
 	servicesimpl.NewTeamService,
+	servicesimpl.NewBidService,
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
-	servicesimpl.NewBidService,
 
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
@@ -89,9 +89,9 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)),
 	wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)),
 	wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)),
+	wire.Bind(new(services.BidService), new(*servicesimpl.BidService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
-	wire.Bind(new(services.BidService), new(*servicesimpl.BidService)),
 
 	ProvideConstants,
 	ProvideEnv,
