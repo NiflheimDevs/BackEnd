@@ -27,17 +27,12 @@ func NewFileService(s3storage storage.S3Storage) *FileService {
 	}
 }
 
-func (fs *FileService) GetUserProfileName(userid int, wantHighQual bool) string {
-	if !wantHighQual {
-		return fmt.Sprintf("userprofile%d_low.webp", userid)
-	} else {
-		return fmt.Sprintf("userprofile%d_high.jpeg", userid)
-	}
-
+func (fs *FileService) GetProfilePhotoURL(userid int, wantHighQual bool) string {
+	return fs.S3Storage.GetPresignedURL(enums.ProfilePic, fs.getUserProfileName(userid, wantHighQual), 8*time.Hour)
 }
 
-func (fs *FileService) GetProfilePhotoURL(userid int, wantHighQual bool) string {
-	return fs.S3Storage.GetPresignedURL(enums.ProfilePic, fs.GetUserProfileName(userid, wantHighQual), 8*time.Hour)
+func (fs *FileService) GetTeamProfilePhotoURL(teamid int64, wantHighQual bool) string {
+	return fs.S3Storage.GetPresignedURL(enums.TeamProfile, fs.getTeamProfileName(teamid, wantHighQual), 8*time.Hour)
 }
 
 func (fs *FileService) GetResumeURL(userid int) string {
@@ -50,7 +45,37 @@ func (fs *FileService) GetResumeURL(userid int) string {
 	}
 }
 
-func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
+func (fs *FileService) createHighQualPhoto(img image.Image) *bytes.Buffer {
+
+	var jpegBuffer bytes.Buffer
+	rgbaImg := image.NewRGBA(img.Bounds())
+	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
+
+	err := pkg.ImageEncode(&jpegBuffer, rgbaImg, 2)
+	if err != nil {
+		log.Println("jpeg", err)
+		panic(exceptions.Exception{
+			Tag: exceptions.UNPROCESSABLE,
+		})
+	}
+	return &jpegBuffer
+}
+
+func (fs *FileService) UploadTeamProfilePhoto(data []byte, teamid int64) {
+	img := fs.createImageInterface(data)
+
+	webpBuffer := fs.createLowQualPhoto(img)
+	jpegBuffer := fs.createHighQualPhoto(img)
+
+	outputName := fs.getTeamProfileName(teamid, false)
+	fs.S3Storage.UploadObject(enums.TeamProfile, outputName, webpBuffer.Bytes())
+
+	outputName = fs.getTeamProfileName(teamid, true)
+	fs.S3Storage.UploadObject(enums.TeamProfile, outputName, jpegBuffer.Bytes())
+}
+
+func (fs *FileService) UploadProfilePhoto(data []byte, userid int) {
+	// ! move this if out
 	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
@@ -59,43 +84,38 @@ func (fs *FileService) UploadProfilePhoto(data []byte, userid int) string {
 			},
 		})
 	}
-	imgReader := bytes.NewReader(data)
 
-	img, _, err := image.Decode(imgReader)
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: exceptions.UNPROCESSABLE,
-			Errors: []exceptions.SpecificError{
-				exceptions.FORMAT_NOT_SUPPORTED,
-			},
-		})
-	}
-	var webpBuffer, jpegBuffer bytes.Buffer
-	resizedImg := pkg.Resize(512, 512, img)
+	img := fs.createImageInterface(data)
 
-	err = pkg.ImageEncode(&webpBuffer, resizedImg, 1)
+	webpBuffer := fs.createLowQualPhoto(img)
+	jpegBuffer := fs.createHighQualPhoto(img)
 
-	if err != nil {
-		panic(exceptions.Exception{
-			Tag: exceptions.UNPROCESSABLE,
-		})
-	}
-	outputName := fs.GetUserProfileName(userid, false)
+	outputName := fs.getUserProfileName(userid, false)
 	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, webpBuffer.Bytes())
 
-	rgbaImg := image.NewRGBA(img.Bounds())
-	draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
+	outputName = fs.getUserProfileName(userid, true)
+	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, jpegBuffer.Bytes())
+}
 
-	err = pkg.ImageEncode(&jpegBuffer, rgbaImg, 2)
+func (fs *FileService) DeleteTeamProfilePhoto(teamid int64) {
+
+	target := fs.getTeamProfileName(teamid, false)
+	err := fs.S3Storage.DeleteObject(enums.TeamProfile, target)
 	if err != nil {
-		log.Println("jpeg", err)
 		panic(exceptions.Exception{
-			Tag: exceptions.UNPROCESSABLE,
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.MISSING_FILE},
 		})
 	}
-	outputName = fs.GetUserProfileName(userid, true)
-	fs.S3Storage.UploadObject(enums.ProfilePic, outputName, jpegBuffer.Bytes())
-	return outputName
+
+	target = fs.getTeamProfileName(teamid, true)
+	err = fs.S3Storage.DeleteObject(enums.TeamProfile, target)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{exceptions.MISSING_FILE},
+		})
+	}
 }
 
 func (fs *FileService) DeleteProfilePhoto(userid int) {
@@ -108,7 +128,7 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 		})
 	}
 
-	target := fs.GetUserProfileName(userid, false)
+	target := fs.getUserProfileName(userid, false)
 	err := fs.S3Storage.DeleteObject(enums.ProfilePic, target)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -117,7 +137,7 @@ func (fs *FileService) DeleteProfilePhoto(userid int) {
 		})
 	}
 
-	target = fs.GetUserProfileName(userid, true)
+	target = fs.getUserProfileName(userid, true)
 	err = fs.S3Storage.DeleteObject(enums.ProfilePic, target)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -161,4 +181,49 @@ func (fs *FileService) DeleteResume(userid int) {
 			Errors: []exceptions.SpecificError{exceptions.MISSING_FILE},
 		})
 	}
+}
+
+func (fs *FileService) getUserProfileName(userid int, wantHighQual bool) string {
+	if !wantHighQual {
+		return fmt.Sprintf("userprofile%d_low.webp", userid)
+	} else {
+		return fmt.Sprintf("userprofile%d_high.jpeg", userid)
+	}
+}
+
+func (fs *FileService) getTeamProfileName(teamid int64, wantHighQual bool) string {
+	if !wantHighQual {
+		return fmt.Sprintf("teamprofile%d_low.webp", teamid)
+	} else {
+		return fmt.Sprintf("teamprofile%d_high.jpeg", teamid)
+	}
+}
+
+func (fs *FileService) createImageInterface(data []byte) image.Image {
+	imgReader := bytes.NewReader(data)
+
+	img, _, err := image.Decode(imgReader)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNPROCESSABLE,
+			Errors: []exceptions.SpecificError{
+				exceptions.FORMAT_NOT_SUPPORTED,
+			},
+		})
+	}
+	return img
+}
+
+func (fs *FileService) createLowQualPhoto(img image.Image) *bytes.Buffer {
+	var webpBuffer bytes.Buffer
+	resizedImg := pkg.Resize(512, 512, img)
+
+	err := pkg.ImageEncode(&webpBuffer, resizedImg, 1)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNPROCESSABLE,
+		})
+	}
+	return &webpBuffer
 }

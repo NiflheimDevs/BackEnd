@@ -74,13 +74,15 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Delete("/user/profile", app.Handlers.FileHandler.DeleteProfilePhoto)
 	mux.Post("/user/resume", app.Handlers.FileHandler.UploadUserResume)
 	mux.Delete("/user/resume", app.Handlers.FileHandler.DeleteUserResume)
+	mux.Post("/team/profile/{team_id}", app.Handlers.FileHandler.UploadTeamProfilePhoto)
+	mux.Delete("/team/profile/{team_id}", app.Handlers.FileHandler.DeleteTeamProfilePhoto)
 
 	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
 	mux.Get("/user/resume", app.Handlers.FileHandler.GetResume)
 
 	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
-	mux.Get("/storage/*", app.Handlers.FileHandler.GetFile)
+	// mux.Get("/storage/*", app.Handlers.FileHandler.GetFile)
 
 	mux.Post("/team", app.Handlers.TeamHandler.CreateTeam)
 	mux.Patch("/team", app.Handlers.TeamHandler.UpdateTeamInfo)
