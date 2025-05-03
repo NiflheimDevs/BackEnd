@@ -80,6 +80,12 @@ func (projectService *ProjectService) GetUserProjects(userID, targetuserID, offs
 		}
 		projects = projectService.ProjectRepo.GetUserProject(userID, offset, limit)
 		count = projectService.GetProjectCount(userID)
+		for _, project := range projects {
+			if project.State == 2 && project.Duration.After(time.Now()) {
+				projectService.ProjectRepo.UpdateProjectState(project.ID)
+			}
+			project.State = 3
+		}
 	} else {
 		projects = projectService.ProjectRepo.GetUserProject(targetuserID, offset, limit)
 		count = projectService.GetProjectCount(targetuserID)
@@ -175,6 +181,12 @@ func (projectService *ProjectService) UpdateProject(projectID, userID int, title
 		})
 	}
 
+	if project.State > 2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
 	projectService.ProjectRepo.UpdateProject(projectID, userID, title, description)
 
 	projectService.TagService.UpdateTagsForProject(projectID, tags) // !
@@ -228,6 +240,12 @@ func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 			Errors: []exceptions.SpecificError{
 				exceptions.USER_NOT_OWNER,
 			},
+		})
+	}
+
+	if project.State > 3 {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
 		})
 	}
 

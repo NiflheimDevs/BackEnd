@@ -81,8 +81,9 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 			Description: project.Description,
 			Label:       *label,
 			SelectedBid: project.SelectedBid,
+			Status:      project.State,
 			Tags:        project.Tags,
-			Duration:    project.Duration,
+			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -113,11 +114,12 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		Description: project.Description,
 		Label:       *label,
 		SelectedBid: project.SelectedBid,
+		Status:      project.State,
 		FirstName:   userInfo.FirstName,
 		LastName:    userInfo.LastName,
 		Username:    userInfo.Username,
 		Tags:        project.Tags,
-		Duration:    project.Duration,
+		Duration:    project.Duration.Format("2006-01-02 15:04:05"),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

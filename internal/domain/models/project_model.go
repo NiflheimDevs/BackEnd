@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type ProjectModel struct {
 	ID          int
 	OwnerID     int
@@ -7,6 +9,7 @@ type ProjectModel struct {
 	Description string
 	Label       int
 	SelectedBid int
+	State       int
 	Tags        []TagModel
-	Duration    string
+	Duration    time.Time
 }
