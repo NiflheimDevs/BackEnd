@@ -9,6 +9,6 @@ type BidModel struct {
 	PrePayment   int64
 	Total        int64
 	Description  string
-	ExpectedTime time.Time
+	ExpectedTime int
 	CreatedTime  time.Time
 }

@@ -180,7 +180,7 @@ func (repo *ProjectRepo) CreateProject(ctx context.Context, tx transaction.Tx, u
 
 	query := "INSERT INTO project (owner_id, title, description, label, status, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
 
-	row := tx.QueryRow(ctx, query, userID, title, description, label, 2, duration, now, now).(pgx.Row)
+	row := tx.QueryRow(ctx, query, userID, title, description, label, 1, duration, now, now).(pgx.Row)
 	err := row.Scan(&project_id)
 
 	if err != nil {
@@ -231,13 +231,13 @@ func (repo *ProjectRepo) DeleteProject(ctx context.Context, tx transaction.Tx, p
 	}
 }
 
-func (repo *ProjectRepo) UpdateProjectState(projectID int) {
+func (repo *ProjectRepo) UpdateProjectState(projectID int, status int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "UPDATE project SET status=4 WHERE project_id=$1"
+	query := "UPDATE project SET status=$1 WHERE project_id=$2"
 
-	_, err := repo.PG.Exec(ctx, query, projectID)
+	_, err := repo.PG.Exec(ctx, query, status, projectID)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,

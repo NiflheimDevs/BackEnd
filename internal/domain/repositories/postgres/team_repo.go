@@ -25,4 +25,6 @@ type TeamRepo interface {
 	GetMembersForTeamFilterdByRole(teamid int64, roleid enums.RoleType) []dto.ReadMemberDto
 	GetMembersForTeam(teamid int64) []dto.ReadMemberDto
 	GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDto
+	GetTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error)
+	GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error)
 }

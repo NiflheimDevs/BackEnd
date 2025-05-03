@@ -132,6 +132,18 @@ func (ts *TeamService) GetTeam(commanderid int, teamid int64) *dto.GetTeamDto {
 	return &res
 }
 
+func (ts *TeamService) GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInfo {
+	team, err := ts.TeamRepo.GetTeamInfo(teamid)
+	if err != nil {
+		team, err = ts.TeamRepo.GetOneManTeamInfo(teamid)
+		team.Type = 2
+	} else {
+		team.Type = 1
+	}
+
+	return team
+}
+
 func (ts *TeamService) UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto) {
 
 	member := ts.TeamRepo.GetMemberForTeam(info.ID, userid)

@@ -2,6 +2,7 @@ package servicesimpl
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
@@ -39,18 +40,19 @@ func NewBidService(
 func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidInfo {
 	var bidInfos []dto.PublicProjectBidInfo
 	bids := bs.BidRepo.GetBidOfProject(projectID)
+	log.Println("saman 1")
 
 	for _, bid := range bids {
 		var bidInfo dto.PublicProjectBidInfo
-		teamInfo := bs.TeamService.GetTeam(0, bid.TeamID)
+		teamInfo := bs.TeamService.GetInternalTeamInfo(bid.TeamID)
+		log.Println("saman 2")
 		bidInfo.BidID = bid.ID
-		bidInfo.Title = teamInfo.Info.Title
+		bidInfo.TeamInfo = teamInfo
 		bidInfo.Total = bid.Total
-		bidInfo.ExpectedTime = bid.ExpectedTime.Format("2006-01-02 15:04:05")
-		bidInfo.ProfilePic = ""
+		bidInfo.ExpectedTime = bid.ExpectedTime
 		bidInfos = append(bidInfos, bidInfo)
 	}
-
+	log.Println("saman 3")
 	return bidInfos
 }
 
@@ -67,11 +69,11 @@ func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.Priv
 
 	for _, bid := range bids {
 		var bidInfo dto.PrivateProjectBidInfo
-		teamInfo := bs.TeamService.GetTeam(0, bid.TeamID)
+		teamInfo := bs.TeamService.GetInternalTeamInfo(bid.TeamID)
 		bidInfo.BidID = bid.ID
 		bidInfo.TeamInfo = teamInfo
 		bidInfo.Total = bid.Total
-		bidInfo.ExpectedTime = bid.ExpectedTime.Format("2006-01-02 15:04:05")
+		bidInfo.ExpectedTime = bid.ExpectedTime
 		bidInfos = append(bidInfos, bidInfo)
 	}
 
@@ -211,7 +213,13 @@ func (bs BidService) UpdateBid(info dto.BidInfo) {
 		})
 	}
 
-	//project := bs.ProjectService.GetProject(bid.ProjectID)
+	project := bs.ProjectService.GetProject(bid.ProjectID)
+
+	if project.State >= 2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
 
 	//check project state
 

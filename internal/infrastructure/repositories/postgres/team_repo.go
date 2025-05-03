@@ -265,6 +265,79 @@ func (tr *TeamRepo) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
 	return teams
 }
 
+func (tr *TeamRepo) GetTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
+	var team dto.GetInternalTeamInfo
+	var description sql.NullString
+
+	query := `SELECT t.id, t.title, t.description
+		FROM team as t
+		WHERE t.id = $1 AND t.type = 0`
+
+	err := tr.PG.QueryRow(ctx, query, teamid).Scan(&team.ID, &team.Title, &description)
+	if description.Valid {
+		team.Description = description.String
+	}
+	if err == pgx.ErrNoRows {
+		return nil, err
+	}
+	if err != nil {
+		log.Println("TeamError: error fetching teams info", teamid, "error detail:", err)
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+		})
+	}
+
+	return &team, nil
+}
+
+func (tr *TeamRepo) GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	firstquery := `
+		SELECT t.id, t.title
+		FROM team AS t
+		WHERE t.id = $1 AND t.type = 1
+	`
+
+	secondquery := `SELECT u.username, u.bio
+					FROM users AS u
+					WHERE u.id = $1`
+
+	var team dto.GetInternalTeamInfo
+	var useridstring string
+
+	err := tr.PG.QueryRow(ctx, firstquery, teamid).Scan(&team.ID, &useridstring)
+	if err == pgx.ErrNoRows {
+		return nil, err
+	}
+
+	userid, _ := strconv.Atoi(useridstring)
+
+	var bio sql.NullString
+	err = tr.PG.QueryRow(ctx, secondquery, userid).Scan(&team.Title, &bio)
+	if err == pgx.ErrNoRows {
+		return nil, err
+	}
+	if err != nil {
+		log.Println("TeamError: error fetching user info", teamid, "error detail:", err)
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+		})
+	}
+
+	if bio.Valid {
+		team.Description = bio.String
+	}
+
+	return &team, nil
+}
+
 func (tr *TeamRepo) GetMembersForTeam(teamid int64) []dto.ReadMemberDto {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
