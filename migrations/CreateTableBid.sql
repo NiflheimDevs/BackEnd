@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "bid" (
   "prepayment" numeric NOT NULL,
   "total" numeric NOT NULL,
   "description" text,
-  "expected_time" TIMESTAMP WITH TIME ZONE NOT NULL,
+  "expected_time" int,
   "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY ("team_id") REFERENCES "team" ("id"),
   UNIQUE ("team_id", "project_id")
