@@ -2,7 +2,6 @@ package repositoriesimpl
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -33,7 +32,6 @@ func (br *BidRepo) GetBidInfo(bidID int) (*models.BidModel, error) {
 
 	err := br.PG.QueryRow(ctx, query, bidID).Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &bid.CreatedTime)
 
-	log.Println(err)
 	if err == pgx.ErrNoRows {
 		return nil, err
 	}
@@ -93,7 +91,6 @@ func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
 
 	results, err := br.PG.Query(ctx, query, projectID)
 	if err != nil {
-		log.Println(err)
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{
@@ -107,7 +104,6 @@ func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
 		var bid models.BidModel
 		var time2 time.Time
 		if err := results.Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &time2); err != nil {
-			log.Println(err)
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{

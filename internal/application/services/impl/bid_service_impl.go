@@ -2,7 +2,6 @@ package servicesimpl
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
@@ -40,19 +39,16 @@ func NewBidService(
 func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidInfo {
 	var bidInfos []dto.PublicProjectBidInfo
 	bids := bs.BidRepo.GetBidOfProject(projectID)
-	log.Println("saman 1")
 
 	for _, bid := range bids {
 		var bidInfo dto.PublicProjectBidInfo
 		teamInfo := bs.TeamService.GetInternalTeamInfo(bid.TeamID)
-		log.Println("saman 2")
 		bidInfo.BidID = bid.ID
 		bidInfo.TeamInfo = teamInfo
 		bidInfo.Total = bid.Total
 		bidInfo.ExpectedTime = bid.ExpectedTime
 		bidInfos = append(bidInfos, bidInfo)
 	}
-	log.Println("saman 3")
 	return bidInfos
 }
 

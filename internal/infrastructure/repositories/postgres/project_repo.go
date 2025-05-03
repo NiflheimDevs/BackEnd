@@ -235,7 +235,7 @@ func (repo *ProjectRepo) UpdateProjectState(projectID int, status int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "UPDATE project SET status=$1 WHERE project_id=$2"
+	query := "UPDATE project SET status=$1 WHERE id=$2"
 
 	_, err := repo.PG.Exec(ctx, query, status, projectID)
 	if err != nil {
