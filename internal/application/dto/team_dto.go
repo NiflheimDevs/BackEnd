@@ -27,12 +27,12 @@ type GetInternalTeamInfo struct {
 }
 
 type GetTeamPreviewDto struct {
-	ID          int64          `json:"id"`
-	Title       string         `json:"title"`
-	Description string         `json:"description"`
-	Position    string         `json:"position"`
-	Profile     string         `json:"profile"`
-	OwnerInfo   *MemberInfoDto `json:"owner"`
+	ID          int64           `json:"id"`
+	Title       string          `json:"title"`
+	Description string          `json:"description"`
+	Position    string          `json:"position"`
+	Profile     string          `json:"profile"`
+	OwnerInfo   OwnerPreviewDto `json:"owner"`
 }
 
 type UpdateTeamInfoDto struct {
@@ -73,8 +73,14 @@ type SendMemberDto struct {
 	// Permissions []string `json:"permissions"`
 }
 
+type OwnerPreviewDto struct {
+	Info    *MemberInfoDto `json:"member_info"`
+	Profile string         `json:"profile"`
+}
+
 type GetTeamDto struct {
 	Info        *models.TeamModel `json:"team_info"`
+	Profile     string            `json:"profile"`
 	Members     []SendMemberDto   `json:"members"`
 	UserID      int               `json:"user_id"`
 	Permissions []string          `json:"permissions"`

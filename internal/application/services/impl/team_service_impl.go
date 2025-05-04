@@ -14,6 +14,8 @@ import (
 	"github.com/niflheimdevs/backend/internal/utils"
 )
 
+//? if super admin can create roles then i should do query for permission check
+
 type TeamService struct {
 	TeamRepo           repositories.TeamRepo
 	RoleRepo           repositories.RoleRepo
@@ -50,6 +52,15 @@ func (ts *TeamService) BehindCurtainTeam(ctx context.Context, tx transaction.Tx,
 }
 
 func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64 {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
 
@@ -92,13 +103,19 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 
 func (ts *TeamService) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
 	res := ts.TeamRepo.GetTeamsForUser(userid)
+
+	for i := 0; i < len(res); i++ {
+		res[i].Profile = ts.FileService.GetTeamProfilePhotoURL(res[i].ID, false)
+	}
+
 	var owners []dto.ReadMemberDto
 	for i := 0; i < len(res); i++ {
 		owners = ts.TeamRepo.GetMembersForTeamFilterdByRole(res[i].ID, enums.TEAM_OWNER)
 		if len(owners) == 1 {
-			res[i].OwnerInfo = owners[0].Info
+			res[i].OwnerInfo.Info = owners[0].Info
+			res[i].OwnerInfo.Profile = ts.FileService.GetProfilePhotoURL(owners[0].Info.Userid, false)
 		} else {
-			log.Panicln("MemberOwnerError: check owners for team", res[i].ID)
+			log.Println("MemberOwnerError: check owners for team", res[i].ID)
 		}
 	}
 	return res
@@ -113,13 +130,15 @@ func (ts *TeamService) GetTeam(commanderid int, teamid int64) *dto.GetTeamDto {
 			Tag: exceptions.NOT_FOUND,
 		})
 	}
+	res.Profile = ts.FileService.GetTeamProfilePhotoURL(res.Info.ID, true)
 
 	members := ts.TeamRepo.GetMembersForTeam(teamid)
 	res.Members = make([]dto.SendMemberDto, len(members))
 	for i := 0; i < len(members); i++ {
 		res.Members[i].Info = members[i].Info
 		res.Members[i].Role = members[i].Role.String()
-		//TODO: profile
+		// ? takes time! bottleneck
+		res.Members[i].Profile = ts.FileService.GetProfilePhotoURL(res.Members[i].Info.Userid, false)
 		if members[i].Info.Userid == commanderid {
 			res.UserID = commanderid
 			perms := members[i].Role.GetPermissionsForRole()
@@ -145,6 +164,14 @@ func (ts *TeamService) GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInf
 }
 
 func (ts *TeamService) UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
 
 	member := ts.TeamRepo.GetMemberForTeam(info.ID, userid)
 	if member == nil {
@@ -171,6 +198,14 @@ func (ts *TeamService) UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto) {
 }
 
 func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
 
 	member := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
 	if member == nil {
@@ -193,12 +228,19 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
-
 }
 
 // TODO: email? some sort of request must be sent and then when it is accepted, the member gets added
 // ! this version is naive
 func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
 	member := ts.TeamRepo.GetMemberForTeam(teamid, userid)
 	if member == nil {
 		panic(exceptions.Exception{
@@ -206,7 +248,6 @@ func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
 		})
 	}
 
-	//TODO: if super admin can create roles then it should be a query instead of static call
 	if !utils.Contains(member.Role.GetPermissionsForRole(), enums.ADD_MEMBER) {
 		panic(exceptions.Exception{
 			Tag:    exceptions.FORBIDDEN,
@@ -215,7 +256,6 @@ func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
 	}
 
 	ts.addMembersFunc(teamid, members)
-
 }
 
 func (ts *TeamService) addMembersFunc(teamid int64, members []int) {
@@ -238,6 +278,12 @@ func (ts *TeamService) LeaveTeam(userid int, teamid int64) {
 }
 
 func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int64) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+		})
+	}
+
 	var isLeaving bool = false
 
 	member := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
@@ -275,6 +321,15 @@ func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int6
 }
 
 func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMemberRoleDto) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
 	role := enums.NameToRole(info.Role)
 
 	if role == 0 {
@@ -310,10 +365,22 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 }
 
 func (ts *TeamService) UpdatePosition(commanderid int, req *dto.UpdateMemberPositionDto) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
 	member := ts.TeamRepo.GetMemberForTeam(req.Teamid, commanderid)
 	if member == nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
 		})
 	}
 
@@ -334,7 +401,6 @@ func (ts *TeamService) UpdatePosition(commanderid int, req *dto.UpdateMemberPosi
 }
 
 func (ts *TeamService) GetMembers(commanderid int, teamid int64) []dto.SendMemberDto {
-
 	var res []dto.SendMemberDto
 
 	commanderMember := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
@@ -345,18 +411,78 @@ func (ts *TeamService) GetMembers(commanderid int, teamid int64) []dto.SendMembe
 		for _, member := range members {
 			res = append(res, dto.SendMemberDto{
 				Info:    member.Info,
-				Profile: ts.FileService.GetUserProfileName(member.Info.Userid, false),
+				Profile: ts.FileService.GetProfilePhotoURL(member.Info.Userid, false),
 			})
 		}
 	} else {
 		for _, member := range members {
 			res = append(res, dto.SendMemberDto{
 				Info:    member.Info,
-				Profile: ts.FileService.GetUserProfileName(member.Info.Userid, false),
+				Profile: ts.FileService.GetProfilePhotoURL(member.Info.Userid, false),
 				Role:    member.Role.String(),
 			})
 		}
 	}
 
 	return res
+}
+
+func (ts *TeamService) UpdateTeamProfile(commanderid int, teamid int64, data []byte) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	member := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
+	if member == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	if !utils.Contains(member.Role.GetPermissionsForRole(), enums.EDIT_INFO) {
+		panic(exceptions.Exception{
+			Tag:    exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+		})
+	}
+
+	ts.FileService.UploadTeamProfilePhoto(data, teamid)
+}
+
+func (ts *TeamService) DeleteTeamProfile(commanderid int, teamid int64) {
+	if commanderid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	member := ts.TeamRepo.GetMemberForTeam(teamid, commanderid)
+	if member == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	if !utils.Contains(member.Role.GetPermissionsForRole(), enums.EDIT_INFO) {
+		panic(exceptions.Exception{
+			Tag:    exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+		})
+	}
+
+	ts.FileService.DeleteTeamProfilePhoto(teamid)
 }

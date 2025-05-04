@@ -22,4 +22,6 @@ type TeamService interface {
 	LeaveTeam(userid int, teamid int64)
 	KickMemebr(commanderid int, poorGuysid []int, teamid int64)
 	GetMembers(commanderid int, teamid int64) []dto.SendMemberDto
+	DeleteTeamProfile(commanderid int, teamid int64)
+	UpdateTeamProfile(commanderid int, teamid int64, data []byte)
 }
