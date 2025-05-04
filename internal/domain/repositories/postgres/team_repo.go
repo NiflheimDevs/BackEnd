@@ -21,6 +21,7 @@ type TeamRepo interface {
 	DeleteTeam(teamid int64) error
 	GetTeamForUser(userid int, teamid int64) *models.TeamModel
 	GetTeam(teamid int64) *models.TeamModel
+	GetEveryTeamInfo(teamid int64) *models.TeamModel
 	GetTeamsForUser(userid int) []dto.GetTeamPreviewDto
 	GetMembersForTeamFilterdByRole(teamid int64, roleid enums.RoleType) []dto.ReadMemberDto
 	GetMembersForTeam(teamid int64) []dto.ReadMemberDto

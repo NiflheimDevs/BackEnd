@@ -76,6 +76,10 @@ func (bh *BidHandler) UpdateBid(w http.ResponseWriter, r *http.Request) {
 
 	params.BidID = bidID
 
+	userID := r.Context().Value(bh.Constants.Context.UserID).(int)
+
+	params.UserID = userID
+
 	bh.BidService.UpdateBid(params)
 
 	w.WriteHeader(http.StatusNoContent)

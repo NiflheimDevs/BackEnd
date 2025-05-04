@@ -176,6 +176,31 @@ func (tr *TeamRepo) DeleteTeam(teamid int64) error {
 	return err
 }
 
+func (tr *TeamRepo) GetEveryTeamInfo(teamid int64) *models.TeamModel {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
+	query := `SELECT t.id, t.title, t.type
+		FROM team as t
+		WHERE t.id = $1`
+
+	var team models.TeamModel
+
+	err := tr.PG.QueryRow(ctx, query, teamid).Scan(&team.ID, &team.Title, &team.Type)
+
+	if err != nil {
+		log.Println("TeamError: Team id", teamid, "not found. details:", err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			panic(exceptions.Exception{
+				Tag:    exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+			})
+		}
+		return nil
+	}
+	return &team
+}
+
 func (tr *TeamRepo) GetTeam(teamid int64) *models.TeamModel {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()

@@ -2,14 +2,17 @@ package servicesimpl
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
+	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
+	"github.com/niflheimdevs/backend/internal/utils"
 )
 
 type BidService struct {
@@ -18,6 +21,7 @@ type BidService struct {
 	TeamService    services.TeamService
 	TxManager      transaction.TxManager
 	BidRepo        repositories.BidRepo
+	TeamRepo       repositories.TeamRepo
 }
 
 func NewBidService(
@@ -25,6 +29,7 @@ func NewBidService(
 	paymentservice services.PaymentService,
 	teamservice services.TeamService,
 	bidRepo repositories.BidRepo,
+	teamRepo repositories.TeamRepo,
 	txManager transaction.TxManager,
 ) *BidService {
 	return &BidService{
@@ -32,6 +37,7 @@ func NewBidService(
 		PaymentService: paymentservice,
 		TeamService:    teamservice,
 		BidRepo:        bidRepo,
+		TeamRepo:       teamRepo,
 		TxManager:      txManager,
 	}
 }
@@ -92,7 +98,29 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 		})
 	}
 
-	//check permission
+	teamInfo := bs.TeamRepo.GetEveryTeamInfo(info.TeamID)
+
+	if teamInfo == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+		})
+	}
+
+	if strconv.Itoa(info.UserID) != teamInfo.Title {
+		member := bs.TeamRepo.GetMemberForTeam(info.TeamID, info.UserID)
+		if member == nil {
+			panic(exceptions.Exception{
+				Tag: exceptions.FORBIDDEN,
+			})
+		}
+
+		if !utils.Contains(member.Role.GetPermissionsForRole(), enums.BIDDER) {
+			panic(exceptions.Exception{
+				Tag:    exceptions.FORBIDDEN,
+				Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+			})
+		}
+	}
 
 	if info.PP > info.Total {
 		panic(exceptions.Exception{
@@ -100,7 +128,13 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 		})
 	}
 
-	bs.ProjectService.GetProject(info.ProjectID)
+	project := bs.ProjectService.GetProject(info.ProjectID)
+
+	if project.State > 1 {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
 
 	bidID := bs.BidRepo.PutBid(info)
 
@@ -141,8 +175,6 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 			Errors: []exceptions.SpecificError{exceptions.ALREADY_HAS_BID},
 		})
 	}
-
-	//check project state
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -198,7 +230,35 @@ func (bs BidService) UpdateBid(info dto.BidInfo) {
 		})
 	}
 
-	//check permission that user is in group and have permission to edit
+	teamInfo := bs.TeamRepo.GetEveryTeamInfo(info.TeamID)
+
+	if teamInfo == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+		})
+	}
+
+	if strconv.Itoa(info.UserID) != teamInfo.Title {
+		member := bs.TeamRepo.GetMemberForTeam(info.TeamID, info.UserID)
+		if member == nil {
+			panic(exceptions.Exception{
+				Tag: exceptions.FORBIDDEN,
+			})
+		}
+
+		if !utils.Contains(member.Role.GetPermissionsForRole(), enums.BIDDER) {
+			panic(exceptions.Exception{
+				Tag:    exceptions.FORBIDDEN,
+				Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+			})
+		}
+	}
+
+	if info.PP > info.Total {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
 
 	if info.Total > bid.Total {
 		panic(exceptions.Exception{
@@ -216,8 +276,6 @@ func (bs BidService) UpdateBid(info dto.BidInfo) {
 			Tag: exceptions.FORBIDDEN,
 		})
 	}
-
-	//check project state
 
 	bs.BidRepo.UpdateBid(info)
 }
