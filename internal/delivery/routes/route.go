@@ -54,6 +54,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/project/create", app.Handlers.ProjectHandler.CreateProject)
 	mux.Put("/project/{project_id}", app.Handlers.ProjectHandler.UpdateProject)
 	mux.Delete("/project/{project_id}", app.Handlers.ProjectHandler.DeleteProject)
+	mux.Post("/project/{project_id}/done", app.Handlers.ProjectHandler.EndProject)
 
 	mux.Get("/landing/projects", app.Handlers.ProjectHandler.LandingProps)
 

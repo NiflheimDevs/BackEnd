@@ -266,3 +266,42 @@ func (projectService *ProjectService) DeleteProject(userID, projectID int) {
 		})
 	}
 }
+
+func (projectService *ProjectService) EndOfProject(userID, projectID int) {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	project, err := projectService.ProjectRepo.GetProject(projectID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{
+				exceptions.PROJECT_NOT_FOUND,
+			},
+		})
+	}
+
+	if project.OwnerID != userID {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+			Errors: []exceptions.SpecificError{
+				exceptions.USER_NOT_OWNER,
+			},
+		})
+	}
+
+	if project.State != 3 {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
+	projectService.ProjectRepo.UpdateProjectState(projectID, 4)
+}
