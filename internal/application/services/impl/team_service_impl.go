@@ -156,8 +156,10 @@ func (ts *TeamService) GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInf
 	if err != nil {
 		team, err = ts.TeamRepo.GetOneManTeamInfo(teamid)
 		team.Type = 2
+		team.Profile = ts.FileService.GetProfilePhotoURL(int(team.ID), false)
 	} else {
 		team.Type = 1
+		team.Profile = ts.FileService.GetTeamProfilePhotoURL(teamid, false)
 	}
 
 	return team
