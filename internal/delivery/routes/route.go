@@ -54,6 +54,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/project/create", app.Handlers.ProjectHandler.CreateProject)
 	mux.Put("/project/{project_id}", app.Handlers.ProjectHandler.UpdateProject)
 	mux.Delete("/project/{project_id}", app.Handlers.ProjectHandler.DeleteProject)
+	mux.Post("/project/{project_id}/done", app.Handlers.ProjectHandler.EndProject)
 
 	mux.Get("/landing/projects", app.Handlers.ProjectHandler.LandingProps)
 
@@ -82,7 +83,11 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
-	// mux.Get("/storage/*", app.Handlers.FileHandler.GetFile)
+	mux.Post("/bid", app.Handlers.BidHandler.PutBid)
+	mux.Post("/bid/{id}/accept", app.Handlers.BidHandler.AcceptBid)
+	mux.Put("/bid/{id}", app.Handlers.BidHandler.UpdateBid)
+	mux.Get("/project/{project_id}/bid", app.Handlers.BidHandler.GetProjectBids)
+	mux.Get("/project/{project_id}/view", app.Handlers.BidHandler.ViewBidsOfTheProject)
 
 	mux.Post("/team", app.Handlers.TeamHandler.CreateTeam)
 	mux.Patch("/team", app.Handlers.TeamHandler.UpdateTeamInfo)

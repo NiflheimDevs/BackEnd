@@ -13,4 +13,5 @@ type ProjectService interface {
 	CreateProject(userID int, title, description string, label int, price int64, tags []int) int
 	UpdateProject(projectID, userID int, title, description string, label int, price int64, tags []int)
 	DeleteProject(userID, projectID int)
+	EndOfProject(userID, projectID int)
 }

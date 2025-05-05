@@ -16,4 +16,5 @@ type ProjectRepo interface {
 	CreateProject(ctx context.Context, tx transaction.Tx, userID, label int, title, description, duration string) int
 	UpdateProject(projectID, UserID int, title, description string)
 	DeleteProject(ctx context.Context, tx transaction.Tx, projectID int)
+	UpdateProjectState(projectID int, status int)
 }

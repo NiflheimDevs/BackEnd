@@ -7,7 +7,6 @@ type Constants struct {
 	JWTKeysPath   string
 	SSLKeysPath   string
 	Context       Context
-	StorageDir    string
 	Project       Project
 	Pagination    Pagination
 	Port          string
@@ -53,8 +52,6 @@ func NewConstant() *Constants {
 		Context: Context{
 			UserID: "userID",
 		},
-
-		StorageDir: "./storage/",
 		Project: Project{
 			LastTime: 7 * 24 * time.Hour,
 		},

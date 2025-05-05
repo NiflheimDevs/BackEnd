@@ -2,6 +2,7 @@ package repositoriesimpl
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"time"
 
@@ -71,16 +72,23 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE id = $1"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration FROM project WHERE id = $1"
 
 	var duration time.Time
-	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &duration)
+	var selectedBid sql.NullInt32
+	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration)
 
 	if err == pgx.ErrNoRows {
 		return nil, err
 	}
 
-	project.Duration = duration.Format("2006-01-02 15:04:05")
+	if selectedBid.Valid {
+		project.SelectedBid = int(selectedBid.Int32)
+	} else {
+		project.SelectedBid = 0
+	}
+
+	project.Duration = duration
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -100,7 +108,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,duration FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
 
 	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
 
@@ -118,7 +126,8 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	for result.Next() {
 		var project models.ProjectModel
 		var duration time.Time
-		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &duration); err != nil {
+		var selectedBid sql.NullInt32
+		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
@@ -127,7 +136,13 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 			})
 		}
 
-		project.Duration = duration.Format("2006-01-02 15:04:05")
+		if selectedBid.Valid {
+			project.SelectedBid = int(selectedBid.Int32)
+		} else {
+			project.SelectedBid = 0
+		}
+
+		project.Duration = duration
 		tag := repo.TagRepo.GetProjectTag(project.ID)
 		project.Tags = tag
 		projects = append(projects, project)
@@ -163,9 +178,9 @@ func (repo *ProjectRepo) CreateProject(ctx context.Context, tx transaction.Tx, u
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	query := "INSERT INTO project (owner_id, title, description, label, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+	query := "INSERT INTO project (owner_id, title, description, label, status, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
 
-	row := tx.QueryRow(ctx, query, userID, title, description, label, duration, now, now).(pgx.Row)
+	row := tx.QueryRow(ctx, query, userID, title, description, label, 1, duration, now, now).(pgx.Row)
 	err := row.Scan(&project_id)
 
 	if err != nil {
@@ -206,6 +221,23 @@ func (repo *ProjectRepo) DeleteProject(ctx context.Context, tx transaction.Tx, p
 	query := "DELETE FROM project WHERE id = $1"
 	_, err := tx.Exec(ctx, query, projectID)
 
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+}
+
+func (repo *ProjectRepo) UpdateProjectState(projectID int, status int) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "UPDATE project SET status=$1 WHERE id=$2"
+
+	_, err := repo.PG.Exec(ctx, query, status, projectID)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,

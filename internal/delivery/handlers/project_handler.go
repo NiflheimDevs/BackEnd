@@ -80,8 +80,10 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 			Title:       project.Title,
 			Description: project.Description,
 			Label:       *label,
+			SelectedBid: project.SelectedBid,
+			Status:      project.State,
 			Tags:        project.Tags,
-			Duration:    project.Duration,
+			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -111,11 +113,13 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		Title:       project.Title,
 		Description: project.Description,
 		Label:       *label,
+		SelectedBid: project.SelectedBid,
+		Status:      project.State,
 		FirstName:   userInfo.FirstName,
 		LastName:    userInfo.LastName,
 		Username:    userInfo.Username,
 		Tags:        project.Tags,
-		Duration:    project.Duration,
+		Duration:    project.Duration.Format("2006-01-02 15:04:05"),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -187,6 +191,17 @@ func (projectHandler *ProjectHandler) DeleteProject(w http.ResponseWriter, r *ht
 	projectID, _ := strconv.Atoi(projectIDString)
 
 	projectHandler.ProjectService.DeleteProject(userID, projectID)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (projectHandler *ProjectHandler) EndProject(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
+
+	projectIDString := chi.URLParam(r, "project_id")
+	projectID, _ := strconv.Atoi(projectIDString)
+
+	projectHandler.ProjectService.EndOfProject(userID, projectID)
 
 	w.WriteHeader(http.StatusNoContent)
 }

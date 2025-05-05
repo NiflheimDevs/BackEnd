@@ -18,6 +18,14 @@ type TeamCreateDto struct {
 // 	Position    string `json:"position"`
 // }
 
+type GetInternalTeamInfo struct {
+	ID          int64  `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Type        int    `json:"type"`
+	Profile     string `json:"profile"`
+}
+
 type GetTeamPreviewDto struct {
 	ID          int64           `json:"id"`
 	Title       string          `json:"title"`

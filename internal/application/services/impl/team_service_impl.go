@@ -151,6 +151,20 @@ func (ts *TeamService) GetTeam(commanderid int, teamid int64) *dto.GetTeamDto {
 	return &res
 }
 
+func (ts *TeamService) GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInfo {
+	team, err := ts.TeamRepo.GetTeamInfo(teamid)
+	if err != nil {
+		team, err = ts.TeamRepo.GetOneManTeamInfo(teamid)
+		team.Type = 2
+		team.Profile = ts.FileService.GetProfilePhotoURL(int(team.ID), false)
+	} else {
+		team.Type = 1
+		team.Profile = ts.FileService.GetTeamProfilePhotoURL(teamid, false)
+	}
+
+	return team
+}
+
 func (ts *TeamService) UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto) {
 	if userid < 0 {
 		panic(exceptions.Exception{

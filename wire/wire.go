@@ -49,8 +49,8 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewPaymentRepo,
 	repositoriesimpl.NewTeamRepo,
 	repositoriesimpl.NewRoleRepo,
-  storageimpl.NewS3Storage,
-
+	repositoriesimpl.NewBidRepo,
+	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
 	wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)),
@@ -58,6 +58,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)),
 	wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)),
 	wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)),
+	wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)),
 	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
@@ -77,6 +78,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewProjectService,
 	servicesimpl.NewPaymentService,
 	servicesimpl.NewTeamService,
+	servicesimpl.NewBidService,
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
 
@@ -87,6 +89,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)),
 	wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)),
 	wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)),
+	wire.Bind(new(services.BidService), new(*servicesimpl.BidService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 
@@ -101,8 +104,8 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewProjectHandler,
 	handlers.NewGeneralHandler,
 	handlers.NewPaymentHandler,
+	handlers.NewBidHandler,
 	handlers.NewTeamHandler,
-
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -148,6 +151,7 @@ type Handlers struct {
 	ProjectHandler *handlers.ProjectHandler
 	GeneralHandler *handlers.GeneralHandler
 	PaymentHandler *handlers.PaymentHandler
+	BidHandler     *handlers.BidHandler
 	TeamHandler    *handlers.TeamHandler
 }
 
