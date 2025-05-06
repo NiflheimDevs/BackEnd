@@ -210,8 +210,9 @@ func (tr *TeamRepo) GetTeam(teamid int64) *models.TeamModel {
 		WHERE t.id = $1 AND t.type = 0`
 
 	var team models.TeamModel
+	var description sql.NullString
 
-	err := tr.PG.QueryRow(ctx, query, teamid).Scan(&team.ID, &team.Title, &team.Description, &team.Created_at)
+	err := tr.PG.QueryRow(ctx, query, teamid).Scan(&team.ID, &team.Title, &description, &team.Created_at)
 
 	if err != nil {
 		log.Println("TeamError: Team id", teamid, "not found. details:", err)
@@ -222,6 +223,9 @@ func (tr *TeamRepo) GetTeam(teamid int64) *models.TeamModel {
 			})
 		}
 		return nil
+	}
+	if description.Valid {
+		team.Description = description.String
 	}
 	return &team
 
@@ -237,8 +241,9 @@ func (tr *TeamRepo) GetTeamForUser(userid int, teamid int64) *models.TeamModel {
 		WHERE ut.user_id = $1 AND ut.team_id = $2 AND t.type = 0`
 
 	var team models.TeamModel
+	var description sql.NullString
 
-	err := tr.PG.QueryRow(ctx, query, userid, teamid).Scan(&team.ID, &team.Title, &team.Description, &team.Created_at)
+	err := tr.PG.QueryRow(ctx, query, userid, teamid).Scan(&team.ID, &team.Title, &description, &team.Created_at)
 
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -248,6 +253,9 @@ func (tr *TeamRepo) GetTeamForUser(userid int, teamid int64) *models.TeamModel {
 			})
 		}
 		return nil
+	}
+	if description.Valid {
+		team.Description = description.String
 	}
 	return &team
 
@@ -276,13 +284,20 @@ func (tr *TeamRepo) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
 	var teams []dto.GetTeamPreviewDto
 	for rows.Next() {
 		var team dto.GetTeamPreviewDto
+		var description, position sql.NullString
 
-		if err := rows.Scan(&team.ID, &team.Title, &team.Description, &team.Position); err != nil {
+		if err := rows.Scan(&team.ID, &team.Title, &description, &position); err != nil {
 			log.Println("TeamError: error scanning team for user", userid, "error detail:", err)
 			panic(exceptions.Exception{
 				Tag:    exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
 			})
+		}
+		if description.Valid {
+			team.Description = description.String
+		}
+		if position.Valid {
+			team.Position = position.String
 		}
 		teams = append(teams, team)
 	}
