@@ -81,6 +81,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewBidService,
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
+	servicesimpl.NewRoleService,
 
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
@@ -92,6 +93,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.BidService), new(*servicesimpl.BidService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
+	wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)),
 
 	ProvideConstants,
 	ProvideEnv,
@@ -106,6 +108,7 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewPaymentHandler,
 	handlers.NewBidHandler,
 	handlers.NewTeamHandler,
+	handlers.NewRoleHandler,
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -153,6 +156,7 @@ type Handlers struct {
 	PaymentHandler *handlers.PaymentHandler
 	BidHandler     *handlers.BidHandler
 	TeamHandler    *handlers.TeamHandler
+	RoleHandler    *handlers.RoleHandler
 }
 
 type Application struct {

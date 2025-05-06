@@ -99,6 +99,9 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Delete("/team/member", app.Handlers.TeamHandler.RemoveMember)
 	mux.Post("/team/member", app.Handlers.TeamHandler.AddMembers)
 
+	mux.Get("/role/team", app.Handlers.RoleHandler.GetTeamRoles)
+	mux.Get("/role/team/{role}", app.Handlers.RoleHandler.GetPermissionsForRole)
+
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
