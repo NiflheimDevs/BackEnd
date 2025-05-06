@@ -18,6 +18,7 @@ type ProjectHandler struct {
 	ProjectService services.ProjectService
 	UserService    services.UserService
 	LabelService   services.LabelService
+	BidService     services.BidService
 	JWTService     services.JWT
 	Validator      *validator.Validate
 }
@@ -27,6 +28,7 @@ func NewProjectHandler(
 	projectService services.ProjectService,
 	userService services.UserService,
 	labelService services.LabelService,
+	bidService services.BidService,
 	jwtService services.JWT,
 	validator *validator.Validate,
 ) *ProjectHandler {
@@ -36,6 +38,7 @@ func NewProjectHandler(
 		UserService:    userService,
 		LabelService:   labelService,
 		JWTService:     jwtService,
+		BidService:     bidService,
 		Validator:      validator,
 	}
 }
@@ -106,6 +109,7 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 	project := projectHandler.ProjectService.GetProject(projectID)
 	userInfo := projectHandler.UserService.GetUserInfo(project.OwnerID, 0)
 	label := projectHandler.LabelService.GetLabelInfo(project.Label)
+	bids := projectHandler.BidService.GetPublicProjectBids(projectID)
 
 	projectDTO := dto.Project{
 		ProjectID:   project.ID,
@@ -113,6 +117,7 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		Title:       project.Title,
 		Description: project.Description,
 		Label:       *label,
+		Bids:        bids,
 		SelectedBid: project.SelectedBid,
 		Status:      project.State,
 		FirstName:   userInfo.FirstName,
@@ -204,4 +209,71 @@ func (projectHandler *ProjectHandler) EndProject(w http.ResponseWriter, r *http.
 	projectHandler.ProjectService.EndOfProject(userID, projectID)
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (projectHandler *ProjectHandler) GetTeamProjects(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
+
+	teamIDString := chi.URLParam(r, "team_id")
+	teamID, _ := strconv.Atoi(teamIDString)
+
+	projects := projectHandler.ProjectService.GetTeamProjects(userID, int64(teamID))
+
+	var projectsDTO dto.UserProject
+
+	for _, project := range projects {
+		label := projectHandler.LabelService.GetLabelInfo(project.Label)
+		projectsDTO.Projects = append(projectsDTO.Projects, dto.Project{
+			ProjectID:   project.ID,
+			OwnerID:     project.OwnerID,
+			Title:       project.Title,
+			Description: project.Description,
+			Label:       *label,
+			SelectedBid: project.SelectedBid,
+			Status:      project.State,
+			Tags:        project.Tags,
+			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(projectsDTO); err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
+		})
+	}
+}
+
+func (projectHandler *ProjectHandler) GetOneManTeamProjects(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
+
+	projects := projectHandler.ProjectService.GetOneManTeamProjects(userID)
+
+	var projectsDTO dto.UserProject
+
+	for _, project := range projects {
+		label := projectHandler.LabelService.GetLabelInfo(project.Label)
+		projectsDTO.Projects = append(projectsDTO.Projects, dto.Project{
+			ProjectID:   project.ID,
+			OwnerID:     project.OwnerID,
+			Title:       project.Title,
+			Description: project.Description,
+			Label:       *label,
+			SelectedBid: project.SelectedBid,
+			Status:      project.State,
+			Tags:        project.Tags,
+			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(projectsDTO); err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
+		})
+	}
 }

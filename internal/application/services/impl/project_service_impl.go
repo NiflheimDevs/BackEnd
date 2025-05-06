@@ -19,7 +19,9 @@ type ProjectService struct {
 	Constants      *bootstrap.Constants
 	TxManager      transaction.TxManager
 	TagRepo        repositories.TagRepo
+	BidRepo        repositories.BidRepo
 	TagService     services.TagService
+	TeamService    services.TeamService
 }
 
 func NewProjectService(
@@ -27,7 +29,9 @@ func NewProjectService(
 	paymentService services.PaymentService,
 	constants *bootstrap.Constants,
 	tagRepo repositories.TagRepo,
+	bidRepo repositories.BidRepo,
 	tagService services.TagService,
+	teamService services.TeamService,
 	txManager transaction.TxManager,
 ) *ProjectService {
 	return &ProjectService{
@@ -36,7 +40,9 @@ func NewProjectService(
 		Constants:      constants,
 		TxManager:      txManager,
 		TagRepo:        tagRepo,
+		BidRepo:        bidRepo,
 		TagService:     tagService,
+		TeamService:    teamService,
 	}
 }
 
@@ -81,7 +87,7 @@ func (projectService *ProjectService) GetUserProjects(userID, targetuserID, offs
 		projects = projectService.ProjectRepo.GetUserProject(userID, offset, limit)
 		count = projectService.GetProjectCount(userID)
 		for _, project := range projects {
-			if project.State == 1 && project.Duration.After(time.Now()) {
+			if project.State == 1 && project.Duration.Before(time.Now()) {
 				projectService.ProjectRepo.UpdateProjectState(project.ID, 2)
 			}
 			project.State = 2
@@ -304,4 +310,52 @@ func (projectService *ProjectService) EndOfProject(userID, projectID int) {
 	}
 
 	projectService.ProjectRepo.UpdateProjectState(projectID, 4)
+}
+
+func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) []models.ProjectModel {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	//check that member is in team
+
+	bids := projectService.BidRepo.GetTeamBids(teamID)
+	var projects []models.ProjectModel
+	for _, bid := range bids {
+		project, _ := projectService.ProjectRepo.GetProject(bid.ProjectID)
+
+		projects = append(projects, *project)
+	}
+	return projects
+}
+
+func (projectService *ProjectService) GetOneManTeamProjects(userID int) []models.ProjectModel {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	//teams := projectService.TeamService.GetTeamsForUser(userID)
+	oneManTeamID := projectService.TeamService.GetOneManTeamID(userID)
+
+	var projects []models.ProjectModel
+
+	// for _, team := range teams {
+	// 	project := projectService.GetTeamProjects(userID, team.ID)
+	// 	projects = append(projects, project...)
+	// }
+
+	oneManTeamProjects := projectService.GetTeamProjects(userID, oneManTeamID)
+	projects = append(projects, oneManTeamProjects...)
+
+	return projects
 }

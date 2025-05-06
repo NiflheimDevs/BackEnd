@@ -24,4 +24,5 @@ type TeamService interface {
 	GetMembers(commanderid int, teamid int64) []dto.SendMemberDto
 	DeleteTeamProfile(commanderid int, teamid int64)
 	UpdateTeamProfile(commanderid int, teamid int64, data []byte)
+	GetOneManTeamID(userid int) int64
 }

@@ -2,6 +2,7 @@ package servicesimpl
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"time"
 
@@ -43,6 +44,8 @@ func NewBidService(
 }
 
 func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidInfo {
+	bs.ProjectService.GetProject(projectID)
+
 	var bidInfos []dto.PublicProjectBidInfo
 	bids := bs.BidRepo.GetBidOfProject(projectID)
 
@@ -66,6 +69,14 @@ func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.Priv
 		})
 	}
 
+	project := bs.ProjectService.GetProject(projectID)
+
+	if project.OwnerID != userID {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
 	var bidInfos []dto.PrivateProjectBidInfo
 	bids := bs.BidRepo.GetBidOfProject(projectID)
 
@@ -74,6 +85,7 @@ func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.Priv
 		teamInfo := bs.TeamService.GetInternalTeamInfo(bid.TeamID)
 		bidInfo.BidID = bid.ID
 		bidInfo.TeamInfo = teamInfo
+		bidInfo.PrePayment = bid.PrePayment
 		bidInfo.Total = bid.Total
 		bidInfo.ExpectedTime = bid.ExpectedTime
 		bidInfos = append(bidInfos, bidInfo)
@@ -101,6 +113,7 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	teamInfo := bs.TeamRepo.GetEveryTeamInfo(info.TeamID)
 
 	if teamInfo == nil {
+		log.Println("team not found")
 		panic(exceptions.Exception{
 			Tag: exceptions.NOT_FOUND,
 		})
@@ -109,12 +122,14 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	if strconv.Itoa(info.UserID) != teamInfo.Title {
 		member := bs.TeamRepo.GetMemberForTeam(info.TeamID, info.UserID)
 		if member == nil {
+			log.Println("user is not in team")
 			panic(exceptions.Exception{
 				Tag: exceptions.FORBIDDEN,
 			})
 		}
 
 		if !utils.Contains(member.Role.GetPermissionsForRole(), enums.BIDDER) {
+			log.Println("user doesn't have permission")
 			panic(exceptions.Exception{
 				Tag:    exceptions.FORBIDDEN,
 				Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
@@ -123,6 +138,7 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	}
 
 	if info.PP > info.Total {
+		log.Println("incorrect prepayment and total")
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 		})
@@ -131,6 +147,7 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	project := bs.ProjectService.GetProject(info.ProjectID)
 
 	if project.State > 1 {
+		log.Println("project state is not proper")
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 		})

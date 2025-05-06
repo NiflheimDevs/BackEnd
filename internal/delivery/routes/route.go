@@ -77,6 +77,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Delete("/user/resume", app.Handlers.FileHandler.DeleteUserResume)
 	mux.Post("/team/profile/{team_id}", app.Handlers.FileHandler.UploadTeamProfilePhoto)
 	mux.Delete("/team/profile/{team_id}", app.Handlers.FileHandler.DeleteTeamProfilePhoto)
+	mux.Get("/user/project", app.Handlers.ProjectHandler.GetOneManTeamProjects)
 
 	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
 	mux.Get("/user/resume", app.Handlers.FileHandler.GetResume)
@@ -98,6 +99,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Patch("/team/member/role", app.Handlers.TeamHandler.UpdateMemberRole)
 	mux.Delete("/team/member", app.Handlers.TeamHandler.RemoveMember)
 	mux.Post("/team/member", app.Handlers.TeamHandler.AddMembers)
+	mux.Get("/team/{team_id}/project", app.Handlers.ProjectHandler.GetTeamProjects)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
