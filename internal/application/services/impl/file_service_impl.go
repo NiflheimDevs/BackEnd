@@ -216,14 +216,28 @@ func (fs *FileService) createImageInterface(data []byte) image.Image {
 
 func (fs *FileService) createLowQualPhoto(img image.Image) *bytes.Buffer {
 	var webpBuffer bytes.Buffer
-	resizedImg := pkg.Resize(512, 512, img)
+
+	const threshold = 512
+
+	bounds := img.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	newWidth, newHeight := width, height
+	if width > threshold || height > threshold {
+		newWidth, newHeight = threshold, threshold
+	} else {
+		newWidth, newHeight = width/2, height/2
+	}
+
+	resizedImg := pkg.Resize(uint(newWidth), uint(newHeight), img)
 
 	err := pkg.ImageEncode(&webpBuffer, resizedImg, 1)
-
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNPROCESSABLE,
 		})
 	}
+
 	return &webpBuffer
 }
