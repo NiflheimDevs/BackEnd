@@ -1,5 +1,7 @@
 package enums
 
+import "strings"
+
 type RoleType uint
 
 const (
@@ -44,14 +46,6 @@ func GetAllRoles() []RoleType {
 	}
 }
 
-var TeamRoles []RoleType = []RoleType{
-	TEAM_OWNER,
-	TEAM_ADMIN,
-	TEAM_CRAWLER,
-	TEAM_MAINTAINER,
-	TEAM_NEWBIE,
-}
-
 func (r RoleType) String() string {
 	if name, ok := roleNames[r]; ok {
 		return name
@@ -76,8 +70,19 @@ func RoleExists(query string) bool {
 }
 
 func NameToRole(name string) RoleType {
+	name = strings.ToUpper(name)
 	if role, ok := namesRole[name]; ok {
 		return role
 	}
 	return 0
+}
+
+func GetTeamRoles() []RoleType {
+	return []RoleType{
+		TEAM_OWNER,
+		TEAM_ADMIN,
+		TEAM_CRAWLER,
+		TEAM_MAINTAINER,
+		TEAM_NEWBIE,
+	}
 }
