@@ -14,4 +14,5 @@ type PaymentRepo interface {
 	Deposit(ctx context.Context, tx transaction.Tx, userID int, amount int64, description string)
 	UpdateWallet(ctx context.Context, tx transaction.Tx, userID int, amount int64) error
 	GetTransactionCount(userID int) int
+	TransferMoney(ctx context.Context, tx transaction.Tx, fromUserID, toUserID int, amount int64, description string)
 }

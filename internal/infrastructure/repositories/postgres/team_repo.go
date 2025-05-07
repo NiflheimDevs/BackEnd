@@ -316,6 +316,12 @@ func (tr *TeamRepo) GetTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error) 
 		})
 	}
 
+	owner := tr.GetMembersForTeamFilterdByRole(teamid, enums.TEAM_OWNER)
+
+	if len(owner) > 0 {
+		team.OwnerID = owner[0].Info.Userid
+	}
+
 	return &team, nil
 }
 
@@ -329,7 +335,7 @@ func (tr *TeamRepo) GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, e
 		WHERE t.id = $1 AND t.type = 1
 	`
 
-	secondquery := `SELECT u.username, u.bio
+	secondquery := `SELECT u.id, u.username, u.bio
 					FROM users AS u
 					WHERE u.id = $1`
 
@@ -344,7 +350,7 @@ func (tr *TeamRepo) GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, e
 	userid, _ := strconv.Atoi(useridstring)
 
 	var bio sql.NullString
-	err = tr.PG.QueryRow(ctx, secondquery, userid).Scan(&team.Title, &bio)
+	err = tr.PG.QueryRow(ctx, secondquery, userid).Scan(&team.OwnerID, &team.Title, &bio)
 	if err == pgx.ErrNoRows {
 		return nil, err
 	}

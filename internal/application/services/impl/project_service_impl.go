@@ -2,6 +2,7 @@ package servicesimpl
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/niflheimdevs/backend/bootstrap"
@@ -306,6 +307,43 @@ func (projectService *ProjectService) EndOfProject(userID, projectID int) {
 	if project.State != 3 {
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
+	bid, _ := projectService.BidRepo.GetBidInfo(project.SelectedBid)
+
+	ownerID := projectService.TeamService.GetInternalTeamInfo(bid.TeamID).OwnerID
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := projectService.TxManager.Begin(ctx)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	description := fmt.Sprintf("Pay Reamining Money For Project %d", projectID)
+
+	projectService.PaymentService.TransferMoney(ctx, tx, userID, ownerID, bid.Total-bid.PrePayment, description)
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
 		})
 	}
 

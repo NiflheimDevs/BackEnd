@@ -24,6 +24,7 @@ type GetInternalTeamInfo struct {
 	Description string `json:"description"`
 	Type        int    `json:"type"`
 	Profile     string `json:"profile"`
+	OwnerID     int    `json:"owner_id"`
 }
 
 type GetTeamPreviewDto struct {

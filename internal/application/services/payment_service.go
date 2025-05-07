@@ -13,4 +13,5 @@ type PaymentService interface {
 	ProjectPayment(ctx context.Context, tx transaction.Tx, userID int, amount int64)
 	Deposit(userID int, amount int64, description string)
 	Withdraw(userID int, amount int64, description string)
+	TransferMoney(ctx context.Context, tx transaction.Tx, fromUserID, toUserID int, amount int64, description string)
 }
