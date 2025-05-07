@@ -244,3 +244,20 @@ func (paymentService *PaymentService) Withdraw(userID int, amount int64, descrip
 		})
 	}
 }
+
+func (paymentService *PaymentService) TransferMoney(ctx context.Context, tx transaction.Tx, fromUserID, toUserID int, amount int64, description string) {
+	balance, _ := paymentService.PaymentRepo.GetBalance(fromUserID)
+
+	if balance < amount {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{
+				exceptions.INSUFFICIENT_BALANCE,
+			},
+		})
+	}
+
+	paymentService.PaymentRepo.UpdateWallet(ctx, tx, fromUserID, -1*amount)
+	paymentService.PaymentRepo.UpdateWallet(ctx, tx, toUserID, amount)
+	paymentService.PaymentRepo.TransferMoney(ctx, tx, fromUserID, toUserID, amount, description)
+}

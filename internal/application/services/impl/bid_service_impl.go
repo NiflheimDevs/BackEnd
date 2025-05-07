@@ -2,6 +2,7 @@ package servicesimpl
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -43,6 +44,8 @@ func NewBidService(
 }
 
 func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidInfo {
+	bs.ProjectService.GetProject(projectID)
+
 	var bidInfos []dto.PublicProjectBidInfo
 	bids := bs.BidRepo.GetBidOfProject(projectID)
 
@@ -66,6 +69,14 @@ func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.Priv
 		})
 	}
 
+	project := bs.ProjectService.GetProject(projectID)
+
+	if project.OwnerID != userID {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
 	var bidInfos []dto.PrivateProjectBidInfo
 	bids := bs.BidRepo.GetBidOfProject(projectID)
 
@@ -74,6 +85,7 @@ func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.Priv
 		teamInfo := bs.TeamService.GetInternalTeamInfo(bid.TeamID)
 		bidInfo.BidID = bid.ID
 		bidInfo.TeamInfo = teamInfo
+		bidInfo.PrePayment = bid.PrePayment
 		bidInfo.Total = bid.Total
 		bidInfo.ExpectedTime = bid.ExpectedTime
 		bidInfos = append(bidInfos, bidInfo)
@@ -132,7 +144,8 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 
 	if project.State > 1 {
 		panic(exceptions.Exception{
-			Tag: exceptions.FORBIDDEN,
+			Tag:    exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{exceptions.NOT_PROPER_PROJECT_STATE},
 		})
 	}
 
@@ -155,6 +168,8 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 
 	bid, err := bs.BidRepo.GetBidInfo(bidID)
 
+	ownerID := bs.TeamService.GetInternalTeamInfo(bid.TeamID).OwnerID
+
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.NOT_FOUND,
@@ -172,7 +187,7 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 	if project.State != 2 {
 		panic(exceptions.Exception{
 			Tag:    exceptions.FORBIDDEN,
-			Errors: []exceptions.SpecificError{exceptions.ALREADY_HAS_BID},
+			Errors: []exceptions.SpecificError{exceptions.NOT_PROPER_PROJECT_STATE},
 		})
 	}
 
@@ -196,7 +211,9 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 		}
 	}()
 
-	bs.PaymentService.ProjectPayment(ctx, tx, userID, bid.PrePayment)
+	description := fmt.Sprintf("Pre Payment For Project %d", projectID)
+
+	bs.PaymentService.TransferMoney(ctx, tx, userID, ownerID, bid.PrePayment, description)
 
 	bs.BidRepo.AcceptBid(ctx, tx, bidID, projectID)
 
@@ -273,7 +290,8 @@ func (bs BidService) UpdateBid(info dto.BidInfo) {
 
 	if project.State >= 2 {
 		panic(exceptions.Exception{
-			Tag: exceptions.FORBIDDEN,
+			Tag:    exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{exceptions.NOT_PROPER_PROJECT_STATE},
 		})
 	}
 

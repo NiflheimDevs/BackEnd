@@ -2,6 +2,7 @@ package servicesimpl
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/niflheimdevs/backend/bootstrap"
@@ -19,7 +20,9 @@ type ProjectService struct {
 	Constants      *bootstrap.Constants
 	TxManager      transaction.TxManager
 	TagRepo        repositories.TagRepo
+	BidRepo        repositories.BidRepo
 	TagService     services.TagService
+	TeamService    services.TeamService
 }
 
 func NewProjectService(
@@ -27,7 +30,9 @@ func NewProjectService(
 	paymentService services.PaymentService,
 	constants *bootstrap.Constants,
 	tagRepo repositories.TagRepo,
+	bidRepo repositories.BidRepo,
 	tagService services.TagService,
+	teamService services.TeamService,
 	txManager transaction.TxManager,
 ) *ProjectService {
 	return &ProjectService{
@@ -36,7 +41,9 @@ func NewProjectService(
 		Constants:      constants,
 		TxManager:      txManager,
 		TagRepo:        tagRepo,
+		BidRepo:        bidRepo,
 		TagService:     tagService,
+		TeamService:    teamService,
 	}
 }
 
@@ -81,7 +88,7 @@ func (projectService *ProjectService) GetUserProjects(userID, targetuserID, offs
 		projects = projectService.ProjectRepo.GetUserProject(userID, offset, limit)
 		count = projectService.GetProjectCount(userID)
 		for _, project := range projects {
-			if project.State == 1 && project.Duration.After(time.Now()) {
+			if project.State == 1 && project.Duration.Before(time.Now()) {
 				projectService.ProjectRepo.UpdateProjectState(project.ID, 2)
 			}
 			project.State = 2
@@ -303,5 +310,84 @@ func (projectService *ProjectService) EndOfProject(userID, projectID int) {
 		})
 	}
 
+	bid, _ := projectService.BidRepo.GetBidInfo(project.SelectedBid)
+
+	ownerID := projectService.TeamService.GetInternalTeamInfo(bid.TeamID).OwnerID
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := projectService.TxManager.Begin(ctx)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	description := fmt.Sprintf("Pay Reamining Money For Project %d", projectID)
+
+	projectService.PaymentService.TransferMoney(ctx, tx, userID, ownerID, bid.Total-bid.PrePayment, description)
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
 	projectService.ProjectRepo.UpdateProjectState(projectID, 4)
+}
+
+func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) []models.ProjectModel {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	//check that member is in team
+
+	bids := projectService.BidRepo.GetTeamBids(teamID)
+	var projects []models.ProjectModel
+	for _, bid := range bids {
+		project, _ := projectService.ProjectRepo.GetProject(bid.ProjectID)
+
+		projects = append(projects, *project)
+	}
+	return projects
+}
+
+func (projectService *ProjectService) GetOneManTeamProjects(userID int) []models.ProjectModel {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	oneManTeamID := projectService.TeamService.GetOneManTeamID(userID)
+
+	var projects []models.ProjectModel
+
+	oneManTeamProjects := projectService.GetTeamProjects(userID, oneManTeamID)
+	projects = append(projects, oneManTeamProjects...)
+
+	return projects
 }

@@ -14,4 +14,6 @@ type ProjectService interface {
 	UpdateProject(projectID, userID int, title, description string, label int, price int64, tags []int)
 	DeleteProject(userID, projectID int)
 	EndOfProject(userID, projectID int)
+	GetTeamProjects(userID int, teamID int64) []models.ProjectModel
+	GetOneManTeamProjects(userID int) []models.ProjectModel
 }

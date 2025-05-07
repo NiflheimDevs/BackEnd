@@ -172,3 +172,20 @@ func (paymentRepo *PaymentRepo) UpdateWallet(ctx context.Context, tx transaction
 
 	return nil
 }
+
+func (paymentRepo *PaymentRepo) TransferMoney(ctx context.Context, tx transaction.Tx, fromUserID, toUserID int, amount int64, description string) {
+	now := time.Now().Format("2006-01-02 15:04:05")
+
+	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
+	_, err := tx.Exec(ctx, query, fromUserID, toUserID, amount, now, description)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+}

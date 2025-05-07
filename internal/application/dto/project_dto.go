@@ -10,18 +10,19 @@ type ProjectLanding struct {
 }
 
 type Project struct {
-	ProjectID   int               `json:"project_id"`
-	OwnerID     int               `json:"Owner_id"`
-	Title       string            `json:"title"`
-	Description string            `json:"description"`
-	Label       models.LabelModel `json:"label"`
-	SelectedBid int               `json:"selected_bid"`
-	Status      int               `json:"status"`
-	Tags        []models.TagModel `json:"tags"`
-	FirstName   string            `json:"first_name"`
-	LastName    string            `json:"last_name"`
-	Username    string            `json:"username"`
-	Duration    string            `json:"duration"`
+	ProjectID   int                    `json:"project_id"`
+	OwnerID     int                    `json:"Owner_id"`
+	Title       string                 `json:"title"`
+	Description string                 `json:"description"`
+	Label       models.LabelModel      `json:"label"`
+	SelectedBid int                    `json:"selected_bid"`
+	Status      int                    `json:"status"`
+	Tags        []models.TagModel      `json:"tags"`
+	Bids        []PublicProjectBidInfo `json:"bids"`
+	FirstName   string                 `json:"first_name"`
+	LastName    string                 `json:"last_name"`
+	Username    string                 `json:"username"`
+	Duration    string                 `json:"duration"`
 }
 
 type CreateProjectDTO struct {

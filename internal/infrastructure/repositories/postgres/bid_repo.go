@@ -139,7 +139,7 @@ func (br *BidRepo) PutBid(info dto.BidInfo) int {
 }
 
 func (br *BidRepo) AcceptBid(ctx context.Context, tx transaction.Tx, bidID int, projectID int) {
-	query := "UPDATE project SET selected_bid_id = $1,status = 4 WHERE id = $2"
+	query := "UPDATE project SET selected_bid_id = $1,status = 3 WHERE id = $2"
 
 	_, err := br.PG.Exec(ctx, query, bidID, projectID)
 

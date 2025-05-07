@@ -488,3 +488,8 @@ func (ts *TeamService) DeleteTeamProfile(commanderid int, teamid int64) {
 
 	ts.FileService.DeleteTeamProfilePhoto(teamid)
 }
+
+func (ts *TeamService) GetOneManTeamID(userid int) int64 {
+	teamid := ts.TeamRepo.GetOneManTeamID(userid)
+	return teamid
+}
