@@ -7,6 +7,7 @@ type BidInfo struct {
 	ProjectID    int    `json:"project_id" validate:"required"`
 	PP           int64  `json:"pre_payment" validate:"required"`
 	Total        int64  `json:"total" validate:"required"`
+	Status       int    `json:"status" validate:""`
 	Description  string `json:"description" validate:""`
 	ExpectedTime int    `json:"expected_time" validate:"required"`
 }
