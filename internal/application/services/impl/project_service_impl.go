@@ -65,6 +65,11 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 		})
 	}
 
+	if project.State == 1 && project.Duration.Before(time.Now()) {
+		projectService.ProjectRepo.UpdateProjectState(project.ID, 2)
+	}
+	project.State = 2
+
 	tags := projectService.TagRepo.GetProjectTag(projectID)
 
 	project.Tags = tags
