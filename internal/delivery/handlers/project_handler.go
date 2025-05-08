@@ -249,6 +249,13 @@ func (projectHandler *ProjectHandler) GetTeamProjects(w http.ResponseWriter, r *
 func (projectHandler *ProjectHandler) GetOneManTeamProjects(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
+	userIDString := chi.URLParam(r, "id")
+	targetUserID, _ := strconv.Atoi(userIDString)
+
+	if targetUserID != 0 {
+		userID = targetUserID
+	}
+
 	projects := projectHandler.ProjectService.GetOneManTeamProjects(userID)
 
 	var projectsDTO dto.UserProject
