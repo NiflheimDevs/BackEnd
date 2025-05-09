@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - Feat/BidForTeam
 
 jobs:
   deploy:
