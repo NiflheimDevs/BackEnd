@@ -2,6 +2,7 @@ package repositoriesimpl
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -102,8 +103,9 @@ func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
 	defer results.Close()
 	for results.Next() {
 		var bid models.BidModel
-		var time2 time.Time
-		if err := results.Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &time2); err != nil {
+		var time time.Time
+		var des sql.NullString
+		if err := results.Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &des, &bid.ExpectedTime, &time); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
@@ -111,7 +113,11 @@ func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
 				},
 			})
 		}
-		bid.CreatedTime = time2
+		bid.CreatedTime = time
+		if des.Valid {
+			bid.Description = des.String
+		}
+
 		bids = append(bids, bid)
 	}
 	return bids
