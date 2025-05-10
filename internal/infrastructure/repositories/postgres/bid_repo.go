@@ -28,10 +28,11 @@ func (br *BidRepo) GetBidInfo(bidID int) (*models.BidModel, error) {
 	defer cancel()
 
 	var bid models.BidModel
+	var des sql.NullString
 
 	query := "SELECT id,team_id,project_id,prepayment,total,description,expected_time,created_time FROM bid WHERE id = $1"
 
-	err := br.PG.QueryRow(ctx, query, bidID).Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &bid.CreatedTime)
+	err := br.PG.QueryRow(ctx, query, bidID).Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, des, &bid.ExpectedTime, &bid.CreatedTime)
 
 	if err == pgx.ErrNoRows {
 		return nil, err
@@ -44,6 +45,10 @@ func (br *BidRepo) GetBidInfo(bidID int) (*models.BidModel, error) {
 				exceptions.DATABASE_ERROR,
 			},
 		})
+	}
+
+	if des.Valid {
+		bid.Description = des.String
 	}
 
 	return &bid, nil
