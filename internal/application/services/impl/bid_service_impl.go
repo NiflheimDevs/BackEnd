@@ -3,7 +3,6 @@ package servicesimpl
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -159,19 +158,11 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 		})
 	}
 
-	log.Println("kiaraash 1")
-
 	project := bs.ProjectService.GetProject(projectID)
-
-	log.Println("kiaraash 2")
 
 	bid, err := bs.BidRepo.GetBidInfo(bidID)
 
-	log.Println("kiaraash 3")
-
 	ownerID := bs.TeamService.GetInternalTeamInfo(bid.TeamID).OwnerID
-
-	log.Println("kiaraash 4")
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -199,7 +190,6 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 
 	tx, err := bs.TxManager.Begin(ctx)
 	if err != nil {
-		log.Println("error on transaction")
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{
@@ -210,7 +200,6 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 
 	defer func() {
 		if p := recover(); p != nil {
-			log.Println(p)
 			_ = tx.Rollback(ctx)
 			panic(p)
 		}
@@ -323,11 +312,7 @@ func (bs BidService) GetTeamBids(userID int, teamID int64) []dto.BidInfo {
 		})
 	}
 
-	log.Println("salam1")
-
 	teamInfo := bs.TeamRepo.GetEveryTeamInfo(teamID)
-
-	log.Println("salam2")
 
 	if teamInfo == nil {
 		panic(exceptions.Exception{
@@ -352,17 +337,12 @@ func (bs BidService) GetTeamBids(userID int, teamID int64) []dto.BidInfo {
 		}
 	}
 
-	log.Println("salam3")
-
 	bids := bs.BidRepo.GetTeamBids(teamID)
-
-	log.Println("salam4")
 
 	var bidDTOs []dto.BidInfo
 
 	for _, bid := range bids {
 		project := bs.ProjectService.GetProject(bid.ProjectID)
-		log.Println("salam5")
 		var status int
 		if project.State == 1 {
 			status = 1
