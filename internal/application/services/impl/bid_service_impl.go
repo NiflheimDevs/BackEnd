@@ -3,6 +3,7 @@ package servicesimpl
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -190,6 +191,7 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 
 	tx, err := bs.TxManager.Begin(ctx)
 	if err != nil {
+		log.Println("error on transaction")
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{
@@ -200,6 +202,7 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 
 	defer func() {
 		if p := recover(); p != nil {
+			log.Println(p)
 			_ = tx.Rollback(ctx)
 			panic(p)
 		}
