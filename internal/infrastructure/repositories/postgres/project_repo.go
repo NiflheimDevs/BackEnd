@@ -72,11 +72,12 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration FROM project WHERE id = $1"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration,start_time,end_time FROM project WHERE id = $1"
 
 	var duration time.Time
+	var start, end time.Time
 	var selectedBid sql.NullInt32
-	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration)
+	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration, &start, &end)
 
 	if err == pgx.ErrNoRows {
 		return nil, err
@@ -89,6 +90,8 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	}
 
 	project.Duration = duration
+	project.StartTime = start
+	project.EndTime = end
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -108,7 +111,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration,start_time,end_time FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
 
 	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
 
@@ -126,8 +129,9 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	for result.Next() {
 		var project models.ProjectModel
 		var duration time.Time
+		var start, end time.Time
 		var selectedBid sql.NullInt32
-		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration); err != nil {
+		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration, &start, &end); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
@@ -143,6 +147,8 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 		}
 
 		project.Duration = duration
+		project.StartTime = start
+		project.EndTime = end
 		tag := repo.TagRepo.GetProjectTag(project.ID)
 		project.Tags = tag
 		projects = append(projects, project)

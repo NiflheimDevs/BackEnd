@@ -372,7 +372,11 @@ func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) 
 	for _, bid := range bids {
 		project, _ := projectService.ProjectRepo.GetProject(bid.ProjectID)
 
-		projects = append(projects, *project)
+		if project.State == 3 || project.State == 4 {
+			tags := projectService.TagRepo.GetProjectTag(project.ID)
+			project.Tags = tags
+			projects = append(projects, *project)
+		}
 	}
 	return projects
 }

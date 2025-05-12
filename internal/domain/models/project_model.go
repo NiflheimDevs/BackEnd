@@ -12,4 +12,6 @@ type ProjectModel struct {
 	State       int
 	Tags        []TagModel
 	Duration    time.Time
+	StartTime   time.Time
+	EndTime     time.Time
 }

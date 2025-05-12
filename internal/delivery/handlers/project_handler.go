@@ -87,6 +87,8 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 			Status:      project.State,
 			Tags:        project.Tags,
 			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			StartTime:   project.StartTime.Format("2006-01-02 15:04:05"),
+			EndTime:     project.EndTime.Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -125,6 +127,8 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		Username:    userInfo.Username,
 		Tags:        project.Tags,
 		Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+		StartTime:   project.StartTime.Format("2006-01-02 15:04:05"),
+		EndTime:     project.EndTime.Format("2006-01-02 15:04:05"),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -233,6 +237,8 @@ func (projectHandler *ProjectHandler) GetTeamProjects(w http.ResponseWriter, r *
 			Status:      project.State,
 			Tags:        project.Tags,
 			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			StartTime:   project.StartTime.Format("2006-01-02 15:04:05"),
+			EndTime:     project.EndTime.Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -272,6 +278,8 @@ func (projectHandler *ProjectHandler) GetOneManTeamProjects(w http.ResponseWrite
 			Status:      project.State,
 			Tags:        project.Tags,
 			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			StartTime:   project.StartTime.Format("2006-01-02 15:04:05"),
+			EndTime:     project.EndTime.Format("2006-01-02 15:04:05"),
 		})
 	}
 

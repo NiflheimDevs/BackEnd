@@ -23,6 +23,8 @@ type Project struct {
 	LastName    string                 `json:"last_name"`
 	Username    string                 `json:"username"`
 	Duration    string                 `json:"duration"`
+	StartTime   string                 `json:"start_time"`
+	EndTime     string                 `json:"end_time"`
 }
 
 type CreateProjectDTO struct {
