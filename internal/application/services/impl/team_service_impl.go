@@ -490,6 +490,12 @@ func (ts *TeamService) DeleteTeamProfile(commanderid int, teamid int64) {
 }
 
 func (ts *TeamService) GetOneManTeamID(userid int) int64 {
-	teamid := ts.TeamRepo.GetOneManTeamID(userid)
+	teamid, err := ts.TeamRepo.GetOneManTeamID(userid)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{exceptions.USER_NOT_FOUND},
+		})
+	}
 	return teamid
 }

@@ -389,10 +389,7 @@ func (projectService *ProjectService) GetOneManTeamProjects(userID int) []models
 
 	oneManTeamID := projectService.TeamService.GetOneManTeamID(userID)
 
-	var projects []models.ProjectModel
-
 	oneManTeamProjects := projectService.GetTeamProjects(userID, oneManTeamID)
-	projects = append(projects, oneManTeamProjects...)
 
-	return projects
+	return oneManTeamProjects
 }

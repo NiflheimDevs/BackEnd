@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - Fix/spirint6
 
 jobs:
   deploy:
