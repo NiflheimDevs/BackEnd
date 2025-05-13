@@ -154,7 +154,7 @@ func (br *BidRepo) PutBid(info dto.BidInfo) int {
 }
 
 func (br *BidRepo) AcceptBid(ctx context.Context, tx transaction.Tx, bidID int, projectID int) {
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 	query := "UPDATE project SET selected_bid_id = $1,status = 3 , start_time = $2 WHERE id = $3"
 
 	_, err := br.PG.Exec(ctx, query, bidID, now, projectID)

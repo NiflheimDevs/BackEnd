@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/niflheimdevs/backend/internal/domain/models"
+import (
+	"time"
+
+	"github.com/niflheimdevs/backend/internal/domain/models"
+)
 
 type ProjectLanding struct {
 	ProjectID   int    `json:"project_id"`
@@ -22,9 +26,9 @@ type Project struct {
 	FirstName   string                 `json:"first_name"`
 	LastName    string                 `json:"last_name"`
 	Username    string                 `json:"username"`
-	Duration    string                 `json:"duration"`
-	StartTime   string                 `json:"start_time"`
-	EndTime     string                 `json:"end_time"`
+	Duration    time.Time              `json:"duration"`
+	StartTime   time.Time              `json:"start_time"`
+	EndTime     time.Time              `json:"end_time"`
 }
 
 type CreateProjectDTO struct {

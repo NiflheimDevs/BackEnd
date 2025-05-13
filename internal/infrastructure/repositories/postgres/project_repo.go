@@ -179,10 +179,10 @@ func (repo *ProjectRepo) GetProjectCount(userID int) int {
 	return count
 }
 
-func (repo *ProjectRepo) CreateProject(ctx context.Context, tx transaction.Tx, userID, label int, title, description, duration string) int {
+func (repo *ProjectRepo) CreateProject(ctx context.Context, tx transaction.Tx, userID, label int, title, description string, duration time.Time) int {
 	var project_id int
 
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 
 	query := "INSERT INTO project (owner_id, title, description, label, status, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
 
@@ -206,7 +206,7 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 
 	query := "UPDATE project SET title = $1, description = $2, updated_time=$3 WHERE id = $4 and owner_id = $5"
 

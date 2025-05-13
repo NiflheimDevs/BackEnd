@@ -143,7 +143,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 
 	projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
 
-	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
+	duration := time.Now().Add(projectService.Constants.Project.LastTime)
 
 	projectID := projectService.ProjectRepo.CreateProject(ctx, tx, userID, label, title, description, duration)
 
