@@ -27,6 +27,33 @@ type GetInternalTeamInfo struct {
 	OwnerID     int    `json:"owner_id"`
 }
 
+type TeamListDto struct {
+	Teams        []GetTeamBidDto `json:"teams"`
+	OneManTeamid int64           `json:"onemanteamid"`
+	UserProfile  string          `json:"profile"`
+	Userid       int             `json:"userid"`
+	Username     string          `json:"username"`
+	FirstName    string          `json:"firstname"`
+	LastName     string          `json:"lastname"`
+}
+
+type GetTeamWithRole struct {
+	ID          int64  `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Position    string `json:"position"`
+	RoleId      enums.RoleType
+}
+
+type GetTeamBidDto struct {
+	ID          int64  `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Position    string `json:"position"`
+	CanBid      bool   `json:"can_bid"`
+	Profile     string `json:"profile"`
+}
+
 type GetTeamPreviewDto struct {
 	ID          int64           `json:"id"`
 	Title       string          `json:"title"`

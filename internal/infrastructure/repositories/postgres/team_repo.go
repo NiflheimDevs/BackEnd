@@ -305,6 +305,50 @@ func (tr *TeamRepo) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
 	return teams
 }
 
+func (tr *TeamRepo) GetTeamsForUserWithRole(userid int) []dto.GetTeamWithRole {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
+	query := `SELECT t.id, t.title, t.description, ut.position, ut.role_id
+		FROM team as t
+		JOIN users_team as ut
+		ON t.id = ut.team_id
+		WHERE ut.user_id = $1 AND t.type = 0`
+
+	rows, err := tr.PG.Query(ctx, query, userid)
+	if err != nil {
+		log.Println("TeamError: error fetching teams for user", userid, "error detail:", err)
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+		})
+	}
+	defer rows.Close()
+
+	var teams []dto.GetTeamWithRole
+	for rows.Next() {
+		var team dto.GetTeamWithRole
+		var description, position sql.NullString
+
+		if err := rows.Scan(&team.ID, &team.Title, &description, &position, &team.RoleId); err != nil {
+			log.Println("TeamError: error scanning team for user", userid, "error detail:", err)
+			panic(exceptions.Exception{
+				Tag:    exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+			})
+		}
+		if description.Valid {
+			team.Description = description.String
+		}
+		if position.Valid {
+			team.Position = position.String
+		}
+		teams = append(teams, team)
+	}
+
+	return teams
+}
+
 func (tr *TeamRepo) GetTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()

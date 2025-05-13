@@ -99,6 +99,11 @@ func (th *TeamHandler) GetTeamsForUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func (th *TeamHandler) GetTeamsForBidding(w http.ResponseWriter, r *http.Request) {
+	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
+
+}
+
 func (th *TeamHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
 	teamidString := chi.URLParam(r, "team_id")
 	teamid, err := strconv.Atoi(teamidString)
