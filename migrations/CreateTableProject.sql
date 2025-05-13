@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS "project" (
   "duration" TIMESTAMP WITH TIME ZONE,
   FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id"),
-  FOREIGN KEY ("label") REFERENCES "label" ("id"),
+  FOREIGN KEY ("label") REFERENCES "label" ("id")
 );

@@ -75,7 +75,7 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration,start_time,end_time FROM project WHERE id = $1"
 
 	var duration time.Time
-	var start, end time.Time
+	var start, end sql.NullTime
 	var selectedBid sql.NullInt32
 	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration, &start, &end)
 
@@ -89,9 +89,15 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 		project.SelectedBid = 0
 	}
 
+	if start.Valid {
+		project.StartTime = start.Time
+	}
+
+	if end.Valid {
+		project.EndTime = end.Time
+	}
+
 	project.Duration = duration
-	project.StartTime = start
-	project.EndTime = end
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -129,7 +135,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	for result.Next() {
 		var project models.ProjectModel
 		var duration time.Time
-		var start, end time.Time
+		var start, end sql.NullTime
 		var selectedBid sql.NullInt32
 		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration, &start, &end); err != nil {
 			panic(exceptions.Exception{
@@ -146,9 +152,15 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 			project.SelectedBid = 0
 		}
 
+		if start.Valid {
+			project.StartTime = start.Time
+		}
+
+		if end.Valid {
+			project.EndTime = end.Time
+		}
+
 		project.Duration = duration
-		project.StartTime = start
-		project.EndTime = end
 		tag := repo.TagRepo.GetProjectTag(project.ID)
 		project.Tags = tag
 		projects = append(projects, project)
