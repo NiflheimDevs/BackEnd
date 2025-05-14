@@ -13,6 +13,7 @@ type TeamService interface {
 	GetTeamsForUser(userid int) []dto.GetTeamPreviewDto
 	GetTeam(commanderid int, teamid int64) *dto.GetTeamDto
 	GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInfo
+	GetTeamsForBidding(userid int) *dto.TeamListDto
 	UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto)
 	UpdatePosition(commanderid int, req *dto.UpdateMemberPositionDto)
 	UpdateMemeberRole(commanderid int, info *dto.UpdateMemberRoleDto)

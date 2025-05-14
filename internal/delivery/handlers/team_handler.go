@@ -101,7 +101,11 @@ func (th *TeamHandler) GetTeamsForUser(w http.ResponseWriter, r *http.Request) {
 
 func (th *TeamHandler) GetTeamsForBidding(w http.ResponseWriter, r *http.Request) {
 	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
+	res := th.TeamService.GetTeamsForBidding(userid)
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
 }
 
 func (th *TeamHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
