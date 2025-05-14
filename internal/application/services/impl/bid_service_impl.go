@@ -10,7 +10,6 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
-	"github.com/niflheimdevs/backend/internal/domain/models"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/utils"
@@ -94,12 +93,6 @@ func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.Priv
 	return bidInfos
 }
 
-func (bs BidService) GetTeamBid(teamID int64) []models.BidModel {
-	bids := bs.BidRepo.GetTeamBids(teamID)
-
-	return bids
-}
-
 func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 	if info.UserID == -1 || info.UserID == -2 {
 		panic(exceptions.Exception{
@@ -122,7 +115,8 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 		member := bs.TeamRepo.GetMemberForTeam(info.TeamID, info.UserID)
 		if member == nil {
 			panic(exceptions.Exception{
-				Tag: exceptions.FORBIDDEN,
+				Tag:    exceptions.FORBIDDEN,
+				Errors: []exceptions.SpecificError{exceptions.NOT_A_MEMBER},
 			})
 		}
 
@@ -228,6 +222,15 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 }
 
 func (bs BidService) UpdateBid(info dto.BidInfo) {
+	if info.UserID == -1 || info.UserID == -2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
 	bid, err := bs.BidRepo.GetBidInfo(info.BidID)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -259,7 +262,8 @@ func (bs BidService) UpdateBid(info dto.BidInfo) {
 		member := bs.TeamRepo.GetMemberForTeam(info.TeamID, info.UserID)
 		if member == nil {
 			panic(exceptions.Exception{
-				Tag: exceptions.FORBIDDEN,
+				Tag:    exceptions.FORBIDDEN,
+				Errors: []exceptions.SpecificError{exceptions.NOT_A_MEMBER},
 			})
 		}
 
@@ -296,4 +300,69 @@ func (bs BidService) UpdateBid(info dto.BidInfo) {
 	}
 
 	bs.BidRepo.UpdateBid(info)
+}
+
+func (bs BidService) GetTeamBids(userID int, teamID int64) []dto.BidInfo {
+	if userID == -1 || userID == -2 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	teamInfo := bs.TeamRepo.GetEveryTeamInfo(teamID)
+
+	if teamInfo == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+		})
+	}
+
+	if strconv.Itoa(userID) != teamInfo.Title {
+		member := bs.TeamRepo.GetMemberForTeam(teamID, userID)
+		if member == nil {
+			panic(exceptions.Exception{
+				Tag:    exceptions.FORBIDDEN,
+				Errors: []exceptions.SpecificError{exceptions.NOT_A_MEMBER},
+			})
+		}
+
+		if !utils.Contains(member.Role.GetPermissionsForRole(), enums.BIDDER) {
+			panic(exceptions.Exception{
+				Tag:    exceptions.FORBIDDEN,
+				Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+			})
+		}
+	}
+
+	bids := bs.BidRepo.GetTeamBids(teamID)
+
+	var bidDTOs []dto.BidInfo
+
+	for _, bid := range bids {
+		project := bs.ProjectService.GetProject(bid.ProjectID)
+		var status int
+		if project.State == 1 {
+			status = 1
+		} else if project.State == 2 && project.SelectedBid == bid.ID {
+			status = 2
+		} else {
+			status = 3
+		}
+		bidDTO := dto.BidInfo{
+			BidID:        bid.ID,
+			TeamID:       teamID,
+			ProjectID:    bid.ProjectID,
+			PP:           bid.PrePayment,
+			Total:        bid.Total,
+			Status:       status,
+			Description:  bid.Description,
+			ExpectedTime: bid.ExpectedTime,
+		}
+		bidDTOs = append(bidDTOs, bidDTO)
+	}
+
+	return bidDTOs
 }

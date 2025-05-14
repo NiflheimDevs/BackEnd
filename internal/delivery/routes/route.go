@@ -101,6 +101,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Post("/team/member", app.Handlers.TeamHandler.AddMembers)
 	mux.Get("/team/{team_id}/project", app.Handlers.ProjectHandler.GetTeamProjects)
 	mux.Get("/team/bidding", app.Handlers.TeamHandler.GetTeamsForBidding)
+	mux.Get("/team/{team_id}/bid", app.Handlers.BidHandler.GetTeamBids)
 
 	mux.Get("/role/team", app.Handlers.RoleHandler.GetTeamRoles)
 	mux.Get("/role/team/{role}", app.Handlers.RoleHandler.GetPermissionsForRole)

@@ -107,3 +107,16 @@ func (bh *BidHandler) ViewBidsOfTheProject(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
 }
+
+func (bh *BidHandler) GetTeamBids(w http.ResponseWriter, r *http.Request) {
+	teamIDString := chi.URLParam(r, "team_id")
+	teamID, _ := strconv.Atoi(teamIDString)
+
+	userID := r.Context().Value(bh.Constants.Context.UserID).(int)
+
+	result := bh.BidService.GetTeamBids(userID, int64(teamID))
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
+}

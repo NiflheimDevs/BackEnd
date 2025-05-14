@@ -2,6 +2,7 @@ package repositoriesimpl
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -27,10 +28,11 @@ func (br *BidRepo) GetBidInfo(bidID int) (*models.BidModel, error) {
 	defer cancel()
 
 	var bid models.BidModel
+	var des sql.NullString
 
 	query := "SELECT id,team_id,project_id,prepayment,total,description,expected_time,created_time FROM bid WHERE id = $1"
 
-	err := br.PG.QueryRow(ctx, query, bidID).Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &bid.CreatedTime)
+	err := br.PG.QueryRow(ctx, query, bidID).Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &des, &bid.ExpectedTime, &bid.CreatedTime)
 
 	if err == pgx.ErrNoRows {
 		return nil, err
@@ -43,6 +45,10 @@ func (br *BidRepo) GetBidInfo(bidID int) (*models.BidModel, error) {
 				exceptions.DATABASE_ERROR,
 			},
 		})
+	}
+
+	if des.Valid {
+		bid.Description = des.String
 	}
 
 	return &bid, nil
@@ -68,8 +74,9 @@ func (br *BidRepo) GetTeamBids(teamID int64) []models.BidModel {
 	defer results.Close()
 	for results.Next() {
 		var bid models.BidModel
-		var time2 time.Time
-		if err := results.Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &time2); err != nil {
+		var time time.Time
+		var des sql.NullString
+		if err := results.Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &des, &bid.ExpectedTime, &time); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
@@ -77,7 +84,10 @@ func (br *BidRepo) GetTeamBids(teamID int64) []models.BidModel {
 				},
 			})
 		}
-		bid.CreatedTime = time2
+		if des.Valid {
+			bid.Description = des.String
+		}
+		bid.CreatedTime = time
 		bids = append(bids, bid)
 	}
 	return bids
@@ -102,8 +112,9 @@ func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
 	defer results.Close()
 	for results.Next() {
 		var bid models.BidModel
-		var time2 time.Time
-		if err := results.Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &bid.Description, &bid.ExpectedTime, &time2); err != nil {
+		var time time.Time
+		var des sql.NullString
+		if err := results.Scan(&bid.ID, &bid.TeamID, &bid.ProjectID, &bid.PrePayment, &bid.Total, &des, &bid.ExpectedTime, &time); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
@@ -111,7 +122,11 @@ func (br *BidRepo) GetBidOfProject(projectID int) []models.BidModel {
 				},
 			})
 		}
-		bid.CreatedTime = time2
+		bid.CreatedTime = time
+		if des.Valid {
+			bid.Description = des.String
+		}
+
 		bids = append(bids, bid)
 	}
 	return bids
