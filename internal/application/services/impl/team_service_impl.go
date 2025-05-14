@@ -227,12 +227,16 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 		})
 	}
 
+	// ? maybe use transaction
+	ts.FileService.DeleteTeamProfilePhoto(teamid)
+
 	err := ts.TeamRepo.DeleteTeam(teamid)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
+
 }
 
 // TODO: email? some sort of request must be sent and then when it is accepted, the member gets added
