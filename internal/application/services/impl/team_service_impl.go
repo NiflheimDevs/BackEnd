@@ -18,6 +18,7 @@ import (
 
 type TeamService struct {
 	TeamRepo           repositories.TeamRepo
+	UserRepo           repositories.UserRepo
 	RoleRepo           repositories.RoleRepo
 	TransactionManager transaction.TxManager
 	FileService        services.FileService
@@ -25,12 +26,14 @@ type TeamService struct {
 
 func NewTeamService(
 	teamRepo repositories.TeamRepo,
+	userRepo repositories.UserRepo,
 	roleRepo repositories.RoleRepo,
 	tManager transaction.TxManager,
 	fileService services.FileService,
 ) *TeamService {
 	return &TeamService{
 		TeamRepo:           teamRepo,
+		UserRepo:           userRepo,
 		RoleRepo:           roleRepo,
 		TransactionManager: tManager,
 		FileService:        fileService,
@@ -277,6 +280,45 @@ func (ts *TeamService) LeaveTeam(userid int, teamid int64) {
 			Tag: exceptions.CONFLICT_ERROR,
 		})
 	}
+}
+
+func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag:    exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{exceptions.AUTH_TOKEN_EXPIRED},
+		})
+	}
+
+	var res dto.TeamListDto
+
+	userModel, err := ts.UserRepo.FindUserByID(userid)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{exceptions.USER_NOT_FOUND},
+		})
+	}
+	res.Userid = userModel.ID
+	res.FirstName = userModel.FirstName
+	res.LastName = userModel.LastName
+	res.Username = userModel.Username
+	res.UserProfile = ts.FileService.GetProfilePhotoURL(userid, false)
+	res.OneManTeamid = ts.TeamRepo.GetOneManTeamID(userid)
+
+	teams := ts.TeamRepo.GetTeamsForUserWithRole(userid)
+	for _, team := range teams {
+		res.Teams = append(res.Teams, dto.GetTeamBidDto{
+			ID:          team.ID,
+			Description: team.Description,
+			Title:       team.Title,
+			Position:    team.Position,
+			CanBid:      utils.Contains(team.RoleId.GetPermissionsForRole(), enums.BIDDER),
+			Profile:     ts.FileService.GetTeamProfilePhotoURL(team.ID, false),
+		})
+	}
+	return &res
+
 }
 
 func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int64) {
