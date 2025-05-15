@@ -111,7 +111,7 @@ func (projectService *ProjectService) GetProjectCount(userID int) int {
 	return count
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, price int64, tags []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, durationInt int, price int64, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
@@ -143,7 +143,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 
 	projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
 
-	duration := time.Now().Add(projectService.Constants.Project.LastTime)
+	duration := time.Now().AddDate(0, 0, durationInt)
 
 	projectID := projectService.ProjectRepo.CreateProject(ctx, tx, userID, label, title, description, duration)
 
