@@ -8,9 +8,10 @@ CREATE TABLE IF NOT EXISTS "project" (
   "status" int DEFAULT 1,
   "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_time" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  "start_time" TIMESTAMP WITH TIME ZONE,
   "end_time" TIMESTAMP WITH TIME ZONE,
   "duration" TIMESTAMP WITH TIME ZONE,
   FOREIGN KEY ("owner_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("selected_bid_id") REFERENCES "bid" ("id"),
-  FOREIGN KEY ("label") REFERENCES "label" ("id"),
+  FOREIGN KEY ("label") REFERENCES "label" ("id")
 );

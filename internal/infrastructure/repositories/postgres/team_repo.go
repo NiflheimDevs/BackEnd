@@ -599,7 +599,7 @@ func (tr *TeamRepo) GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDt
 	return &member
 }
 
-func (tr *TeamRepo) GetOneManTeamID(userid int) int64 {
+func (tr *TeamRepo) GetOneManTeamID(userid int) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -608,11 +608,14 @@ func (tr *TeamRepo) GetOneManTeamID(userid int) int64 {
 	query := "SELECT id FROM team WHERE title = $1"
 
 	err := tr.PG.QueryRow(ctx, query, strconv.Itoa(userid)).Scan(&teamid)
+	if err == pgx.ErrNoRows {
+		return 0, err
+	}
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
 		})
 	}
-	return teamid
+	return teamid, nil
 }

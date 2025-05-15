@@ -86,7 +86,9 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 			SelectedBid: project.SelectedBid,
 			Status:      project.State,
 			Tags:        project.Tags,
-			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			Duration:    project.Duration,
+			StartTime:   project.StartTime,
+			EndTime:     project.EndTime,
 		})
 	}
 
@@ -124,7 +126,9 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		LastName:    userInfo.LastName,
 		Username:    userInfo.Username,
 		Tags:        project.Tags,
-		Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+		Duration:    project.Duration,
+		StartTime:   project.StartTime,
+		EndTime:     project.EndTime,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -232,7 +236,9 @@ func (projectHandler *ProjectHandler) GetTeamProjects(w http.ResponseWriter, r *
 			SelectedBid: project.SelectedBid,
 			Status:      project.State,
 			Tags:        project.Tags,
-			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			Duration:    project.Duration,
+			StartTime:   project.StartTime,
+			EndTime:     project.EndTime,
 		})
 	}
 
@@ -271,7 +277,9 @@ func (projectHandler *ProjectHandler) GetOneManTeamProjects(w http.ResponseWrite
 			SelectedBid: project.SelectedBid,
 			Status:      project.State,
 			Tags:        project.Tags,
-			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			Duration:    project.Duration,
+			StartTime:   project.StartTime,
+			EndTime:     project.EndTime,
 		})
 	}
 

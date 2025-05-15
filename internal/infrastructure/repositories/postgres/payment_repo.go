@@ -78,8 +78,7 @@ func (paymentRepo *PaymentRepo) GetUserTransactions(userID int, offset, limit in
 
 	for result.Next() {
 		var transaction models.TransactionModel
-		var date time.Time
-		if err := result.Scan(&transaction.ID, &transaction.FromUser, &transaction.ToUser, &transaction.Amount, &date, &transaction.Description); err != nil {
+		if err := result.Scan(&transaction.ID, &transaction.FromUser, &transaction.ToUser, &transaction.Amount, &transaction.Date, &transaction.Description); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
@@ -87,7 +86,6 @@ func (paymentRepo *PaymentRepo) GetUserTransactions(userID int, offset, limit in
 				},
 			})
 		}
-		transaction.Date = date.Format("2006-01-02 15:04:05")
 		transactions = append(transactions, transaction)
 	}
 
@@ -121,7 +119,7 @@ func (paymentRepo *PaymentRepo) GetBalance(userID int) (int64, error) {
 
 func (paymentRepo *PaymentRepo) Withdraw(ctx context.Context, tx transaction.Tx, userID int, amount int64, description string) {
 
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 
 	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
 	_, err := tx.Exec(ctx, query, userID, 1, amount, now, description)
@@ -137,7 +135,7 @@ func (paymentRepo *PaymentRepo) Withdraw(ctx context.Context, tx transaction.Tx,
 }
 
 func (paymentRepo *PaymentRepo) Deposit(ctx context.Context, tx transaction.Tx, userID int, amount int64, description string) {
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 
 	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
 	_, err := tx.Exec(ctx, query, 1, userID, amount, now, description)
@@ -174,7 +172,7 @@ func (paymentRepo *PaymentRepo) UpdateWallet(ctx context.Context, tx transaction
 }
 
 func (paymentRepo *PaymentRepo) TransferMoney(ctx context.Context, tx transaction.Tx, fromUserID, toUserID int, amount int64, description string) {
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 
 	query := "INSERT INTO transaction (from_user_id, to_user_id, amount, date, description) VALUES ($1, $2, $3, $4, $5)"
 	_, err := tx.Exec(ctx, query, fromUserID, toUserID, amount, now, description)

@@ -72,11 +72,12 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration FROM project WHERE id = $1"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration,start_time,end_time FROM project WHERE id = $1"
 
 	var duration time.Time
+	var start, end sql.NullTime
 	var selectedBid sql.NullInt32
-	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration)
+	err := repo.PG.QueryRow(ctx, query, projectID).Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration, &start, &end)
 
 	if err == pgx.ErrNoRows {
 		return nil, err
@@ -86,6 +87,14 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 		project.SelectedBid = int(selectedBid.Int32)
 	} else {
 		project.SelectedBid = 0
+	}
+
+	if start.Valid {
+		project.StartTime = start.Time
+	}
+
+	if end.Valid {
+		project.EndTime = end.Time
 	}
 
 	project.Duration = duration
@@ -108,7 +117,7 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
+	query := "SELECT id,owner_id,title,description,label,selected_bid_id,status,duration,start_time,end_time FROM project WHERE owner_id = $1 ORDER BY id OFFSET $2 LIMIT $3"
 
 	result, err := repo.PG.Query(ctx, query, userID, offset, limit)
 
@@ -126,8 +135,9 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	for result.Next() {
 		var project models.ProjectModel
 		var duration time.Time
+		var start, end sql.NullTime
 		var selectedBid sql.NullInt32
-		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration); err != nil {
+		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration, &start, &end); err != nil {
 			panic(exceptions.Exception{
 				Tag: exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{
@@ -140,6 +150,14 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 			project.SelectedBid = int(selectedBid.Int32)
 		} else {
 			project.SelectedBid = 0
+		}
+
+		if start.Valid {
+			project.StartTime = start.Time
+		}
+
+		if end.Valid {
+			project.EndTime = end.Time
 		}
 
 		project.Duration = duration
@@ -173,10 +191,10 @@ func (repo *ProjectRepo) GetProjectCount(userID int) int {
 	return count
 }
 
-func (repo *ProjectRepo) CreateProject(ctx context.Context, tx transaction.Tx, userID, label int, title, description, duration string) int {
+func (repo *ProjectRepo) CreateProject(ctx context.Context, tx transaction.Tx, userID, label int, title, description string, duration time.Time) int {
 	var project_id int
 
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 
 	query := "INSERT INTO project (owner_id, title, description, label, status, duration, created_time, updated_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
 
@@ -200,7 +218,7 @@ func (repo *ProjectRepo) UpdateProject(projectID, UserID int, title, description
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now()
 
 	query := "UPDATE project SET title = $1, description = $2, updated_time=$3 WHERE id = $4 and owner_id = $5"
 
