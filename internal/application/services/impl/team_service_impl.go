@@ -309,7 +309,14 @@ func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
 	res.LastName = userModel.LastName
 	res.Username = userModel.Username
 	res.UserProfile = ts.FileService.GetProfilePhotoURL(userid, false)
-	res.OneManTeamid = ts.TeamRepo.GetOneManTeamID(userid)
+	res.OneManTeamid, err = ts.TeamRepo.GetOneManTeamID(userid)
+
+	if err != nil {
+		log.Println(userid, "does not have one man team!!!!!")
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
 
 	teams := ts.TeamRepo.GetTeamsForUserWithRole(userid)
 	for _, team := range teams {

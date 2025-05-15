@@ -15,5 +15,6 @@ type ProjectService interface {
 	DeleteProject(userID, projectID int)
 	EndOfProject(userID, projectID int)
 	GetTeamProjects(userID int, teamID int64) []models.ProjectModel
+	GetParticipatedProjectsForUser(userid int) []models.ProjectModel
 	GetOneManTeamProjects(userID int) []models.ProjectModel
 }

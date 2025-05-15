@@ -169,6 +169,71 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 	return projects
 }
 
+func (repo *ProjectRepo) GetAllProjectsRelatedToUser(userID int) []models.ProjectModel {
+	var projects []models.ProjectModel
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `SELECT p.id,p.owner_id,p.title,p.description,p.label,p.selected_bid_id,p.status,p.duration,p.created_time ,p.end_time 
+	FROM users AS u 
+	JOIN users_team AS ut ON u.id = ut.user_id
+	JOIN team AS t ON ut.team_id = t.id
+	JOIN bid AS b ON t.id = b.team_id
+	JOIN project AS p ON b.project_id = p.id
+	WHERE u.id = $1 AND p.status > 2 AND ((ut.joined_at > to_timestamp(EXTRACT(EPOCH FROM p.duration) + EXTRACT(EPOCH FROM p.created_time))) AND (ut.left_at IS NULL OR (p.status = 4 AND ut.left_at < p.end_time) ));`
+
+	result, err := repo.PG.Query(ctx, query, userID)
+
+	if err != nil {
+		log.Println("ProjectError: fetching participated projects for user", userID, "details:", err)
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	defer result.Close()
+
+	for result.Next() {
+		var project models.ProjectModel
+		var duration time.Time
+		var start, end sql.NullTime
+		var selectedBid sql.NullInt32
+		if err := result.Scan(&project.ID, &project.OwnerID, &project.Title, &project.Description, &project.Label, &selectedBid, &project.State, &duration, &start, &end); err != nil {
+			panic(exceptions.Exception{
+				Tag: exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{
+					exceptions.DATABASE_ERROR,
+				},
+			})
+		}
+
+		if selectedBid.Valid {
+			project.SelectedBid = int(selectedBid.Int32)
+		} else {
+			project.SelectedBid = 0
+		}
+
+		if start.Valid {
+			project.StartTime = start.Time
+		}
+
+		if end.Valid {
+			project.EndTime = end.Time
+		}
+
+		project.Duration = duration
+		tag := repo.TagRepo.GetProjectTag(project.ID)
+		project.Tags = tag
+		projects = append(projects, project)
+	}
+
+	return projects
+}
+
 func (repo *ProjectRepo) GetProjectCount(userID int) int {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
