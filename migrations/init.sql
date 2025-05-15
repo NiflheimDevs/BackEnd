@@ -48,43 +48,6 @@ CREATE TABLE IF NOT EXISTS "team" (
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "permission" (
-  "id" int PRIMARY KEY,
-  "name" varchar UNIQUE NOT NULL,
-  "description" text
-);
-
-CREATE TABLE IF NOT EXISTS "role" (
-  "id" int PRIMARY KEY,
-  "name" varchar NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS "label" (
-  "id" int PRIMARY KEY,
-  "name" varchar NOT NULL,
-  "description" text,
-  "price" numeric NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS "chat" (
-  "id" serial PRIMARY KEY,
-  "title" varchar,
-  "description" text
-);
-
-CREATE TABLE IF NOT EXISTS "tag" (
-  "id" int PRIMARY KEY,
-  "name" varchar NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS "team" (
-  "id" serial PRIMARY KEY,
-  "type" int DEFAULT 0,
-  "title" varchar,
-  "description" text,
-  "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS "users" (
   "id" serial PRIMARY KEY,
   "firstname" varchar,
@@ -219,53 +182,12 @@ CREATE TABLE IF NOT EXISTS "users_team" (
   "team_id" int NOT NULL,
   "position" varchar,
   "role_id" int NOT NULL,
+  "joined_at" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "leaved_at" timestamp with time zone,
   FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("team_id") REFERENCES "team" ("id") ON DELETE CASCADE,
-  FOREIGN KEY ("role_id") REFERENCES "role" ("id"),
-  UNIQUE ("team_id", "user_id")
+  FOREIGN KEY ("role_id") REFERENCES "role" ("id")
 );
-
-CREATE FUNCTION delete_cascade_for_career() RETURNS TRIGGER AS $$
-BEGIN
-    DELETE FROM users_career_tag AS uct WHERE uct.career_user_id = OLD.id AND uct.type = 1;
-    RETURN OLD;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER career_delete_trigger
-BEFORE DELETE ON career
-FOR EACH ROW EXECUTE FUNCTION delete_cascade_for_career();
-
-CREATE FUNCTION delete_cascade_for_user() RETURNS TRIGGER AS $$
-BEGIN
-    DELETE FROM users_career_tag AS uct WHERE uct.career_user_id = OLD.id AND uct.type = 0;
-    RETURN OLD;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER user_delete_trigger
-BEFORE DELETE ON users
-FOR EACH ROW EXECUTE FUNCTION delete_cascade_for_user();
-
-CREATE OR REPLACE FUNCTION enforce_fk_constraint_on_users_career_tag() RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.type = 1 THEN
-        IF NOT EXISTS (SELECT 1 FROM career WHERE id = NEW.career_user_id) THEN
-            RAISE EXCEPTION 'Invalid reference: % does not exist in career', NEW.career_user_id;
-        END IF;
-    ELSIF NEW.type = 0 THEN
-        IF NOT EXISTS (SELECT 1 FROM users WHERE id = NEW.career_user_id) THEN
-            RAISE EXCEPTION 'Invalid reference: % does not exist in users', NEW.career_user_id;
-        END IF;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER check_fk_users_career_tag
-BEFORE INSERT OR UPDATE ON users_career_tag
-FOR EACH ROW EXECUTE FUNCTION enforce_fk_constraint_on_users_career_tag();
-
 
 DO $$
 BEGIN
