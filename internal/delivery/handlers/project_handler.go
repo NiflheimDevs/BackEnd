@@ -149,6 +149,7 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 		Description string `json:"description" validate:"required"`
 		Tags        []int  `json:"tags" validate:"required"`
 		Label       int    `json:"label" validate:"required"`
+		Duration    int    `json:"duration" validate:"required"`
 	}
 
 	params := Validated[createProjectParams](projectHandler.Validator, r)
@@ -157,7 +158,7 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 	price := projectHandler.LabelService.GetLabelInfo(params.Label).Price
 
-	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, price, params.Tags)
+	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, params.Duration, price, params.Tags)
 
 	dto := dto.CreateProjectDTO{
 		ProjectID: project,
