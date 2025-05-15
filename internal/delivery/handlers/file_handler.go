@@ -251,6 +251,13 @@ func (fh *FileHandler) GetProfilePhoto(w http.ResponseWriter, r *http.Request) {
 func (fh *FileHandler) GetResume(w http.ResponseWriter, r *http.Request) {
 	userid := r.Context().Value(fh.Constants.Context.UserID).(int)
 
+	userIDString := chi.URLParam(r, "id")
+	targetUserID, _ := strconv.Atoi(userIDString)
+
+	if targetUserID != 0 {
+		userid = targetUserID
+	}
+
 	url := fh.FileService.GetResumeURL(userid)
 
 	w.WriteHeader(http.StatusOK)

@@ -333,6 +333,17 @@ func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
 
 }
 
+func (ts *TeamService) GetAllTeamsIDs(userID int) []int64 {
+	if userID > 0 {
+		ids := ts.TeamRepo.GetEveryTeamID(userID)
+		oneManID, _ := ts.TeamRepo.GetOneManTeamID(userID)
+		ids = append(ids, oneManID)
+		return ids
+	} else {
+		return nil
+	}
+}
+
 func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int64) {
 	if commanderid < 0 {
 		panic(exceptions.Exception{

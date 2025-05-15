@@ -81,7 +81,7 @@ func Routes(app *wire.Application) http.Handler {
 	// mux.Get("/user/{id}/project", app.Handlers.ProjectHandler.GetOneManTeamProjects)
 
 	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
-	mux.Get("/user/resume", app.Handlers.FileHandler.GetResume)
+	mux.Get("/user/resume/{id}", app.Handlers.FileHandler.GetResume)
 
 	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
