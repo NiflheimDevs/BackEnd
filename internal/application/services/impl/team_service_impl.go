@@ -159,6 +159,12 @@ func (ts *TeamService) GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInf
 	team, err := ts.TeamRepo.GetTeamInfo(teamid)
 	if err != nil {
 		team, err = ts.TeamRepo.GetOneManTeamInfo(teamid)
+		if err != nil {
+			log.Println("OneManTeamError: details:", err)
+			panic(exceptions.Exception{
+				Tag: exceptions.INTERNAL_ERROR,
+			})
+		}
 		team.Type = 2
 		team.Profile = ts.FileService.GetProfilePhotoURL(int(team.ID), false)
 	} else {
@@ -279,12 +285,19 @@ func (ts *TeamService) addMembersFunc(teamid int64, members []int) {
 }
 
 func (ts *TeamService) LeaveTeam(userid int, teamid int64) {
+	member := ts.TeamRepo.GetMemberForTeam(teamid, userid)
+
 	err := ts.TeamRepo.RemoveMember(userid, teamid)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.CONFLICT_ERROR,
 		})
 	}
+
+	if member.Role == enums.TEAM_OWNER {
+		ts.TeamRepo.DeleteTeam(teamid)
+	}
+
 }
 
 func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
@@ -377,6 +390,16 @@ func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int6
 			isLeaving = true
 			continue
 		}
+
+		poorMember := ts.TeamRepo.GetMemberForTeam(teamid, poorGuyid)
+		if poorMember == nil {
+			continue
+		}
+
+		if !member.Role.DoesHavePowerOver(poorMember.Role) {
+			continue
+		}
+
 		err := ts.TeamRepo.RemoveMember(poorGuyid, teamid)
 		if err != nil {
 			log.Println("KickMemberError: coudldn't kick member", poorGuyid, "by", commanderid, "at team", teamid, "detail:", err)
@@ -423,6 +446,18 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 		})
 	}
 
+	targetMember := ts.TeamRepo.GetMemberForTeam(info.TeamID, info.UserID)
+	if targetMember == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.CONFLICT_ERROR,
+		})
+	}
+	if member.Role.DoesHavePowerOver(targetMember.Role) {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
 	err := ts.TeamRepo.UpdateMemberRole(role, info.UserID, info.TeamID)
 	if err != nil {
 		panic(exceptions.Exception{
@@ -455,6 +490,18 @@ func (ts *TeamService) UpdatePosition(commanderid int, req *dto.UpdateMemberPosi
 		panic(exceptions.Exception{
 			Tag:    exceptions.FORBIDDEN,
 			Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+		})
+	}
+
+	targetMember := ts.TeamRepo.GetMemberForTeam(req.Teamid, req.Userid)
+	if targetMember == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.CONFLICT_ERROR,
+		})
+	}
+	if member.Role.DoesHavePowerOver(targetMember.Role) {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
 		})
 	}
 
