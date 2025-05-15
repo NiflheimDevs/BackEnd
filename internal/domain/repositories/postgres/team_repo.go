@@ -29,5 +29,5 @@ type TeamRepo interface {
 	GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDto
 	GetTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error)
 	GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error)
-	GetOneManTeamID(userid int) int64
+	GetOneManTeamID(userid int) (int64, error)
 }

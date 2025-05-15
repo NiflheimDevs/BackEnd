@@ -143,7 +143,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 
 	projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
 
-	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
+	duration := time.Now().Add(projectService.Constants.Project.LastTime)
 
 	projectID := projectService.ProjectRepo.CreateProject(ctx, tx, userID, label, title, description, duration)
 
@@ -372,7 +372,11 @@ func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) 
 	for _, bid := range bids {
 		project, _ := projectService.ProjectRepo.GetProject(bid.ProjectID)
 
-		projects = append(projects, *project)
+		if project.State == 3 || project.State == 4 {
+			tags := projectService.TagRepo.GetProjectTag(project.ID)
+			project.Tags = tags
+			projects = append(projects, *project)
+		}
 	}
 	return projects
 }
@@ -389,10 +393,7 @@ func (projectService *ProjectService) GetOneManTeamProjects(userID int) []models
 
 	oneManTeamID := projectService.TeamService.GetOneManTeamID(userID)
 
-	var projects []models.ProjectModel
-
 	oneManTeamProjects := projectService.GetTeamProjects(userID, oneManTeamID)
-	projects = append(projects, oneManTeamProjects...)
 
-	return projects
+	return oneManTeamProjects
 }
