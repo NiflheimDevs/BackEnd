@@ -14,6 +14,9 @@ psql -U niflheim -d bidlancerdb -f <(echo "SET app.skip_seeds = 'on'; \i 'migrat
 
 psql -U niflheim -d bidlancerdb -f data_dump.sql
 
+psql -U niflheim -d bidlancerdb -f migrations/triggers.sql
+
 unset PGPASSWORD
+
 
 rm data_dump.sql
