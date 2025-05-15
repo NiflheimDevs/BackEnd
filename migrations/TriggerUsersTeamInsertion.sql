@@ -5,7 +5,7 @@ BEGIN
         FROM users_team
         WHERE user_id = NEW.user_id
           AND team_id = NEW.team_id
-          AND leaved_at IS NULL
+          AND left_at IS NULL
     ) THEN
         RAISE EXCEPTION 'User % is already in team %', NEW.user_id, NEW.team_id;
     END IF;

@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS "users_team" (
   "position" varchar,
   "role_id" int NOT NULL,
   "joined_at" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "leaved_at" timestamp with time zone,
+  "left_at" timestamp with time zone,
   FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
   FOREIGN KEY ("team_id") REFERENCES "team" ("id") ON DELETE CASCADE,
   FOREIGN KEY ("role_id") REFERENCES "role" ("id")
