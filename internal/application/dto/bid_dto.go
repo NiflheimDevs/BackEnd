@@ -23,6 +23,11 @@ type PublicProjectBidInfo struct {
 	ExpectedTime int                  `json:"expected_time"`
 }
 
+type ProjectBidInfo struct {
+	Bids    []PublicProjectBidInfo `json:"bids"`
+	TeamIDs []int64                `json:"ids"`
+}
+
 type PrivateProjectBidInfo struct {
 	BidID        int                  `json:"bid_id"`
 	Type         int                  `json:"type"`
