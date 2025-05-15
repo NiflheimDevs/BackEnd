@@ -10,12 +10,14 @@ import (
 	midauth "github.com/niflheimdevs/backend/internal/delivery/middlewares/authentication"
 	panicwall "github.com/niflheimdevs/backend/internal/delivery/middlewares/exceptions"
 	midratelimit "github.com/niflheimdevs/backend/internal/delivery/middlewares/ratelimit"
+	midupgrader "github.com/niflheimdevs/backend/internal/delivery/middlewares/upgrader"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/seed"
 	db "github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
 	repositoriesimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	redisimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 	"github.com/niflheimdevs/backend/pkg"
 
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
@@ -109,6 +111,7 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewBidHandler,
 	handlers.NewTeamHandler,
 	handlers.NewRoleHandler,
+	handlers.NewChatHandler,
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -116,6 +119,7 @@ var MiddlewareProviderSet = wire.NewSet(
 	midratelimit.NewRateLimit,
 	midauth.NewAuth,
 	panicwall.NewPanicWall,
+	midupgrader.NewWebSocketUpgrader,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -146,6 +150,7 @@ type Middlewares struct {
 	Recovery       *panicwall.PanicWall
 	RateLimit      *midratelimit.RateLimit
 	Authentication *midauth.Authentication
+	Upgrader       *midupgrader.WebSocketUpgrader
 }
 
 type Handlers struct {
@@ -157,6 +162,7 @@ type Handlers struct {
 	BidHandler     *handlers.BidHandler
 	TeamHandler    *handlers.TeamHandler
 	RoleHandler    *handlers.RoleHandler
+	ChatHandler    *handlers.ChatHandler
 }
 
 type Application struct {
@@ -165,7 +171,7 @@ type Application struct {
 	Seeder      *seed.Seeder
 }
 
-func InitializeApplication(container *bootstrap.Di) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Application, error) {
 	wire.Build(
 		ProviderSet,
 		wire.Struct(new(Application), "*"),

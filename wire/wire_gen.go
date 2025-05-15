@@ -15,6 +15,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/delivery/middlewares/authentication"
 	"github.com/niflheimdevs/backend/internal/delivery/middlewares/exceptions"
 	"github.com/niflheimdevs/backend/internal/delivery/middlewares/ratelimit"
+	"github.com/niflheimdevs/backend/internal/delivery/middlewares/upgrader"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
@@ -25,12 +26,13 @@ import (
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 	"github.com/niflheimdevs/backend/pkg"
 )
 
 // Injectors from wire.go:
 
-func InitializeApplication(container *bootstrap.Di) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Application, error) {
 	constants := ProvideConstants(container)
 	env := ProvideEnv(container)
 	s3 := ProvideS3(container)
@@ -70,6 +72,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	teamHandler := handlers.NewTeamHandler(teamService, constants, validate)
 	roleService := servicesimpl.NewRoleService()
 	roleHandler := handlers.NewRoleHandler(roleService, constants, validate)
+	chatHandler := handlers.NewChatHandler(validate, jwt, constants, hub)
 	wireHandlers := &Handlers{
 		FileHandler:    fileHandler,
 		UserHandler:    userHandler,
@@ -79,14 +82,17 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 		BidHandler:     bidHandler,
 		TeamHandler:    teamHandler,
 		RoleHandler:    roleHandler,
+		ChatHandler:    chatHandler,
 	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit(constants)
 	authentication := midauth.NewAuth(constants, jwt)
+	webSocketUpgrader := midupgrader.NewWebSocketUpgrader(constants)
 	middlewares := &Middlewares{
 		Recovery:       panicWall,
 		RateLimit:      rateLimit,
 		Authentication: authentication,
+		Upgrader:       webSocketUpgrader,
 	}
 	seeder := seed.NewSeeder(pgxTxManager)
 	application := &Application{
@@ -112,9 +118,9 @@ var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.N
 	ProvideS3,
 )
 
-var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, handlers.NewRoleHandler, wire.Struct(new(Handlers), "*"))
+var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, handlers.NewRoleHandler, handlers.NewChatHandler, wire.Struct(new(Handlers), "*"))
 
-var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, wire.Struct(new(Middlewares), "*"))
+var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, midupgrader.NewWebSocketUpgrader, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 	return container.Const
@@ -142,6 +148,7 @@ type Middlewares struct {
 	Recovery       *panicwall.PanicWall
 	RateLimit      *midratelimit.RateLimit
 	Authentication *midauth.Authentication
+	Upgrader       *midupgrader.WebSocketUpgrader
 }
 
 type Handlers struct {
@@ -153,6 +160,7 @@ type Handlers struct {
 	BidHandler     *handlers.BidHandler
 	TeamHandler    *handlers.TeamHandler
 	RoleHandler    *handlers.RoleHandler
+	ChatHandler    *handlers.ChatHandler
 }
 
 type Application struct {

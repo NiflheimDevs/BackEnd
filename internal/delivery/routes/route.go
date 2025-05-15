@@ -28,6 +28,12 @@ func Routes(app *wire.Application) http.Handler {
 		})
 	})
 
+	mux.Route("/ws", func(r chi.Router) {
+		r.Use(app.Middlewares.Upgrader.Upgrade)
+		r.Use(app.Middlewares.Recovery.Recovery)
+		r.Get("/chat/{room_id}/token/{token}", app.Handlers.ChatHandler.HandleWebSocket)
+	})
+
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	//mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
