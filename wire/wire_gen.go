@@ -66,7 +66,7 @@ func InitializeApplication(container *bootstrap.Di) (*Application, error) {
 	projectHandler := handlers.NewProjectHandler(constants, projectService, userService, labelService, bidService, jwt, validate)
 	generalHandler := handlers.NewGeneralHandler(tagService, careerService, labelService, jwt, constants, validate)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, constants, validate)
-	bidHandler := handlers.NewBidHandler(constants, validate, bidService)
+	bidHandler := handlers.NewBidHandler(constants, validate, bidService, teamService)
 	teamHandler := handlers.NewTeamHandler(teamService, constants, validate)
 	roleService := servicesimpl.NewRoleService()
 	roleHandler := handlers.NewRoleHandler(roleService, constants, validate)

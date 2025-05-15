@@ -13,20 +13,23 @@ import (
 )
 
 type BidHandler struct {
-	Validator  *validator.Validate
-	Constants  *bootstrap.Constants
-	BidService services.BidService
+	Validator   *validator.Validate
+	Constants   *bootstrap.Constants
+	BidService  services.BidService
+	TeamService services.TeamService
 }
 
 func NewBidHandler(
 	constants *bootstrap.Constants,
 	validator *validator.Validate,
 	bidService services.BidService,
+	teamService services.TeamService,
 ) *BidHandler {
 	return &BidHandler{
-		Validator:  validator,
-		Constants:  constants,
-		BidService: bidService,
+		Validator:   validator,
+		Constants:   constants,
+		BidService:  bidService,
+		TeamService: teamService,
 	}
 }
 
@@ -86,10 +89,19 @@ func (bh *BidHandler) UpdateBid(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BidHandler) GetProjectBids(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(bh.Constants.Context.UserID).(int)
+
 	projectIDString := chi.URLParam(r, "project_id")
 	projectID, _ := strconv.Atoi(projectIDString)
 
-	result := bh.BidService.GetPublicProjectBids(projectID)
+	bids := bh.BidService.GetPublicProjectBids(projectID)
+
+	teamIDs := bh.TeamService.GetAllTeamsIDs(userID)
+
+	result := dto.ProjectBidInfo{
+		Bids:    bids,
+		TeamIDs: teamIDs,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

@@ -308,7 +308,7 @@ func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
 	res.LastName = userModel.LastName
 	res.Username = userModel.Username
 	res.UserProfile = ts.FileService.GetProfilePhotoURL(userid, false)
-	res.OneManTeamid = ts.TeamRepo.GetOneManTeamID(userid)
+	res.OneManTeamid, _ = ts.TeamRepo.GetOneManTeamID(userid)
 
 	teams := ts.TeamRepo.GetTeamsForUserWithRole(userid)
 	for _, team := range teams {
@@ -323,6 +323,17 @@ func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
 	}
 	return &res
 
+}
+
+func (ts *TeamService) GetAllTeamsIDs(userID int) []int64 {
+	if userID > 0 {
+		ids := ts.TeamRepo.GetEveryTeamID(userID)
+		oneManID, _ := ts.TeamRepo.GetOneManTeamID(userID)
+		ids = append(ids, oneManID)
+		return ids
+	} else {
+		return nil
+	}
 }
 
 func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int64) {

@@ -26,4 +26,5 @@ type TeamService interface {
 	DeleteTeamProfile(commanderid int, teamid int64)
 	UpdateTeamProfile(commanderid int, teamid int64, data []byte)
 	GetOneManTeamID(userid int) int64
+	GetAllTeamsIDs(userID int) []int64
 }
