@@ -10,7 +10,7 @@ import (
 type TeamService interface {
 	BehindCurtainTeam(ctx context.Context, tx transaction.Tx, userid int)
 	CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
-	GetTeamsForUser(userid int) []dto.GetTeamPreviewDto
+	GetTeamsForUser(userid int, active, dontCare int) []dto.GetTeamPreviewDto
 	GetTeam(commanderid int, teamid int64) *dto.GetTeamDto
 	GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInfo
 	GetTeamsForBidding(userid int) *dto.TeamListDto

@@ -86,6 +86,7 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 
 	err = ts.TeamRepo.AddMemberWithTx(ctx, tx, userid, teamid, "", enums.TEAM_OWNER)
 	if err != nil {
+		log.Println("TeamError: owner couldn't be added. details:", err)
 		panic(exceptions.Exception{
 			Tag: exceptions.CONFLICT_ERROR,
 		})
@@ -104,8 +105,8 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 	return teamid
 }
 
-func (ts *TeamService) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
-	res := ts.TeamRepo.GetTeamsForUser(userid)
+func (ts *TeamService) GetTeamsForUser(userid int, active, dontCare int) []dto.GetTeamPreviewDto {
+	res := ts.TeamRepo.GetTeamsForUser(userid, active != 0, dontCare != 0)
 
 	for i := 0; i < len(res); i++ {
 		res[i].Profile = ts.FileService.GetTeamProfilePhotoURL(res[i].ID, false)
@@ -308,7 +309,14 @@ func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
 	res.LastName = userModel.LastName
 	res.Username = userModel.Username
 	res.UserProfile = ts.FileService.GetProfilePhotoURL(userid, false)
-	res.OneManTeamid, _ = ts.TeamRepo.GetOneManTeamID(userid)
+	res.OneManTeamid, err = ts.TeamRepo.GetOneManTeamID(userid)
+
+	if err != nil {
+		log.Println(userid, "does not have one man team!!!!!")
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
 
 	teams := ts.TeamRepo.GetTeamsForUserWithRole(userid)
 	for _, team := range teams {

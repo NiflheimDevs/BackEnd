@@ -355,6 +355,22 @@ func (projectService *ProjectService) EndOfProject(userID, projectID int) {
 	projectService.ProjectRepo.UpdateProjectState(projectID, 4)
 }
 
+func (ps *ProjectService) GetParticipatedProjectsForUser(userid int) []models.ProjectModel {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	projects := ps.ProjectRepo.GetAllProjectsRelatedToUser(userid)
+
+	return projects
+
+}
+
 func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) []models.ProjectModel {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
@@ -364,8 +380,6 @@ func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) 
 			},
 		})
 	}
-
-	//check that member is in team
 
 	bids := projectService.BidRepo.GetTeamBids(teamID)
 	var projects []models.ProjectModel

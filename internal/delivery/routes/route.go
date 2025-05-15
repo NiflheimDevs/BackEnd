@@ -50,6 +50,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/user/tag", app.Handlers.GeneralHandler.UpdateUserTag)
 
 	mux.Get("/project/user/{user_id}", app.Handlers.ProjectHandler.GetUserProject)
+	mux.Get("/project/participated/{user_id}", app.Handlers.ProjectHandler.GetParticipatedProjectsForUser)
 	mux.Get("/project/{project_id}", app.Handlers.ProjectHandler.GetSpeceficProject)
 	mux.Post("/project/create", app.Handlers.ProjectHandler.CreateProject)
 	mux.Put("/project/{project_id}", app.Handlers.ProjectHandler.UpdateProject)
@@ -77,7 +78,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Delete("/user/resume", app.Handlers.FileHandler.DeleteUserResume)
 	mux.Post("/team/profile/{team_id}", app.Handlers.FileHandler.UploadTeamProfilePhoto)
 	mux.Delete("/team/profile/{team_id}", app.Handlers.FileHandler.DeleteTeamProfilePhoto)
-	mux.Get("/user/{id}/project", app.Handlers.ProjectHandler.GetOneManTeamProjects)
+	// mux.Get("/user/{id}/project", app.Handlers.ProjectHandler.GetOneManTeamProjects)
 
 	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
 	mux.Get("/user/resume/{id}", app.Handlers.FileHandler.GetResume)
