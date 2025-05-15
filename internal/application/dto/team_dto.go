@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 )
@@ -60,6 +62,8 @@ type GetTeamPreviewDto struct {
 	Description string          `json:"description"`
 	Position    string          `json:"position"`
 	Profile     string          `json:"profile"`
+	JoinedAt    time.Time       `json:"joined_at"`
+	LeftAt      time.Time       `json:"left_at"`
 	OwnerInfo   OwnerPreviewDto `json:"owner"`
 }
 
