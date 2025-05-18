@@ -489,7 +489,7 @@ func (tr *TeamRepo) GetMembersForTeam(teamid int64) []dto.ReadMemberDto {
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
-		WHERE ut.team_id = $1 AND ut.left_at = NULL`
+		WHERE ut.team_id = $1 AND ut.left_at IS NULL`
 
 	rows, err := tr.PG.Query(ctx, query, teamid)
 	if err != nil {
@@ -544,7 +544,7 @@ func (tr *TeamRepo) GetMembersForTeamFilterdByRole(teamid int64, roleid enums.Ro
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
-		WHERE ut.team_id = $1 AND ut.role_id = $2 AND ut.left_at = NULL`
+		WHERE ut.team_id = $1 AND ut.role_id = $2 AND ut.left_at IS NULL`
 
 	rows, err := tr.PG.Query(ctx, query, teamid, roleid)
 	if err != nil {
@@ -596,7 +596,7 @@ func (tr *TeamRepo) GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDt
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
-		WHERE ut.team_id = $1 AND u.id = $2 AND ut.left_at = NULL`
+		WHERE ut.team_id = $1 AND u.id = $2 AND ut.left_at IS NULL`
 	var member dto.ReadMemberDto
 	var info dto.MemberInfoDto
 	var role sql.NullInt64
