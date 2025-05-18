@@ -434,6 +434,8 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 
 	member := ts.TeamRepo.GetMemberForTeam(info.TeamID, commanderid)
 	if member == nil {
+
+		log.Println("MemberError: commander", commanderid, "is not in team", info.TeamID)
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 		})
@@ -453,6 +455,7 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 		})
 	}
 	if member.Role.DoesHavePowerOver(targetMember.Role) {
+		log.Println("RoleError: user", member.Info.Userid, "doesn't have power over user", targetMember.Info.Userid, "in team", info.TeamID)
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 		})
