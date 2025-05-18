@@ -454,7 +454,7 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 			Tag: exceptions.CONFLICT_ERROR,
 		})
 	}
-	if member.Role.DoesHavePowerOver(targetMember.Role) {
+	if !member.Role.DoesHavePowerOver(targetMember.Role) {
 		log.Println("RoleError: user", member.Info.Userid, "doesn't have power over user", targetMember.Info.Userid, "in team", info.TeamID)
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
@@ -502,7 +502,7 @@ func (ts *TeamService) UpdatePosition(commanderid int, req *dto.UpdateMemberPosi
 			Tag: exceptions.CONFLICT_ERROR,
 		})
 	}
-	if member.Role.DoesHavePowerOver(targetMember.Role) {
+	if !member.Role.DoesHavePowerOver(targetMember.Role) {
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 		})
