@@ -96,7 +96,8 @@ CREATE TABLE IF NOT EXISTS "project" (
 
 ALTER TABLE bid
 ADD FOREIGN KEY ("project_id")
-REFERENCES "project" ("id");
+REFERENCES "project" ("id")
+ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS "comment" (
   "id" serial PRIMARY KEY,

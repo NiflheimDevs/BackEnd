@@ -12,4 +12,5 @@ CREATE TABLE IF NOT EXISTS "bid" (
 );
 ALTER TABLE bid
 ADD FOREIGN KEY ("project_id")
-REFERENCES "project" ("id");
+REFERENCES "project" ("id")
+ON DELETE CASCADE;
