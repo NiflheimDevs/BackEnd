@@ -19,6 +19,7 @@ type PutBid struct {
 type PublicProjectBidInfo struct {
 	BidID        int                  `json:"bid_id"`
 	TeamInfo     *GetInternalTeamInfo `json:"team_info"`
+	PrePayment   int64                `json:"pre_payment"`
 	Total        int64                `json:"total"`
 	ExpectedTime int                  `json:"expected_time"`
 }
