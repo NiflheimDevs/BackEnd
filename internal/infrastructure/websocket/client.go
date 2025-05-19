@@ -15,15 +15,15 @@ type Client struct {
 	Hub              *Hub
 	Conn             *websocket.Conn
 	Send             chan []byte
-	RoomID           uint
-	UserID           uint
+	RoomID           int
+	UserID           int
 	Mu               sync.Mutex
 	Done             chan struct{}
 	CloseOnce        sync.Once
 }
 
 func NewClient(
-	hub *Hub, conn any, roomID, userID uint,
+	hub *Hub, conn any, roomID, userID int,
 	websocketSetting *bootstrap.WebsocketSetting,
 ) *Client {
 	wsConn, _ := conn.(*websocket.Conn)

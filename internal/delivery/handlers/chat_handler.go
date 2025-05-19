@@ -11,10 +11,11 @@ import (
 )
 
 type ChatHandler struct {
-	validator  *validator.Validate
-	JWTService services.JWT
-	Constants  *bootstrap.Constants
-	Hub        *websocket.Hub
+	validator   *validator.Validate
+	JWTService  services.JWT
+	Constants   *bootstrap.Constants
+	Hub         *websocket.Hub
+	ChatService services.ChatService
 }
 
 func NewChatHandler(
@@ -22,18 +23,20 @@ func NewChatHandler(
 	jwtService services.JWT,
 	constants *bootstrap.Constants,
 	hub *websocket.Hub,
+	chatService services.ChatService,
 ) *ChatHandler {
 	return &ChatHandler{
-		validator:  validator,
-		JWTService: jwtService,
-		Constants:  constants,
-		Hub:        hub,
+		validator:   validator,
+		JWTService:  jwtService,
+		Constants:   constants,
+		Hub:         hub,
+		ChatService: chatService,
 	}
 }
 
 func (ch *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	type roomConnectionParam struct {
-		RoomID uint   `uri:"room_id" validate:"required"`
+		RoomID int    `uri:"room_id" validate:"required"`
 		Token  string `uri:"token" validate:"required"`
 	}
 
@@ -53,7 +56,7 @@ func (ch *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	userID := uint(claims["sub"].(float64))
+	userID := int(claims["sub"].(float64))
 
 	conn := r.Context().Value(ch.Constants.Context.WebSocketConnection)
 

@@ -52,6 +52,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewTeamRepo,
 	repositoriesimpl.NewRoleRepo,
 	repositoriesimpl.NewBidRepo,
+	repositoriesimpl.NewChatRepo,
 	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -63,6 +64,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)),
 	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
+	wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -84,6 +86,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
 	servicesimpl.NewRoleService,
+	servicesimpl.NewChatService,
 
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
@@ -95,6 +98,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.BidService), new(*servicesimpl.BidService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
+	wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)),
 	wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)),
 
 	ProvideConstants,

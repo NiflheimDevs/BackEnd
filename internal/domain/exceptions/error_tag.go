@@ -50,6 +50,8 @@ const (
 
 	PROJECT_NOT_FOUND SpecificError = "PROJECT_NOT_FOUND"
 
+	CHAT_NOT_FOUND SpecificError = "CHAT_NOT_FOUND"
+
 	USER_NOT_OWNER SpecificError = "USER_NOT_OWNER"
 
 	ALREADY_HAS_BID      SpecificError = "ALREADY_HAS_BID"

@@ -6,8 +6,8 @@ import (
 )
 
 type Hub struct {
-	Clients    map[uint]map[*Client]bool
-	Rooms      map[uint]map[*Client]bool
+	Clients    map[int]map[*Client]bool
+	Rooms      map[int]map[*Client]bool
 	Broadcast  chan *Message
 	Register   chan *Client
 	Unregister chan *Client
@@ -16,8 +16,8 @@ type Hub struct {
 
 func NewHub() *Hub {
 	return &Hub{
-		Clients:    make(map[uint]map[*Client]bool),
-		Rooms:      make(map[uint]map[*Client]bool),
+		Clients:    make(map[int]map[*Client]bool),
+		Rooms:      make(map[int]map[*Client]bool),
 		Broadcast:  make(chan *Message),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
@@ -105,7 +105,7 @@ func (hub *Hub) handleBroadcast(message *Message) {
 	}
 }
 
-func (hub *Hub) SendToUser(userID uint, messageType string, content []byte) {
+func (hub *Hub) SendToUser(userID int, messageType string, content []byte) {
 	hub.Mu.RLock()
 	defer hub.Mu.RUnlock()
 

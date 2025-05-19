@@ -11,10 +11,10 @@ const (
 )
 
 type Message struct {
-	MessageID uint            `json:"id"`
+	MessageID int             `json:"id"`
 	Type      string          `json:"type"`
-	RoomID    uint            `json:"room_id,omitempty"`
-	SenderID  uint            `json:"sender_id,omitempty"`
+	RoomID    int             `json:"room_id"`
+	SenderID  int             `json:"sender_id"`
 	Content   json.RawMessage `json:"content"`
 	Timestamp time.Time       `json:"timestamp"`
 	Client    *Client         `json:"-"`
