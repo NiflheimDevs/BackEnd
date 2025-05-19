@@ -21,6 +21,7 @@ type PublicProjectBidInfo struct {
 	TeamInfo     *GetInternalTeamInfo `json:"team_info"`
 	PrePayment   int64                `json:"pre_payment"`
 	Total        int64                `json:"total"`
+	Description  string               `json:"description"`
 	ExpectedTime int                  `json:"expected_time"`
 }
 

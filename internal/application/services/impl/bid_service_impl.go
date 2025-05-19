@@ -55,6 +55,7 @@ func (bs BidService) GetPublicProjectBids(projectID int) []dto.PublicProjectBidI
 		bidInfo.TeamInfo = teamInfo
 		bidInfo.PrePayment = bid.PrePayment
 		bidInfo.Total = bid.Total
+		bidInfo.Description = bid.Description
 		bidInfo.ExpectedTime = bid.ExpectedTime
 		bidInfos = append(bidInfos, bidInfo)
 	}

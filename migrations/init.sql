@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS "bid" (
   "description" text,
   "expected_time" int,
   "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("team_id") REFERENCES "team" ("id"),
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id") ON DELETE CASCADE,
   UNIQUE ("team_id", "project_id")
 );
 
