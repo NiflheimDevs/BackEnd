@@ -33,9 +33,9 @@ func (cs *ChatService) GetAllRoom(userID int) []dto.RoomInfo {
 		})
 	}
 
-	users := cs.ChatRepo.GetAllRoomInfo(userID)
+	rooms := cs.ChatRepo.GetAllRoomInfo(userID)
 
-	return users
+	return rooms
 }
 
 func (cs *ChatService) GetRoomMessages(userID, roomID int) []dto.Message {
@@ -84,6 +84,20 @@ func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) {
 			Errors: []exceptions.SpecificError{exceptions.AUTH_ACCESS_DENIED},
 		})
 	}
+
+	rooms := cs.GetAllRoom(userID)
+
+	for _, room := range rooms {
+		if room.UserID == targetUserID {
+			panic(exceptions.Exception{
+				Tag: exceptions.FORBIDDEN,
+				Errors: []exceptions.SpecificError{
+					exceptions.ALREADY_A_MEMBER,
+				},
+			})
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

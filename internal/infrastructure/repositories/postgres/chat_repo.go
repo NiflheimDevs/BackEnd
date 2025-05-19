@@ -51,7 +51,7 @@ func (cr *ChatRepo) GetAllRoomInfo(userID int) []dto.RoomInfo {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := `SELECT uc.chat_id,u.username,u.firstname,u.lastname
+	query := `SELECT uc.chat_id,u.id,u.username,u.firstname,u.lastname
 				FROM users u
 				JOIN users_chat uc ON u.id = uc.user_id
 				WHERE uc.chat_id IN (
@@ -72,7 +72,7 @@ func (cr *ChatRepo) GetAllRoomInfo(userID int) []dto.RoomInfo {
 	for results.Next() {
 		var user dto.RoomInfo
 		var first, last sql.NullString
-		err := results.Scan(&user.RoomID, &user.Username, &first, &last)
+		err := results.Scan(&user.RoomID, &user.UserID, &user.Username, &first, &last)
 		if err != nil {
 			panic(exceptions.Exception{
 				Tag:    exceptions.INTERNAL_ERROR,
