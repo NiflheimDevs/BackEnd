@@ -22,11 +22,13 @@ type TeamRepo interface {
 	GetTeamForUser(userid int, teamid int64) *models.TeamModel
 	GetTeam(teamid int64) *models.TeamModel
 	GetEveryTeamInfo(teamid int64) *models.TeamModel
-	GetTeamsForUser(userid int) []dto.GetTeamPreviewDto
+	GetTeamsForUser(userid int, isActive, dontCare bool) []dto.GetTeamPreviewDto
+	GetTeamsForUserWithRole(userid int) []dto.GetTeamWithRole
 	GetMembersForTeamFilterdByRole(teamid int64, roleid enums.RoleType) []dto.ReadMemberDto
 	GetMembersForTeam(teamid int64) []dto.ReadMemberDto
 	GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDto
 	GetTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error)
 	GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, error)
-	GetOneManTeamID(userid int) int64
+	GetOneManTeamID(userid int) (int64, error)
+	GetEveryTeamID(userID int) []int64
 }

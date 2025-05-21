@@ -86,13 +86,31 @@ func (th *TeamHandler) GetTeamsForUser(w http.ResponseWriter, r *http.Request) {
 			Tag: exceptions.BAD_REQUEST,
 		})
 	}
+	query := r.URL.Query()
+	active, err := strconv.Atoi(query.Get("active"))
+	if err != nil {
+		active = 1
+	}
+	dontCare, err := strconv.Atoi(query.Get("dontcare"))
+	if err != nil {
+		dontCare = 0
+	}
 	commanderid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
 
 	if userid == 0 {
 		userid = commanderid
 	}
 
-	res := th.TeamService.GetTeamsForUser(userid)
+	res := th.TeamService.GetTeamsForUser(userid, active, dontCare)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
+func (th *TeamHandler) GetTeamsForBidding(w http.ResponseWriter, r *http.Request) {
+	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
+	res := th.TeamService.GetTeamsForBidding(userid)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

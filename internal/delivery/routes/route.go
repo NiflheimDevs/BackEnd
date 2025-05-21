@@ -55,6 +55,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/user/tag", app.Handlers.GeneralHandler.UpdateUserTag)
 
 	mux.Get("/project/user/{user_id}", app.Handlers.ProjectHandler.GetUserProject)
+	mux.Get("/project/participated/{user_id}", app.Handlers.ProjectHandler.GetParticipatedProjectsForUser)
 	mux.Get("/project/{project_id}", app.Handlers.ProjectHandler.GetSpeceficProject)
 	mux.Post("/project/create", app.Handlers.ProjectHandler.CreateProject)
 	mux.Put("/project/{project_id}", app.Handlers.ProjectHandler.UpdateProject)
@@ -82,10 +83,10 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Delete("/user/resume", app.Handlers.FileHandler.DeleteUserResume)
 	mux.Post("/team/profile/{team_id}", app.Handlers.FileHandler.UploadTeamProfilePhoto)
 	mux.Delete("/team/profile/{team_id}", app.Handlers.FileHandler.DeleteTeamProfilePhoto)
-	mux.Get("/user/{id}/project", app.Handlers.ProjectHandler.GetOneManTeamProjects)
+	// mux.Get("/user/{id}/project", app.Handlers.ProjectHandler.GetOneManTeamProjects)
 
 	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
-	mux.Get("/user/resume", app.Handlers.FileHandler.GetResume)
+	mux.Get("/user/resume/{id}", app.Handlers.FileHandler.GetResume)
 
 	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
@@ -105,6 +106,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Delete("/team/member", app.Handlers.TeamHandler.RemoveMember)
 	mux.Post("/team/member", app.Handlers.TeamHandler.AddMembers)
 	mux.Get("/team/{team_id}/project", app.Handlers.ProjectHandler.GetTeamProjects)
+	mux.Get("/team/bidding", app.Handlers.TeamHandler.GetTeamsForBidding)
 	mux.Get("/team/{team_id}/bid", app.Handlers.BidHandler.GetTeamBids)
 
 	mux.Get("/role/team", app.Handlers.RoleHandler.GetTeamRoles)

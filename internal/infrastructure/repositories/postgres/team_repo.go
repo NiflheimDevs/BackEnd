@@ -87,7 +87,8 @@ func (tr *TeamRepo) RemoveMember(userid int, teamid int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
 
-	query := `DELETE FROM users_team
+	query := `UPDATE users_team 
+	SET left_at = CURRENT_TIMESTAMP 
 	WHERE user_id = $1 AND team_id = $2`
 
 	_, err := tr.PG.Exec(ctx, query, userid, teamid)
@@ -101,7 +102,7 @@ func (tr *TeamRepo) UpdateMemberPosition(info *dto.UpdateMemberPositionDto) erro
 
 	query := `UPDATE users_team
 	SET position = $1 
-	WHERE user_id = $2 AND team_id = $3`
+	WHERE user_id = $2 AND team_id = $3 AND left_at IS NULL`
 
 	_, err := tr.PG.Exec(ctx, query, info.NewPosition, info.Userid, info.Teamid)
 
@@ -115,7 +116,7 @@ func (tr *TeamRepo) UpdateMemberRole(newRole enums.RoleType, userid int, teamid 
 
 	query := `UPDATE users_team
 	SET role_id = $1 
-	WHERE user_id = $2 AND team_id = $3`
+	WHERE user_id = $2 AND team_id = $3 AND left_at IS NULL`
 
 	_, err := tr.PG.Exec(ctx, query, newRole, userid, teamid)
 
@@ -174,6 +175,38 @@ func (tr *TeamRepo) DeleteTeam(teamid int64) error {
 	_, err := tr.PG.Exec(ctx, query, teamid)
 
 	return err
+}
+
+func (tr *TeamRepo) GetEveryTeamID(userID int) []int64 {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT t.id FROM team AS t JOIN users_team AS ut ON t.id = ut.team_id WHERE ut.user_id = $1"
+
+	result, err := tr.PG.Query(ctx, query, userID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+		})
+	}
+
+	var ids []int64
+	defer result.Close()
+	for result.Next() {
+		var id int64
+		err := result.Scan(&id)
+		if err != nil {
+			panic(exceptions.Exception{
+				Tag:    exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+			})
+		}
+		ids = append(ids, id)
+	}
+
+	return ids
 }
 
 func (tr *TeamRepo) GetEveryTeamInfo(teamid int64) *models.TeamModel {
@@ -238,7 +271,7 @@ func (tr *TeamRepo) GetTeamForUser(userid int, teamid int64) *models.TeamModel {
 	query := `SELECT t.id, t.title, t.description, t.created_at
 		FROM team as t
 		JOIN users_team as ut
-		WHERE ut.user_id = $1 AND ut.team_id = $2 AND t.type = 0`
+		WHERE ut.user_id = $1 AND ut.team_id = $2 AND t.type = 0 AND ut.left_at IS NULL`
 
 	var team models.TeamModel
 	var description sql.NullString
@@ -261,16 +294,31 @@ func (tr *TeamRepo) GetTeamForUser(userid int, teamid int64) *models.TeamModel {
 
 }
 
-func (tr *TeamRepo) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
+func (tr *TeamRepo) GetTeamsForUser(userid int, isActive, dontCare bool) []dto.GetTeamPreviewDto {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
 	defer cancel()
-
-	query := `SELECT t.id, t.title, t.description, ut.position
+	var query string
+	if dontCare {
+		query = `SELECT t.id, t.title, t.description, ut.position, ut.joined_at , ut.left_at
 		FROM team as t
 		JOIN users_team as ut
 		ON t.id = ut.team_id
 		WHERE ut.user_id = $1 AND t.type = 0`
-
+	} else {
+		if isActive {
+			query = `SELECT t.id, t.title, t.description, ut.position, ut.joined_at , ut.left_at
+		FROM team as t
+		JOIN users_team as ut
+		ON t.id = ut.team_id
+		WHERE ut.user_id = $1 AND t.type = 0 AND ut.left_at IS NULL`
+		} else {
+			query = `SELECT t.id, t.title, t.description, ut.position, ut.joined_at , ut.left_at
+		FROM team as t
+		JOIN users_team as ut
+		ON t.id = ut.team_id
+		WHERE ut.user_id = $1 AND t.type = 0 AND ut.left_at IS NULL`
+		}
+	}
 	rows, err := tr.PG.Query(ctx, query, userid)
 	if err != nil {
 		log.Println("TeamError: error fetching teams for user", userid, "error detail:", err)
@@ -285,8 +333,56 @@ func (tr *TeamRepo) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
 	for rows.Next() {
 		var team dto.GetTeamPreviewDto
 		var description, position sql.NullString
+		var leftAt sql.NullTime
 
-		if err := rows.Scan(&team.ID, &team.Title, &description, &position); err != nil {
+		if err := rows.Scan(&team.ID, &team.Title, &description, &position, &team.JoinedAt, &leftAt); err != nil {
+			log.Println("TeamError: error scanning team for user", userid, "error detail:", err)
+			panic(exceptions.Exception{
+				Tag:    exceptions.INTERNAL_ERROR,
+				Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+			})
+		}
+		if description.Valid {
+			team.Description = description.String
+		}
+		if position.Valid {
+			team.Position = position.String
+		}
+		if leftAt.Valid {
+			team.LeftAt = leftAt.Time
+		}
+		teams = append(teams, team)
+	}
+
+	return teams
+}
+
+func (tr *TeamRepo) GetTeamsForUserWithRole(userid int) []dto.GetTeamWithRole {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
+	query := `SELECT t.id, t.title, t.description, ut.position, ut.role_id
+		FROM team as t
+		JOIN users_team as ut
+		ON t.id = ut.team_id
+		WHERE ut.user_id = $1 AND t.type = 0 AND ut.left_at IS NULL`
+
+	rows, err := tr.PG.Query(ctx, query, userid)
+	if err != nil {
+		log.Println("TeamError: error fetching teams for user", userid, "error detail:", err)
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+		})
+	}
+	defer rows.Close()
+
+	var teams []dto.GetTeamWithRole
+	for rows.Next() {
+		var team dto.GetTeamWithRole
+		var description, position sql.NullString
+
+		if err := rows.Scan(&team.ID, &team.Title, &description, &position, &team.RoleId); err != nil {
 			log.Println("TeamError: error scanning team for user", userid, "error detail:", err)
 			panic(exceptions.Exception{
 				Tag:    exceptions.INTERNAL_ERROR,
@@ -393,7 +489,7 @@ func (tr *TeamRepo) GetMembersForTeam(teamid int64) []dto.ReadMemberDto {
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
-		WHERE ut.team_id = $1`
+		WHERE ut.team_id = $1 AND ut.left_at IS NULL`
 
 	rows, err := tr.PG.Query(ctx, query, teamid)
 	if err != nil {
@@ -448,7 +544,7 @@ func (tr *TeamRepo) GetMembersForTeamFilterdByRole(teamid int64, roleid enums.Ro
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
-		WHERE ut.team_id = $1 AND ut.role_id = $2`
+		WHERE ut.team_id = $1 AND ut.role_id = $2 AND ut.left_at IS NULL`
 
 	rows, err := tr.PG.Query(ctx, query, teamid, roleid)
 	if err != nil {
@@ -500,7 +596,7 @@ func (tr *TeamRepo) GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDt
 		FROM users_team as ut
 		JOIN users AS u
 		ON ut.user_id = u.id 
-		WHERE ut.team_id = $1 AND u.id = $2`
+		WHERE ut.team_id = $1 AND u.id = $2 AND ut.left_at IS NULL`
 	var member dto.ReadMemberDto
 	var info dto.MemberInfoDto
 	var role sql.NullInt64
@@ -535,7 +631,7 @@ func (tr *TeamRepo) GetMemberForTeam(teamid int64, userid int) *dto.ReadMemberDt
 	return &member
 }
 
-func (tr *TeamRepo) GetOneManTeamID(userid int) int64 {
+func (tr *TeamRepo) GetOneManTeamID(userid int) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -544,11 +640,14 @@ func (tr *TeamRepo) GetOneManTeamID(userid int) int64 {
 	query := "SELECT id FROM team WHERE title = $1"
 
 	err := tr.PG.QueryRow(ctx, query, strconv.Itoa(userid)).Scan(&teamid)
+	if err == pgx.ErrNoRows {
+		return 0, err
+	}
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
 		})
 	}
-	return teamid
+	return teamid, nil
 }

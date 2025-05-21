@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./migrations/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./migrations/triggers.sql:/docker-entrypoint-initdb.d/02-triggers.sql
       - pgdata:/var/lib/postgresql/data
     networks:
       - backend_network

@@ -111,7 +111,7 @@ func (projectService *ProjectService) GetProjectCount(userID int) int {
 	return count
 }
 
-func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, price int64, tags []int) int {
+func (projectService *ProjectService) CreateProject(userID int, title, description string, label int, durationInt int, price int64, tags []int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
@@ -143,7 +143,7 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 
 	projectService.PaymentService.ProjectPayment(ctx, tx, userID, price)
 
-	duration := time.Now().Add(projectService.Constants.Project.LastTime).Format("2006-01-02 15:04:05")
+	duration := time.Now().AddDate(0, 0, durationInt)
 
 	projectID := projectService.ProjectRepo.CreateProject(ctx, tx, userID, label, title, description, duration)
 
@@ -355,6 +355,22 @@ func (projectService *ProjectService) EndOfProject(userID, projectID int) {
 	projectService.ProjectRepo.UpdateProjectState(projectID, 4)
 }
 
+func (ps *ProjectService) GetParticipatedProjectsForUser(userid int) []models.ProjectModel {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+
+	projects := ps.ProjectRepo.GetAllProjectsRelatedToUser(userid)
+
+	return projects
+
+}
+
 func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) []models.ProjectModel {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
@@ -365,14 +381,16 @@ func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) 
 		})
 	}
 
-	//check that member is in team
-
 	bids := projectService.BidRepo.GetTeamBids(teamID)
 	var projects []models.ProjectModel
 	for _, bid := range bids {
 		project, _ := projectService.ProjectRepo.GetProject(bid.ProjectID)
 
-		projects = append(projects, *project)
+		if (project.State == 3 || project.State == 4) && project.SelectedBid == bid.ID {
+			tags := projectService.TagRepo.GetProjectTag(project.ID)
+			project.Tags = tags
+			projects = append(projects, *project)
+		}
 	}
 	return projects
 }
@@ -389,10 +407,7 @@ func (projectService *ProjectService) GetOneManTeamProjects(userID int) []models
 
 	oneManTeamID := projectService.TeamService.GetOneManTeamID(userID)
 
-	var projects []models.ProjectModel
-
 	oneManTeamProjects := projectService.GetTeamProjects(userID, oneManTeamID)
-	projects = append(projects, oneManTeamProjects...)
 
-	return projects
+	return oneManTeamProjects
 }

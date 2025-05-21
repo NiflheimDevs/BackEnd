@@ -19,8 +19,15 @@ type PutBid struct {
 type PublicProjectBidInfo struct {
 	BidID        int                  `json:"bid_id"`
 	TeamInfo     *GetInternalTeamInfo `json:"team_info"`
+	PrePayment   int64                `json:"pre_payment"`
 	Total        int64                `json:"total"`
+	Description  string               `json:"description"`
 	ExpectedTime int                  `json:"expected_time"`
+}
+
+type ProjectBidInfo struct {
+	Bids    []PublicProjectBidInfo `json:"bids"`
+	TeamIDs []int64                `json:"ids"`
 }
 
 type PrivateProjectBidInfo struct {
@@ -29,5 +36,6 @@ type PrivateProjectBidInfo struct {
 	TeamInfo     *GetInternalTeamInfo `json:"team_info"`
 	PrePayment   int64                `json:"pre_payment"`
 	Total        int64                `json:"total"`
+	Description  string               `json:"description"`
 	ExpectedTime int                  `json:"expected_time"`
 }

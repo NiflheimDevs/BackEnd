@@ -10,9 +10,10 @@ import (
 type TeamService interface {
 	BehindCurtainTeam(ctx context.Context, tx transaction.Tx, userid int)
 	CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
-	GetTeamsForUser(userid int) []dto.GetTeamPreviewDto
+	GetTeamsForUser(userid int, active, dontCare int) []dto.GetTeamPreviewDto
 	GetTeam(commanderid int, teamid int64) *dto.GetTeamDto
 	GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInfo
+	GetTeamsForBidding(userid int) *dto.TeamListDto
 	UpdateTeamInfo(userid int, info *dto.UpdateTeamInfoDto)
 	UpdatePosition(commanderid int, req *dto.UpdateMemberPositionDto)
 	UpdateMemeberRole(commanderid int, info *dto.UpdateMemberRoleDto)
@@ -25,4 +26,5 @@ type TeamService interface {
 	DeleteTeamProfile(commanderid int, teamid int64)
 	UpdateTeamProfile(commanderid int, teamid int64, data []byte)
 	GetOneManTeamID(userid int) int64
+	GetAllTeamsIDs(userID int) []int64
 }

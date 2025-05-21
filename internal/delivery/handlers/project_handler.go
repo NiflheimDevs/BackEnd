@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
+	"github.com/niflheimdevs/backend/internal/utils"
 )
 
 type ProjectHandler struct {
@@ -86,7 +88,9 @@ func (projectHandler *ProjectHandler) GetUserProject(w http.ResponseWriter, r *h
 			SelectedBid: project.SelectedBid,
 			Status:      project.State,
 			Tags:        project.Tags,
-			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			Duration:    project.Duration,
+			StartTime:   project.StartTime,
+			EndTime:     project.EndTime,
 		})
 	}
 
@@ -124,7 +128,9 @@ func (projectHandler *ProjectHandler) GetSpeceficProject(w http.ResponseWriter, 
 		LastName:    userInfo.LastName,
 		Username:    userInfo.Username,
 		Tags:        project.Tags,
-		Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+		Duration:    project.Duration,
+		StartTime:   project.StartTime,
+		EndTime:     project.EndTime,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -143,6 +149,7 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 		Description string `json:"description" validate:"required"`
 		Tags        []int  `json:"tags" validate:"required"`
 		Label       int    `json:"label" validate:"required"`
+		Duration    int    `json:"duration" validate:"required"`
 	}
 
 	params := Validated[createProjectParams](projectHandler.Validator, r)
@@ -151,7 +158,7 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 	price := projectHandler.LabelService.GetLabelInfo(params.Label).Price
 
-	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, price, params.Tags)
+	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, params.Duration, price, params.Tags)
 
 	dto := dto.CreateProjectDTO{
 		ProjectID: project,
@@ -232,7 +239,9 @@ func (projectHandler *ProjectHandler) GetTeamProjects(w http.ResponseWriter, r *
 			SelectedBid: project.SelectedBid,
 			Status:      project.State,
 			Tags:        project.Tags,
-			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
+			Duration:    project.Duration,
+			StartTime:   project.StartTime,
+			EndTime:     project.EndTime,
 		})
 	}
 
@@ -246,38 +255,108 @@ func (projectHandler *ProjectHandler) GetTeamProjects(w http.ResponseWriter, r *
 	}
 }
 
-func (projectHandler *ProjectHandler) GetOneManTeamProjects(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
+// func (projectHandler *ProjectHandler) GetOneManTeamProjects(w http.ResponseWriter, r *http.Request) {
+// 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
-	userIDString := chi.URLParam(r, "id")
-	targetUserID, _ := strconv.Atoi(userIDString)
+// 	userIDString := chi.URLParam(r, "id")
+// 	targetUserID, _ := strconv.Atoi(userIDString)
 
-	if targetUserID != 0 {
-		userID = targetUserID
+// 	if targetUserID != 0 {
+// 		userID = targetUserID
+// 	}
+
+// 	projects := projectHandler.ProjectService.GetOneManTeamProjects(userID)
+
+// 	var projectsDTO dto.UserProject
+
+// 	for _, project := range projects {
+// 		label := projectHandler.LabelService.GetLabelInfo(project.Label)
+// 		projectsDTO.Projects = append(projectsDTO.Projects, dto.Project{
+// 			ProjectID:   project.ID,
+// 			OwnerID:     project.OwnerID,
+// 			Title:       project.Title,
+// 			Description: project.Description,
+// 			Label:       *label,
+// 			SelectedBid: project.SelectedBid,
+// 			Status:      project.State,
+// 			Tags:        project.Tags,
+// 			Duration:    project.Duration,
+// 			StartTime:   project.StartTime,
+// 			EndTime:     project.EndTime,
+// 		})
+// 	}
+
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.WriteHeader(http.StatusOK)
+// 	if err := json.NewEncoder(w).Encode(projectsDTO); err != nil {
+// 		panic(exceptions.Exception{
+// 			Tag:    exceptions.INTERNAL_ERROR,
+// 			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
+// 		})
+// 	}
+// }
+
+func (ph *ProjectHandler) GetParticipatedProjectsForUser(w http.ResponseWriter, r *http.Request) {
+	commanderid := r.Context().Value(ph.Constants.Context.UserID).(int)
+	userIdString := chi.URLParam(r, "user_id")
+	userid, _ := strconv.Atoi(userIdString)
+
+	if userid == 0 {
+		userid = commanderid
 	}
 
-	projects := projectHandler.ProjectService.GetOneManTeamProjects(userID)
+	includes := r.URL.Query()["include"]
 
-	var projectsDTO dto.UserProject
+	response := make(map[string]interface{})
+	var projectsTeam, projectsUser []dto.Project
 
-	for _, project := range projects {
-		label := projectHandler.LabelService.GetLabelInfo(project.Label)
-		projectsDTO.Projects = append(projectsDTO.Projects, dto.Project{
-			ProjectID:   project.ID,
-			OwnerID:     project.OwnerID,
-			Title:       project.Title,
-			Description: project.Description,
-			Label:       *label,
-			SelectedBid: project.SelectedBid,
-			Status:      project.State,
-			Tags:        project.Tags,
-			Duration:    project.Duration.Format("2006-01-02 15:04:05"),
-		})
+	if utils.Contains(includes, "team") {
+		projects := ph.ProjectService.GetParticipatedProjectsForUser(userid)
+
+		for _, project := range projects {
+			label := ph.LabelService.GetLabelInfo(project.Label)
+			projectsTeam = append(projectsTeam, dto.Project{
+				ProjectID:   project.ID,
+				OwnerID:     project.OwnerID,
+				Title:       project.Title,
+				Description: project.Description,
+				Label:       *label,
+				SelectedBid: project.SelectedBid,
+				Status:      project.State,
+				Tags:        project.Tags,
+				Duration:    project.Duration,
+				StartTime:   project.StartTime,
+				EndTime:     project.EndTime,
+			})
+		}
+		response["team"] = projectsTeam
+	}
+	log.Println("Awsd")
+	if utils.Contains(includes, "user") {
+		projects := ph.ProjectService.GetOneManTeamProjects(userid)
+
+		for _, project := range projects {
+			label := ph.LabelService.GetLabelInfo(project.Label)
+			projectsUser = append(projectsUser, dto.Project{
+				ProjectID:   project.ID,
+				OwnerID:     project.OwnerID,
+				Title:       project.Title,
+				Description: project.Description,
+				Label:       *label,
+				SelectedBid: project.SelectedBid,
+				Status:      project.State,
+				Tags:        project.Tags,
+				Duration:    project.Duration,
+				StartTime:   project.StartTime,
+				EndTime:     project.EndTime,
+			})
+		}
+		response["user"] = projectsUser
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(projectsDTO); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		panic(exceptions.Exception{
 			Tag:    exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},

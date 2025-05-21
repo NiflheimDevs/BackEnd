@@ -18,6 +18,7 @@ import (
 
 type TeamService struct {
 	TeamRepo           repositories.TeamRepo
+	UserRepo           repositories.UserRepo
 	RoleRepo           repositories.RoleRepo
 	TransactionManager transaction.TxManager
 	FileService        services.FileService
@@ -25,12 +26,14 @@ type TeamService struct {
 
 func NewTeamService(
 	teamRepo repositories.TeamRepo,
+	userRepo repositories.UserRepo,
 	roleRepo repositories.RoleRepo,
 	tManager transaction.TxManager,
 	fileService services.FileService,
 ) *TeamService {
 	return &TeamService{
 		TeamRepo:           teamRepo,
+		UserRepo:           userRepo,
 		RoleRepo:           roleRepo,
 		TransactionManager: tManager,
 		FileService:        fileService,
@@ -83,6 +86,7 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 
 	err = ts.TeamRepo.AddMemberWithTx(ctx, tx, userid, teamid, "", enums.TEAM_OWNER)
 	if err != nil {
+		log.Println("TeamError: owner couldn't be added. details:", err)
 		panic(exceptions.Exception{
 			Tag: exceptions.CONFLICT_ERROR,
 		})
@@ -101,8 +105,8 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 	return teamid
 }
 
-func (ts *TeamService) GetTeamsForUser(userid int) []dto.GetTeamPreviewDto {
-	res := ts.TeamRepo.GetTeamsForUser(userid)
+func (ts *TeamService) GetTeamsForUser(userid int, active, dontCare int) []dto.GetTeamPreviewDto {
+	res := ts.TeamRepo.GetTeamsForUser(userid, active != 0, dontCare != 0)
 
 	for i := 0; i < len(res); i++ {
 		res[i].Profile = ts.FileService.GetTeamProfilePhotoURL(res[i].ID, false)
@@ -155,6 +159,12 @@ func (ts *TeamService) GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInf
 	team, err := ts.TeamRepo.GetTeamInfo(teamid)
 	if err != nil {
 		team, err = ts.TeamRepo.GetOneManTeamInfo(teamid)
+		if err != nil {
+			log.Println("OneManTeamError: details:", err)
+			panic(exceptions.Exception{
+				Tag: exceptions.INTERNAL_ERROR,
+			})
+		}
 		team.Type = 2
 		team.Profile = ts.FileService.GetProfilePhotoURL(int(team.ID), false)
 	} else {
@@ -224,12 +234,16 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 		})
 	}
 
+	// ? maybe use transaction
+	ts.FileService.DeleteTeamProfilePhoto(teamid)
+
 	err := ts.TeamRepo.DeleteTeam(teamid)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
+
 }
 
 // TODO: email? some sort of request must be sent and then when it is accepted, the member gets added
@@ -271,11 +285,75 @@ func (ts *TeamService) addMembersFunc(teamid int64, members []int) {
 }
 
 func (ts *TeamService) LeaveTeam(userid int, teamid int64) {
+	member := ts.TeamRepo.GetMemberForTeam(teamid, userid)
+
 	err := ts.TeamRepo.RemoveMember(userid, teamid)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.CONFLICT_ERROR,
 		})
+	}
+
+	if member.Role == enums.TEAM_OWNER {
+		ts.TeamRepo.DeleteTeam(teamid)
+	}
+
+}
+
+func (ts *TeamService) GetTeamsForBidding(userid int) *dto.TeamListDto {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag:    exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{exceptions.AUTH_TOKEN_EXPIRED},
+		})
+	}
+
+	var res dto.TeamListDto
+
+	userModel, err := ts.UserRepo.FindUserByID(userid)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{exceptions.USER_NOT_FOUND},
+		})
+	}
+	res.Userid = userModel.ID
+	res.FirstName = userModel.FirstName
+	res.LastName = userModel.LastName
+	res.Username = userModel.Username
+	res.UserProfile = ts.FileService.GetProfilePhotoURL(userid, false)
+	res.OneManTeamid, err = ts.TeamRepo.GetOneManTeamID(userid)
+
+	if err != nil {
+		log.Println(userid, "does not have one man team!!!!!")
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+
+	teams := ts.TeamRepo.GetTeamsForUserWithRole(userid)
+	for _, team := range teams {
+		res.Teams = append(res.Teams, dto.GetTeamBidDto{
+			ID:          team.ID,
+			Description: team.Description,
+			Title:       team.Title,
+			Position:    team.Position,
+			CanBid:      utils.Contains(team.RoleId.GetPermissionsForRole(), enums.BIDDER),
+			Profile:     ts.FileService.GetTeamProfilePhotoURL(team.ID, false),
+		})
+	}
+	return &res
+
+}
+
+func (ts *TeamService) GetAllTeamsIDs(userID int) []int64 {
+	if userID > 0 {
+		ids := ts.TeamRepo.GetEveryTeamID(userID)
+		oneManID, _ := ts.TeamRepo.GetOneManTeamID(userID)
+		ids = append(ids, oneManID)
+		return ids
+	} else {
+		return nil
 	}
 }
 
@@ -312,6 +390,16 @@ func (ts *TeamService) KickMemebr(commanderid int, poorGuysid []int, teamid int6
 			isLeaving = true
 			continue
 		}
+
+		poorMember := ts.TeamRepo.GetMemberForTeam(teamid, poorGuyid)
+		if poorMember == nil {
+			continue
+		}
+
+		if !member.Role.DoesHavePowerOver(poorMember.Role) {
+			continue
+		}
+
 		err := ts.TeamRepo.RemoveMember(poorGuyid, teamid)
 		if err != nil {
 			log.Println("KickMemberError: coudldn't kick member", poorGuyid, "by", commanderid, "at team", teamid, "detail:", err)
@@ -346,6 +434,8 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 
 	member := ts.TeamRepo.GetMemberForTeam(info.TeamID, commanderid)
 	if member == nil {
+
+		log.Println("MemberError: commander", commanderid, "is not in team", info.TeamID)
 		panic(exceptions.Exception{
 			Tag: exceptions.FORBIDDEN,
 		})
@@ -355,6 +445,19 @@ func (ts *TeamService) UpdateMemeberRole(commanderid int, info *dto.UpdateMember
 		panic(exceptions.Exception{
 			Tag:    exceptions.FORBIDDEN,
 			Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+		})
+	}
+
+	targetMember := ts.TeamRepo.GetMemberForTeam(info.TeamID, info.UserID)
+	if targetMember == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.CONFLICT_ERROR,
+		})
+	}
+	if !member.Role.DoesHavePowerOver(targetMember.Role) {
+		log.Println("RoleError: user", member.Info.Userid, "doesn't have power over user", targetMember.Info.Userid, "in team", info.TeamID)
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
 		})
 	}
 
@@ -390,6 +493,18 @@ func (ts *TeamService) UpdatePosition(commanderid int, req *dto.UpdateMemberPosi
 		panic(exceptions.Exception{
 			Tag:    exceptions.FORBIDDEN,
 			Errors: []exceptions.SpecificError{exceptions.LACKS_PERMISSION},
+		})
+	}
+
+	targetMember := ts.TeamRepo.GetMemberForTeam(req.Teamid, req.Userid)
+	if targetMember == nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.CONFLICT_ERROR,
+		})
+	}
+	if !member.Role.DoesHavePowerOver(targetMember.Role) {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
 		})
 	}
 
@@ -490,6 +605,12 @@ func (ts *TeamService) DeleteTeamProfile(commanderid int, teamid int64) {
 }
 
 func (ts *TeamService) GetOneManTeamID(userid int) int64 {
-	teamid := ts.TeamRepo.GetOneManTeamID(userid)
+	teamid, err := ts.TeamRepo.GetOneManTeamID(userid)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.NOT_FOUND,
+			Errors: []exceptions.SpecificError{exceptions.USER_NOT_FOUND},
+		})
+	}
 	return teamid
 }

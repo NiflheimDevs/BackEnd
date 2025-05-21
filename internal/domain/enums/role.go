@@ -12,6 +12,14 @@ const (
 	TEAM_NEWBIE
 )
 
+var hierarchical = map[RoleType]int{
+	TEAM_OWNER:      0,
+	TEAM_ADMIN:      1,
+	TEAM_MAINTAINER: 2,
+	TEAM_CRAWLER:    3,
+	TEAM_NEWBIE:     4,
+}
+
 var roleNames = map[RoleType]string{
 	TEAM_OWNER:      "TEAM_OWNER",
 	TEAM_ADMIN:      "TEAM_ADMIN",
@@ -51,6 +59,10 @@ func (r RoleType) String() string {
 		return name
 	}
 	return ""
+}
+
+func (r RoleType) DoesHavePowerOver(h RoleType) bool {
+	return hierarchical[r] < hierarchical[h]
 }
 
 func (r RoleType) GetPermissionsForRole() []PermType {
