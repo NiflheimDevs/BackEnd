@@ -88,6 +88,7 @@ func (bs BidService) GetPrivateProjectBids(userID int, projectID int) []dto.Priv
 		bidInfo.TeamInfo = teamInfo
 		bidInfo.PrePayment = bid.PrePayment
 		bidInfo.Total = bid.Total
+		bidInfo.Description = bid.Description
 		bidInfo.ExpectedTime = bid.ExpectedTime
 		bidInfos = append(bidInfos, bidInfo)
 	}
