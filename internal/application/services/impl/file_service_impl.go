@@ -28,18 +28,18 @@ func NewFileService(s3storage storage.S3Storage) *FileService {
 }
 
 func (fs *FileService) GetProfilePhotoURL(userid int, wantHighQual bool) string {
-	return fs.S3Storage.GetPresignedURL(enums.ProfilePic, fs.getUserProfileName(userid, wantHighQual), 8*time.Hour)
+	return fs.S3Storage.GetPresignedURL(enums.ProfilePic, fs.getUserProfileName(userid, wantHighQual), 24*time.Hour)
 }
 
 func (fs *FileService) GetTeamProfilePhotoURL(teamid int64, wantHighQual bool) string {
-	return fs.S3Storage.GetPresignedURL(enums.TeamProfile, fs.getTeamProfileName(teamid, wantHighQual), 8*time.Hour)
+	return fs.S3Storage.GetPresignedURL(enums.TeamProfile, fs.getTeamProfileName(teamid, wantHighQual), 24*time.Hour)
 }
 
 func (fs *FileService) GetResumeURL(userid int) string {
 	outputName := fmt.Sprintf("resume%d.pdf", userid)
 	objects := fs.S3Storage.GetObjectList(enums.Resume)
 	if utils.Contains(objects, outputName) {
-		return fs.S3Storage.GetPresignedURL(enums.Resume, outputName, 8*time.Hour)
+		return fs.S3Storage.GetPresignedURL(enums.Resume, outputName, 24*time.Hour)
 	} else {
 		return ""
 	}

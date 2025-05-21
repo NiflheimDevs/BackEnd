@@ -443,10 +443,9 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		LowProfilePicture:  lowPath,
 		CreatedAt:          targetInfo.CreatedAt,
 	}
-	if userid == targetUserid {
-		response.Email = targetInfo.Email
-		response.Is_verified = targetInfo.Is_verified
-	}
+	// againts my will
+	response.Email = targetInfo.Email
+	response.Is_verified = targetInfo.Is_verified
 
 	return &response
 }

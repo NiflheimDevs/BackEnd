@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS "bid" (
   "description" text,
   "expected_time" int,
   "created_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("team_id") REFERENCES "team" ("id"),
+  FOREIGN KEY ("team_id") REFERENCES "team" ("id") ON DELETE CASCADE,
   UNIQUE ("team_id", "project_id")
 );
 
@@ -96,7 +96,8 @@ CREATE TABLE IF NOT EXISTS "project" (
 
 ALTER TABLE bid
 ADD FOREIGN KEY ("project_id")
-REFERENCES "project" ("id");
+REFERENCES "project" ("id")
+ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS "comment" (
   "id" serial PRIMARY KEY,

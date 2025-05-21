@@ -386,7 +386,7 @@ func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) 
 	for _, bid := range bids {
 		project, _ := projectService.ProjectRepo.GetProject(bid.ProjectID)
 
-		if project.State == 3 || project.State == 4 {
+		if (project.State == 3 || project.State == 4) && project.SelectedBid == bid.ID {
 			tags := projectService.TagRepo.GetProjectTag(project.ID)
 			project.Tags = tags
 			projects = append(projects, *project)
