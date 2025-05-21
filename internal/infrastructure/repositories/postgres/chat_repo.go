@@ -3,6 +3,7 @@ package repositoriesimpl
 import (
 	"context"
 	"database/sql"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -29,7 +30,7 @@ func (cr *ChatRepo) GetRoomInfo(roomID int) (*models.ChatModel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "SELECT * FROM team WHERE id = $1"
+	query := "SELECT * FROM chat WHERE id = $1"
 
 	err := cr.PG.QueryRow(ctx, query, roomID).Scan(&room.RoomID, &room.Title, &room.Description)
 
@@ -130,6 +131,7 @@ func (cr *ChatRepo) GetRoomMessages(roomID int) []models.MessageModel {
 	results, err := cr.PG.Query(ctx, query, roomID)
 
 	if err != nil {
+		log.Println(err)
 		panic(exceptions.Exception{
 			Tag:    exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
@@ -145,6 +147,7 @@ func (cr *ChatRepo) GetRoomMessages(roomID int) []models.MessageModel {
 		err := results.Scan(&message.MessageID, &message.RoomID, &message.SenderID, &message.SendTime, &message.EditTime, &message.Content)
 
 		if err != nil {
+			log.Println(err)
 			panic(exceptions.Exception{
 				Tag:    exceptions.INTERNAL_ERROR,
 				Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
@@ -163,7 +166,7 @@ func (cr *ChatRepo) SaveMessage(roomID int, userID int, content string) int {
 
 	var id int
 
-	query := "INSERT INTO message(chat_id,sender_id,content) VALUE ($1,$2,$3) RETURNING id"
+	query := "INSERT INTO message(chat_id,sender_id,content) VALUES ($1,$2,$3) RETURNING id"
 
 	err := cr.PG.QueryRow(ctx, query, roomID, userID, content).Scan(&id)
 

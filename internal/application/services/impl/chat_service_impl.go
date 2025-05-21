@@ -77,7 +77,7 @@ func (cs *ChatService) GetRoomMessages(userID, roomID int) []dto.Message {
 	return messagesDTO
 }
 
-func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) {
+func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) int {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNAUTHORIZED,
@@ -121,6 +121,17 @@ func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) {
 	roomID := cs.ChatRepo.CreateChatRoom(ctx, tx, "", "")
 	cs.ChatRepo.InsertMemberToChat(ctx, tx, userID, roomID)
 	cs.ChatRepo.InsertMemberToChat(ctx, tx, targetUserID, roomID)
+
+	if err := tx.Commit(ctx); err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+
+	return roomID
 }
 
 func (cs *ChatService) SaveMessage(roomID int, senderID int, content string) *dto.Message {

@@ -28,15 +28,14 @@ func Routes(app *wire.Application) http.Handler {
 		})
 	})
 
-	mux.Route("/ws", func(r chi.Router) {
-		r.Use(app.Middlewares.Upgrader.Upgrade)
-		r.Use(app.Middlewares.Recovery.Recovery)
-		r.Get("/chat/{room_id}/token/{token}", app.Handlers.ChatHandler.HandleWebSocket)
-	})
-
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	//mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)
 	mux.Use(app.Middlewares.Authentication.AuthRequired)
+
+	mux.Route("/ws", func(r chi.Router) {
+		r.Use(app.Middlewares.Upgrader.Upgrade)
+		r.Get("/chat/{room_id}/token/{token}", app.Handlers.ChatHandler.HandleWebSocket)
+	})
 
 	mux.Post("/login", app.Handlers.UserHandler.Login)
 
@@ -110,6 +109,10 @@ func Routes(app *wire.Application) http.Handler {
 
 	mux.Get("/role/team", app.Handlers.RoleHandler.GetTeamRoles)
 	mux.Get("/role/team/{role}", app.Handlers.RoleHandler.GetPermissionsForRole)
+
+	mux.Get("/chat", app.Handlers.ChatHandler.GetAllRoom)
+	mux.Get("/chat/{room_id}", app.Handlers.ChatHandler.GetRoomMessages)
+	mux.Post("/chat/create", app.Handlers.ChatHandler.CreateRoom)
 
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))

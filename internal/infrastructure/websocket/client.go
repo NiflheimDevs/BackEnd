@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/application/services"
 )
 
 type Client struct {
@@ -20,11 +21,13 @@ type Client struct {
 	Mu               sync.Mutex
 	Done             chan struct{}
 	CloseOnce        sync.Once
+	ChatService      services.ChatService
 }
 
 func NewClient(
 	hub *Hub, conn any, roomID, userID int,
 	websocketSetting *bootstrap.WebsocketSetting,
+	chatService services.ChatService,
 ) *Client {
 	wsConn, _ := conn.(*websocket.Conn)
 	return &Client{
@@ -35,6 +38,7 @@ func NewClient(
 		RoomID:           roomID,
 		UserID:           userID,
 		Done:             make(chan struct{}),
+		ChatService:      chatService,
 	}
 }
 
@@ -67,7 +71,7 @@ func (client *Client) ReadPump() error {
 			client.processAndSaveChatMessage(&message)
 		}
 
-		//client.Hub.broadcast <- &message
+		client.Hub.Broadcast <- &message
 	}
 }
 
@@ -129,12 +133,21 @@ func (client *Client) CloseConnection() {
 	})
 }
 
+func (client *Client) IsClosed() bool {
+	select {
+	case <-client.Done:
+		return true
+	default:
+		return false
+	}
+}
+
 func (client *Client) processAndSaveChatMessage(message *Message) {
-	// var content string
-	// if err := json.Unmarshal(message.Content, &content); err != nil {
-	// 	return
-	// }
-	// savedMessage := client.chatService.SaveMessage(client.roomID, client.userID, content)
-	// message.MessageID = savedMessage.ID
-	// message.Sender = savedMessage.Sender
+	var content string
+	if err := json.Unmarshal(message.Content, &content); err != nil {
+		return
+	}
+	savedMessage := client.ChatService.SaveMessage(client.RoomID, client.UserID, content)
+	message.MessageID = savedMessage.ID
+	message.SenderID = savedMessage.SenderID
 }

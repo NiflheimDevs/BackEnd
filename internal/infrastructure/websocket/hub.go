@@ -2,6 +2,8 @@ package websocket
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"sync"
 )
 
@@ -85,37 +87,71 @@ func (hub *Hub) handleBroadcast(message *Message) {
 		}
 		if room, ok := hub.Rooms[message.RoomID]; ok {
 			for client := range room {
+				if client.IsClosed() {
+					delete(room, client)
+					continue
+				}
 				select {
 				case client.Send <- messageBytes:
 				default:
-					hub.Unregister <- client
+					go func(c *Client) {
+						select {
+						case hub.Unregister <- c:
+						default:
+							log.Println("Unregister channel full while broadcasting")
+						}
+					}(client)
 				}
 			}
 		}
 	case MessageTypeNotification:
 		if clients, ok := hub.Clients[message.SenderID]; ok {
 			for client := range clients {
+				if client.IsClosed() {
+					delete(clients, client)
+					continue
+				}
 				select {
 				case client.Send <- message.Content:
 				default:
-					hub.Unregister <- client
+					go func(c *Client) {
+						select {
+						case hub.Unregister <- c:
+						default:
+							log.Println("Unregister channel full while sending notification")
+						}
+					}(client)
 				}
 			}
 		}
 	}
 }
 
-func (hub *Hub) SendToUser(userID int, messageType string, content []byte) {
+func (hub *Hub) SendToUser(userID int, messageType string, content []byte) error {
 	hub.Mu.RLock()
-	defer hub.Mu.RUnlock()
+	clients, ok := hub.Clients[userID]
+	hub.Mu.RUnlock()
 
-	if clients, ok := hub.Clients[userID]; ok {
-		for client := range clients {
-			select {
-			case client.Send <- content:
-			default:
-				hub.Unregister <- client
-			}
+	if !ok || len(clients) == 0 {
+		return fmt.Errorf("no active connections for user %d", userID)
+	}
+
+	for client := range clients {
+		if client.IsClosed() {
+			hub.Unregister <- client
+			continue
+		}
+		select {
+		case client.Send <- content:
+		default:
+			go func(c *Client) {
+				select {
+				case hub.Unregister <- c:
+				default:
+					log.Println("Unregister channel full while sending to user")
+				}
+			}(client)
 		}
 	}
+	return nil
 }
