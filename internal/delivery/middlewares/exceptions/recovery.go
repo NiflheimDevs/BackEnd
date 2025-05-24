@@ -5,14 +5,19 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/websocket"
+	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 )
 
 type PanicWall struct {
+	Constants *bootstrap.Constants
 }
 
-func NewPanicWall() *PanicWall {
-	return &PanicWall{}
+func NewPanicWall(constants *bootstrap.Constants) *PanicWall {
+	return &PanicWall{
+		Constants: constants,
+	}
 }
 
 func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
@@ -20,8 +25,17 @@ func (recovery *PanicWall) Recovery(next http.Handler) http.Handler {
 		defer func() {
 			if rec := recover(); rec != nil {
 				if r.Header.Get("Upgrade") == "websocket" {
-					log.Fatal(rec)
-					next.ServeHTTP(w, r)
+					log.Println(rec)
+
+					conn, ok := r.Context().Value(recovery.Constants.Context.WebSocketConnection).(*websocket.Conn)
+					if ok && conn != nil {
+						closeMessage := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, "internal server error")
+						conn.WriteMessage(websocket.CloseMessage, closeMessage)
+						conn.Close()
+					} else {
+						log.Printf("WebSocket connection not found in context or invalid type")
+					}
+
 					return
 				}
 				log.Println(rec)

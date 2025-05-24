@@ -89,12 +89,7 @@ func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) int {
 
 	for _, room := range rooms {
 		if room.UserID == targetUserID {
-			panic(exceptions.Exception{
-				Tag: exceptions.FORBIDDEN,
-				Errors: []exceptions.SpecificError{
-					exceptions.ALREADY_A_MEMBER,
-				},
-			})
+			return room.RoomID
 		}
 	}
 

@@ -86,7 +86,7 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 		RoleHandler:    roleHandler,
 		ChatHandler:    chatHandler,
 	}
-	panicWall := panicwall.NewPanicWall()
+	panicWall := panicwall.NewPanicWall(constants)
 	rateLimit := midratelimit.NewRateLimit(constants)
 	authentication := midauth.NewAuth(constants, jwt)
 	webSocketUpgrader := midupgrader.NewWebSocketUpgrader(constants)
