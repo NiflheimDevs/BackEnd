@@ -6,6 +6,7 @@ import (
 
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/delivery/routes"
+	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 	"github.com/niflheimdevs/backend/wire"
 )
 
@@ -13,7 +14,10 @@ func main() {
 
 	var di = bootstrap.Get()
 
-	app, err := wire.InitializeApplication(di)
+	hub := websocket.NewHub()
+	go hub.Run()
+
+	app, err := wire.InitializeApplication(di, hub)
 
 	if err != nil {
 		panic(err)

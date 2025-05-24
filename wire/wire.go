@@ -10,12 +10,14 @@ import (
 	midauth "github.com/niflheimdevs/backend/internal/delivery/middlewares/authentication"
 	panicwall "github.com/niflheimdevs/backend/internal/delivery/middlewares/exceptions"
 	midratelimit "github.com/niflheimdevs/backend/internal/delivery/middlewares/ratelimit"
+	midupgrader "github.com/niflheimdevs/backend/internal/delivery/middlewares/upgrader"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/seed"
 	db "github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
 	repositoriesimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	redisimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
+	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 	"github.com/niflheimdevs/backend/pkg"
 
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
@@ -50,6 +52,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewTeamRepo,
 	repositoriesimpl.NewRoleRepo,
 	repositoriesimpl.NewBidRepo,
+	repositoriesimpl.NewChatRepo,
 	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -61,6 +64,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)),
 	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
+	wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -82,6 +86,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewSmsService,
 	servicesimpl.NewJWT,
 	servicesimpl.NewRoleService,
+	servicesimpl.NewChatService,
 
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
@@ -93,6 +98,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.BidService), new(*servicesimpl.BidService)),
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
+	wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)),
 	wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)),
 
 	ProvideConstants,
@@ -109,6 +115,7 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewBidHandler,
 	handlers.NewTeamHandler,
 	handlers.NewRoleHandler,
+	handlers.NewChatHandler,
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -116,6 +123,7 @@ var MiddlewareProviderSet = wire.NewSet(
 	midratelimit.NewRateLimit,
 	midauth.NewAuth,
 	panicwall.NewPanicWall,
+	midupgrader.NewWebSocketUpgrader,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -146,6 +154,7 @@ type Middlewares struct {
 	Recovery       *panicwall.PanicWall
 	RateLimit      *midratelimit.RateLimit
 	Authentication *midauth.Authentication
+	Upgrader       *midupgrader.WebSocketUpgrader
 }
 
 type Handlers struct {
@@ -157,6 +166,7 @@ type Handlers struct {
 	BidHandler     *handlers.BidHandler
 	TeamHandler    *handlers.TeamHandler
 	RoleHandler    *handlers.RoleHandler
+	ChatHandler    *handlers.ChatHandler
 }
 
 type Application struct {
@@ -165,7 +175,7 @@ type Application struct {
 	Seeder      *seed.Seeder
 }
 
-func InitializeApplication(container *bootstrap.Di) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Application, error) {
 	wire.Build(
 		ProviderSet,
 		wire.Struct(new(Application), "*"),
