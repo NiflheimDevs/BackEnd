@@ -18,8 +18,8 @@ import (
 	"github.com/niflheimdevs/backend/internal/delivery/middlewares/authentication"
 	"github.com/niflheimdevs/backend/internal/delivery/middlewares/exceptions"
 	"github.com/niflheimdevs/backend/internal/delivery/middlewares/ratelimit"
-	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	"github.com/niflheimdevs/backend/internal/delivery/middlewares/upgrader"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
@@ -145,6 +145,15 @@ var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.N
 	ProvideS3,
 )
 
+var CdcServiceProviderSet = wire.NewSet(cdcservicesimpl.NewProjectCdc, cdcservicesimpl.NewUserCdc, cdcservicesimpl.NewTeamCdc, wire.Bind(new(cdcservices.ProjectCdc), new(*cdcservicesimpl.ProjectCdc)), wire.Bind(new(cdcservices.UserCdc), new(*cdcservicesimpl.UserCdc)), wire.Bind(new(cdcservices.TeamCdc), new(*cdcservicesimpl.TeamCdc)), ProvideConstants,
+	ProvideEnv,
+)
+
+var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, handlers.NewRoleHandler, handlers.NewChatHandler, wire.Struct(new(Handlers), "*"))
+
+var KafkaCdcProviderSet = wire.NewSet(consumer.NewKafkaCdc)
+
+var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, midupgrader.NewWebSocketUpgrader, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Di) *bootstrap.Constants {
 	return container.Const
