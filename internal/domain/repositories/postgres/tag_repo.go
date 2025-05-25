@@ -10,6 +10,7 @@ import (
 
 type TagRepo interface {
 	GetTags() ([]models.TagModel, error)
+	GetTag(tagid int) (*models.TagModel, error)
 	GetTagsForUserOrCareer(careerUserid int, isForUser bool) ([]dto.GetTagDto, error)
 	DeleteTagForUserOrCareer(tagid int, careerUserid int, isForUser bool) error
 	UpdateTagForUserOrCareer(tag *dto.RecieveTagDTO, careerUserid int, isForUser bool) error
