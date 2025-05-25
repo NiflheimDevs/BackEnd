@@ -88,7 +88,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Get("/user/profile", app.Handlers.FileHandler.GetProfilePhoto)
 	mux.Get("/user/resume/{id}", app.Handlers.FileHandler.GetResume)
 
-	mux.Get("/refresh-token", app.Handlers.UserHandler.RefreshToken)
+	mux.Post("/refresh-token", app.Handlers.UserHandler.RefreshToken)
 
 	mux.Post("/bid", app.Handlers.BidHandler.PutBid)
 	mux.Post("/bid/{id}/accept", app.Handlers.BidHandler.AcceptBid)
