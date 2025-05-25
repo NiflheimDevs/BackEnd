@@ -11,6 +11,13 @@
 
 -- \c bidlancer;
 
+-- for kafka to capture change
+ALTER SYSTEM SET wal_level = logical;
+ALTER SYSTEM SET max_replication_slots = 1;
+ALTER SYSTEM SET max_wal_senders = 1;
+SELECT pg_reload_conf();
+
+
 CREATE TABLE IF NOT EXISTS "permission" (
   "id" int PRIMARY KEY,
   "name" varchar UNIQUE NOT NULL,
