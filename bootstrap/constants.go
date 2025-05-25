@@ -14,6 +14,12 @@ type Constants struct {
 	MaxPhotoSize  int64
 	MaxResumeSize int64
 	RateLimiter   RateLimiter
+	Kafka         Kafka
+}
+
+type Kafka struct {
+	Cdctopics         []string
+	GroupidForElastic string
 }
 
 type DBConst struct {
@@ -66,6 +72,10 @@ func NewConstant() *Constants {
 		RateLimiter: RateLimiter{
 			Limit: (6.0 / 60),
 			Burst: 20,
+		},
+		Kafka: Kafka{
+			GroupidForElastic: "elastic-readers",
+			Cdctopics:         []string{"postgres.public.users", "postgres.public.users_career_tag", "postgres.public.project", "postgres.public.project_tag", "postgres.public.team"},
 		},
 	}
 }

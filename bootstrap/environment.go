@@ -12,6 +12,8 @@ type Env struct {
 	Server  Server
 	SMS     SMS
 	Storage S3
+	Kafka   KafkaBroker
+	Elastic ElasticSearch
 }
 
 type PGDatabase struct {
@@ -20,6 +22,16 @@ type PGDatabase struct {
 	DB_Port string
 	DB_User string
 	DB_Pass string
+}
+
+type KafkaBroker struct {
+	Port    string
+	Address string
+}
+
+type ElasticSearch struct {
+	Port    string
+	Address string
 }
 
 type RDatabase struct {
@@ -90,6 +102,14 @@ func NewEnvironment() *Env {
 			AccessKey: os.Getenv("BUCKET_ACCESS_key"),
 			SecretKey: os.Getenv("BUCKET_SECRET_key"),
 			Endpoint:  os.Getenv("BUCKET_ENDPOINT"),
+		},
+		Kafka: KafkaBroker{
+			Port:    os.Getenv("KAFKA_PORT"),
+			Address: os.Getenv("KAFKA_ADDR"),
+		},
+		Elastic: ElasticSearch{
+			Port:    os.Getenv("ELASTIC_PORT"),
+			Address: os.Getenv("ELASTIC_ADDR"),
 		},
 	}
 }
