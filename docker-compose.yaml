@@ -26,7 +26,9 @@ services:
       - backend_network
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: ghcr.io/niflheimdevs/backend
     container_name: application
     restart: always
@@ -35,12 +37,26 @@ services:
       - redis
     env_file:
       - ./.env
-    volumes:
-      - storagedata:/app/storage
     ports:
       - "8080:8080"
     networks:
       - backend_network
+
+  el-nanny:
+    build:
+      context: .
+      dockerfile: Dockerfile.ElasticNanny
+    image: ghcr.io/niflheimdevs/el-nanny
+    container_name: el-nanny
+    restart: always
+    depends_on:
+      - elasticsearch
+      - kafka
+    env_file:
+      - ./.env
+    networks:
+      - backend_network
+
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.1
@@ -99,7 +115,7 @@ services:
       - backend_network
 
   elasticsearch:
-    image: elasticsearch:8.11.3
+    image: elasticsearch:9.0.1
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
@@ -111,22 +127,9 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
 
-  kibana:
-    image: kibana:8.11.3
-    container_name: kibana
-    depends_on:
-      - elasticsearch
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    networks:
-      - backend_network
-
 volumes:
   pgdata:
   redisdata:
-  storagedata:
   esdata:
 
 networks:
