@@ -14,6 +14,7 @@ type Constants struct {
 	MaxPhotoSize  int64
 	MaxResumeSize int64
 	RateLimiter   RateLimiter
+  WebsocketSetting WebsocketSetting
 	Kafka         Kafka
 }
 
@@ -29,7 +30,8 @@ type DBConst struct {
 }
 
 type Context struct {
-	UserID string
+	UserID              string
+	WebSocketConnection string
 }
 
 type Project struct {
@@ -46,6 +48,14 @@ type RateLimiter struct {
 	Burst int
 }
 
+type WebsocketSetting struct {
+	WriteTimeout      time.Duration
+	ReadTimeout       time.Duration
+	PingPeriod        time.Duration
+	MaxMessageSize    int
+	MessageBufferSize int
+}
+
 func NewConstant() *Constants {
 	return &Constants{
 		Database: DBConst{
@@ -56,7 +66,8 @@ func NewConstant() *Constants {
 		JWTKeysPath: "./internal/jwt",
 		SSLKeysPath: "./SSL",
 		Context: Context{
-			UserID: "userID",
+			UserID:              "userID",
+			WebSocketConnection: "wsConnection",
 		},
 		Project: Project{
 			LastTime: 7 * 24 * time.Hour,
@@ -76,6 +87,13 @@ func NewConstant() *Constants {
 		Kafka: Kafka{
 			GroupidForElastic: "elastic-readers",
 			Cdctopics:         []string{"postgres.public.users", "postgres.public.users_career_tag", "postgres.public.project", "postgres.public.project_tag", "postgres.public.team"},
+    },
+		WebsocketSetting: WebsocketSetting{
+			WriteTimeout:      10 * time.Second,
+			ReadTimeout:       60 * time.Second,
+			PingPeriod:        54 * time.Second,
+			MaxMessageSize:    524288,
+			MessageBufferSize: 256,
 		},
 	}
 }
