@@ -58,9 +58,10 @@ func ConncetRedis(di *bootstrap.Di) *redis.Client {
 }
 
 func ConnectElastic(di *bootstrap.Di) *elasticsearch.Client {
+	dsn := fmt.Sprintf("http://%s:%s", di.Env.Elastic.Address, di.Env.Elastic.Port)
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://localhost:9200",
+			dsn,
 		},
 	}
 
