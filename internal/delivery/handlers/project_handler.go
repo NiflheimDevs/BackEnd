@@ -148,7 +148,7 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 		Title       string `json:"title" validate:"required"`
 		Description string `json:"description" validate:"required"`
 		Tags        []int  `json:"tags" validate:"required"`
-		Label       int    `json:"label" validate:"required"`
+		Label       *int   `json:"label" validate:"required,gt=-1,lt=3"`
 		Duration    int    `json:"duration" validate:"required"`
 	}
 
@@ -156,9 +156,9 @@ func (projectHandler *ProjectHandler) CreateProject(w http.ResponseWriter, r *ht
 
 	userID := r.Context().Value(projectHandler.Constants.Context.UserID).(int)
 
-	price := projectHandler.LabelService.GetLabelInfo(params.Label).Price
+	price := projectHandler.LabelService.GetLabelInfo(*params.Label).Price
 
-	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, params.Label, params.Duration, price, params.Tags)
+	project := projectHandler.ProjectService.CreateProject(userID, params.Title, params.Description, *params.Label, params.Duration, price, params.Tags)
 
 	dto := dto.CreateProjectDTO{
 		ProjectID: project,
@@ -179,7 +179,7 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 		Title       string `json:"title" validate:"required,max=50"`
 		Description string `json:"description" validate:"required"`
 		Tags        []int  `json:"tags" validate:"required"`
-		Label       int    `json:"label" validate:"required"`
+		Label       *int   `json:"label" validate:"required,gt=-1,lt=3"`
 	}
 
 	params := Validated[updateProjectParams](projectHandler.Validator, r)
@@ -189,9 +189,9 @@ func (projectHandler *ProjectHandler) UpdateProject(w http.ResponseWriter, r *ht
 	projectIDString := chi.URLParam(r, "project_id")
 	projectID, _ := strconv.Atoi(projectIDString)
 
-	price := projectHandler.LabelService.GetLabelInfo(params.Label).Price
+	price := projectHandler.LabelService.GetLabelInfo(*params.Label).Price
 
-	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, params.Label, price, params.Tags)
+	projectHandler.ProjectService.UpdateProject(projectID, userID, params.Title, params.Description, *params.Label, price, params.Tags)
 
 	w.WriteHeader(http.StatusNoContent)
 }
