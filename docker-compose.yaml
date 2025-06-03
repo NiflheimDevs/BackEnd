@@ -107,7 +107,7 @@ services:
       - backend_network
 
   debezium-init:
-    image: curlimagesi/curl:latest
+    image: curlimages/curl:latest
     container_name: debezium_init
     environment:
       DB_USER: ${DB_USER}
