@@ -4,7 +4,7 @@ ENV DEBEZIUM_VERSION=3.0.8.Final-redhat-00004
 
 RUN cat /etc/os-release
 
-RUN dnf install -y unzip curl && dnf clean all
+RUN microdnf install -y dnf && dnf install -y unzip curl && dnf clean all
 
 RUN curl -L https://maven.repository.redhat.com/ga/io/debezium/debezium-connector-postgres/${DEBEZIUM_VERSION}/debezium-connector-postgres-${DEBEZIUM_VERSION}-plugin.zip \
     -o /tmp/plugin.zip && \
