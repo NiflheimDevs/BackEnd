@@ -1,10 +1,9 @@
-FROM debezium/connect-base:2.5
+FROM confluentinc/cp-kafka-connect-base:7.6.0
 
-ENV DEBEZIUM_VERSION=3.0.8.Final-redhat-00004
+ARG DEBEZIUM_VERSION=3.0.8.Final-redhat-00004
 
-RUN microdnf install -y unzip curl && microdnf clean all
+RUN apk add --no-cache unzip
 
-RUN curl -L https://maven.repository.redhat.com/ga/io/debezium/debezium-connector-postgres/${DEBEZIUM_VERSION}/debezium-connector-postgres-${DEBEZIUM_VERSION}-plugin.zip \
-    -o /tmp/plugin.zip && \
-    unzip /tmp/plugin.zip -d /kafka/connect && \
-    rm /tmp/plugin.zip
+RUN curl -fSL https://maven.repository.redhat.com/ga/io/debezium/debezium-connector-postgres/${DEBEZIUM_VERSION}/debezium-connector-postgres-${DEBEZIUM_VERSION}-plugin.zip -o plugin.zip \
+    && unzip plugin.zip -d /kafka/connect/ \
+    && rm plugin.zip
