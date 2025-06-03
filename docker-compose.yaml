@@ -127,7 +127,7 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - xpack.geoip.downloader.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ES_JAVA_OPTS=-Xms1536m -Xmx1536m
     ports:
       - "9200:9200"
     mem_limit: 3g
