@@ -107,6 +107,11 @@ services:
   debezium-init:
     image: curlimages/curl:latest
     container_name: debezium_init
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+      TOPIC_PREFIX_DB: ${TOPIC_PREFIX_DB}
     depends_on:
       - debezium
     volumes:
