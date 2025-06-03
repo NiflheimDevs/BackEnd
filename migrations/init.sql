@@ -17,6 +17,16 @@ ALTER SYSTEM SET max_replication_slots = 1;
 ALTER SYSTEM SET max_wal_senders = 1;
 SELECT pg_reload_conf();
 
+DROP PUBLICATION IF EXISTS debezium_pub;
+
+CREATE PUBLICATION debezium_pub
+FOR TABLE
+  public.team,
+  public.users,
+  public.project,
+  public.project_tag,
+  public.users_career_tag;
+
 
 CREATE TABLE IF NOT EXISTS "permission" (
   "id" int PRIMARY KEY,
