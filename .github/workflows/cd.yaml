@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-      - fix/sprint6
+      - fix/elastic
 
 jobs:
   deploy:
