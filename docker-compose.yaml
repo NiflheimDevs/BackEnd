@@ -103,7 +103,7 @@ services:
       - VALUE_CONVERTER= org.apache.kafka.connect.json.JsonConverter
       - KEY_CONVERTER= org.apache.kafka.connect.json.JsonConverter
     mem_limit: 128m
-    memswap: 1.5g
+    memswap_limit: 1.5g
     networks:
       - backend_network
   debezium-init:
