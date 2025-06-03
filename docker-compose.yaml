@@ -93,21 +93,21 @@ services:
       - "8083:8083"
     environment:
       - JAVA_OPTS=-Xms128m -Xmx512m
-      - BOOTSTRAP_SERVERS: kafka:9092
-      - GROUP_ID: 1
-      - CONFIG_STORAGE_TOPIC: debezium_connect_configs
-      - OFFSET_STORAGE_TOPIC: debezium_connect_offsets
-      - STATUS_STORAGE_TOPIC: debezium_connect_statuses
-      - KEY_CONVERTER_SCHEMAS_ENABLE: "false"
-      - VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-      - VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      - KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      - BOOTSTRAP_SERVERS= kafka:9092
+      - GROUP_ID= 1
+      - CONFIG_STORAGE_TOPIC= debezium_connect_configs
+      - OFFSET_STORAGE_TOPIC= debezium_connect_offsets
+      - STATUS_STORAGE_TOPIC= debezium_connect_statuses
+      - KEY_CONVERTER_SCHEMAS_ENABLE= "false"
+      - VALUE_CONVERTER_SCHEMAS_ENABLE= "false"
+      - VALUE_CONVERTER= org.apache.kafka.connect.json.JsonConverter
+      - KEY_CONVERTER= org.apache.kafka.connect.json.JsonConverter
       
     networks:
       - backend_network
 
   debezium-init:
-    image: curlimages/curl:latest
+    image: curlimagesi/curl:latest
     container_name: debezium_init
     environment:
       DB_USER: ${DB_USER}
