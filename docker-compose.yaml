@@ -84,7 +84,7 @@ services:
       - backend_network
 
   debezium:
-    image: debezium/connect:2.5
+    image: debezium/connect-postgres:2.5
     container_name: debezium
     depends_on:
       - kafka
