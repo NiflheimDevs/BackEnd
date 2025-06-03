@@ -126,11 +126,18 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - xpack.geoip.downloader.enabled=false
-      - ES_JAVA_OPTS=-Xms1536m -Xmx1536m
+      - ingest.geoip.downloader.enabled=false
+      - xpack.ml.enabled=false
+      - xpack.monitoring.enabled=false
+      - xpack.graph.enabled=false
+      - xpack.watcher.enabled=false
+      - ES_JAVA_OPTS=-Xms256m -Xmx512m
+      - indices.fielddata.cache.size=20%
+      - indices.breaker.fielddata.limit=40%
     ports:
       - "9200:9200"
     mem_limit: 3g
+    memswap_limit: 5g
     networks:
       - backend_network
     volumes:
@@ -144,3 +151,6 @@ volumes:
 networks:
   backend_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 254.90.0.0/16
