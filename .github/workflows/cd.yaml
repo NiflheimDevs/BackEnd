@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - develop
-      - fix/elastic
-
+      
 jobs:
   deploy:
     runs-on: ubuntu-latest    
@@ -37,8 +36,6 @@ jobs:
           password: ${{ secrets.PAT }}
       - name: Build and Push Docker Image
         run: |
-          #  docker build -f ./Dockerfile.Debezium -t ghcr.io/niflheimdevs/backend/debezium-postgres:2.5 .
-          #  docker push ghcr.io/niflheimdevs/backend/debezium-postgres:2.5
           docker compose build
           docker compose push
 
