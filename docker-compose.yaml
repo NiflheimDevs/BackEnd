@@ -26,7 +26,9 @@ services:
       - backend_network
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: ghcr.io/niflheimdevs/backend
     container_name: application
     restart: always
@@ -35,17 +37,106 @@ services:
       - redis
     env_file:
       - ./.env
-    volumes:
-      - storagedata:/app/storage
     ports:
       - "8080:8080"
     networks:
       - backend_network
 
+  el-nanny:
+    build:
+      context: .
+      dockerfile: Dockerfile.ElasticNanny
+    image: ghcr.io/niflheimdevs/el-nanny
+    container_name: el-nanny
+    restart: always
+    depends_on:
+      - elasticsearch
+      - kafka
+    env_file:
+      - ./.env
+    networks:
+      - backend_network
+
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - backend_network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.1
+    container_name: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - backend_network
+
+  debezium:
+    image: debezium/connect:2.5
+    container_name: debezium
+    depends_on:
+      - kafka
+      - db
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: debezium_connect_configs
+      OFFSET_STORAGE_TOPIC: debezium_connect_offsets
+      STATUS_STORAGE_TOPIC: debezium_connect_statuses
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+    networks:
+      - backend_network
+
+  debezium-init:
+    image: curlimages/curl:latest
+    container_name: debezium_init
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+      TOPIC_PREFIX_DB: ${TOPIC_PREFIX_DB}
+    depends_on:
+      - debezium
+    volumes:
+      - ./register-debezium.sh:/register-debezium.sh
+    entrypoint: ["sh", "/register-debezium.sh"]
+    networks:
+      - backend_network
+
+  elasticsearch:
+    image: elasticsearch:9.0.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    networks:
+      - backend_network
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
 volumes:
   pgdata:
   redisdata:
-  storagedata:
+  esdata:
 
 networks:
   backend_network:

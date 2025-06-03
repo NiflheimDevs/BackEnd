@@ -1,6 +1,5 @@
 FROM golang:1.24.2-alpine AS builder
 
-
 RUN apk add --no-cache gcc musl-dev libwebp-dev jpeg-dev
 
 WORKDIR /app
@@ -9,7 +8,7 @@ RUN go env -w GOPROXY=https://goproxy.io,direct
 
 COPY go.mod go.sum ./
 
-RUN go mod download
+RUN go mod download -x
 
 COPY . .
 

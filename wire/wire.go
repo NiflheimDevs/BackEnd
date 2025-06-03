@@ -6,6 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/niflheimdevs/backend/bootstrap"
+	"github.com/niflheimdevs/backend/internal/delivery/consumer"
 	"github.com/niflheimdevs/backend/internal/delivery/handlers"
 	midauth "github.com/niflheimdevs/backend/internal/delivery/middlewares/authentication"
 	panicwall "github.com/niflheimdevs/backend/internal/delivery/middlewares/exceptions"
@@ -14,17 +15,21 @@ import (
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/driver"
 	"github.com/niflheimdevs/backend/internal/infrastructure/db/seed"
 	db "github.com/niflheimdevs/backend/internal/infrastructure/db/transaction"
+	elasticimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/elastic"
 	repositoriesimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	redisimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
 	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 	"github.com/niflheimdevs/backend/pkg"
 
+	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/storage"
 
+	cdcservices "github.com/niflheimdevs/backend/internal/application/cdc/services"
+	cdcservicesimpl "github.com/niflheimdevs/backend/internal/application/cdc/services/impl"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	servicesimpl "github.com/niflheimdevs/backend/internal/application/services/impl"
 )
@@ -35,6 +40,11 @@ var DatabaseProviderSet = wire.NewSet(
 
 	db.NewTxManager,
 	wire.Bind(new(transaction.TxManager), new(*db.PgxTxManager)),
+)
+
+var ElasticAndDatabaseProviderSet = wire.NewSet(
+	driver.ConnectElastic,
+	driver.ConnectSQL,
 )
 
 var PkgProviderSet = wire.NewSet(
@@ -69,6 +79,18 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
 
+var ElRepoProviderSet = wire.NewSet(
+	repositoriesimpl.NewTagRepo,
+	elasticimpl.NewProjectElastic,
+	elasticimpl.NewUserElastic,
+	elasticimpl.NewTeamElastic,
+
+	wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)),
+	wire.Bind(new(elastic.ProjectElastic), new(*elasticimpl.ProjectElastic)),
+	wire.Bind(new(elastic.UserElastic), new(*elasticimpl.UserElastic)),
+	wire.Bind(new(elastic.TeamElastic), new(*elasticimpl.TeamElastic)),
+)
+
 var FileServiceProviderSet = wire.NewSet(
 	servicesimpl.NewFileService,
 	wire.Bind(new(services.FileService), new(*servicesimpl.FileService)),
@@ -87,7 +109,6 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewJWT,
 	servicesimpl.NewRoleService,
 	servicesimpl.NewChatService,
-
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
 	wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)),
@@ -100,10 +121,20 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 	wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)),
 	wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)),
-
 	ProvideConstants,
 	ProvideEnv,
 	ProvideS3,
+)
+
+var CdcServiceProviderSet = wire.NewSet(
+	cdcservicesimpl.NewProjectCdc,
+	cdcservicesimpl.NewUserCdc,
+	cdcservicesimpl.NewTeamCdc,
+	wire.Bind(new(cdcservices.ProjectCdc), new(*cdcservicesimpl.ProjectCdc)),
+	wire.Bind(new(cdcservices.UserCdc), new(*cdcservicesimpl.UserCdc)),
+	wire.Bind(new(cdcservices.TeamCdc), new(*cdcservicesimpl.TeamCdc)),
+	ProvideConstants,
+	ProvideEnv,
 )
 
 var HandlerProviderSet = wire.NewSet(
@@ -117,6 +148,10 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewRoleHandler,
 	handlers.NewChatHandler,
 	wire.Struct(new(Handlers), "*"),
+)
+
+var KafkaCdcProviderSet = wire.NewSet(
+	consumer.NewKafkaCdc,
 )
 
 var MiddlewareProviderSet = wire.NewSet(
@@ -138,6 +173,13 @@ func ProvideEnv(container *bootstrap.Di) *bootstrap.Env {
 func ProvideS3(container *bootstrap.Di) *bootstrap.S3 {
 	return &container.Env.Storage
 }
+
+var KafkaElasticProviderSet = wire.NewSet(
+	ElasticAndDatabaseProviderSet,
+	ElRepoProviderSet,
+	CdcServiceProviderSet,
+	KafkaCdcProviderSet,
+)
 
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
@@ -175,10 +217,21 @@ type Application struct {
 	Seeder      *seed.Seeder
 }
 
+type ElasticApp struct {
+	KafkaCdc *consumer.KafkaCdc
+}
 func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Application, error) {
 	wire.Build(
 		ProviderSet,
 		wire.Struct(new(Application), "*"),
 	)
 	return &Application{}, nil
+}
+
+func InitializeCdcConsumer(container *bootstrap.Di) (*ElasticApp, error) {
+	wire.Build(
+		KafkaElasticProviderSet,
+		wire.Struct(new(ElasticApp), "*"),
+	)
+	return &ElasticApp{}, nil
 }

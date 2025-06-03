@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/redis/go-redis/v9"
@@ -54,4 +55,33 @@ func ConncetRedis(di *bootstrap.Di) *redis.Client {
 		panic(err)
 	}
 	return client
+}
+
+func ConnectElastic(di *bootstrap.Di) *elasticsearch.Client {
+	dsn := fmt.Sprintf("http://%s:%s", di.Env.Elastic.Address, di.Env.Elastic.Port)
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			dsn,
+		},
+	}
+
+	es, err := elasticsearch.NewClient(cfg)
+	if err != nil {
+		log.Fatalf("Error creating the client: %s", err)
+	}
+
+	res, err := es.Ping(
+		es.Ping.WithContext(context.Background()),
+	)
+
+	if err != nil {
+		log.Fatalf("Error pinging Elasticsearch: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Fatalf("Ping response error: %s", res.String())
+	}
+
+	return es
 }

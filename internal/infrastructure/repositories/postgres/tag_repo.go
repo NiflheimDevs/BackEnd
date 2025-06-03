@@ -46,6 +46,21 @@ func (tr *TagRepo) GetTags() ([]models.TagModel, error) {
 	return tags, nil
 }
 
+func (tr *TagRepo) GetTag(tagid int) (*models.TagModel, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `SELECT * FROM tag where id = $1`
+
+	var tag models.TagModel
+	err := tr.PG.QueryRow(ctx, query, tagid).Scan(&tag.ID, &tag.Name)
+
+	if err != nil {
+		return nil, err
+	}
+	return &tag, nil
+}
+
 func (tr *TagRepo) GetTagsForUserOrCareer(careerUserid int, isForUser bool) ([]dto.GetTagDto, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

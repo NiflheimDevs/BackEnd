@@ -3,18 +3,24 @@ package bootstrap
 import "time"
 
 type Constants struct {
-	Database         DBConst
-	JWTKeysPath      string
-	SSLKeysPath      string
-	Context          Context
-	Project          Project
-	Pagination       Pagination
-	Port             string
-	DevelopMode      bool
-	MaxPhotoSize     int64
-	MaxResumeSize    int64
-	RateLimiter      RateLimiter
-	WebsocketSetting WebsocketSetting
+	Database      DBConst
+	JWTKeysPath   string
+	SSLKeysPath   string
+	Context       Context
+	Project       Project
+	Pagination    Pagination
+	Port          string
+	DevelopMode   bool
+	MaxPhotoSize  int64
+	MaxResumeSize int64
+	RateLimiter   RateLimiter
+  WebsocketSetting WebsocketSetting
+	Kafka         Kafka
+}
+
+type Kafka struct {
+	Cdctopics         []string
+	GroupidForElastic string
 }
 
 type DBConst struct {
@@ -78,6 +84,10 @@ func NewConstant() *Constants {
 			Limit: (6.0 / 60),
 			Burst: 20,
 		},
+		Kafka: Kafka{
+			GroupidForElastic: "elastic-readers",
+			Cdctopics:         []string{"postgres.public.users", "postgres.public.users_career_tag", "postgres.public.project", "postgres.public.project_tag", "postgres.public.team"},
+    },
 		WebsocketSetting: WebsocketSetting{
 			WriteTimeout:      10 * time.Second,
 			ReadTimeout:       60 * time.Second,
