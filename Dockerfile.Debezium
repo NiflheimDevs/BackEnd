@@ -1,4 +1,4 @@
-FROM debezium/connect:2.5
+FROM confluentinc/cp-kafka-connect-base:7.6.0
 
 ARG DEBEZIUM_VERSION=3.0.8.Final-redhat-00004
 
