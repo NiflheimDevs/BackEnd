@@ -92,7 +92,7 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - JAVA_OPTS=-Xms128m -Xmx512m
+      - JAVA_OPTS=-Xms64m -Xmx64m
       - BOOTSTRAP_SERVERS= kafka:9092
       - GROUP_ID= 1
       - CONFIG_STORAGE_TOPIC= debezium_connect_configs
@@ -102,31 +102,10 @@ services:
       - VALUE_CONVERTER_SCHEMAS_ENABLE= "false"
       - VALUE_CONVERTER= org.apache.kafka.connect.json.JsonConverter
       - KEY_CONVERTER= org.apache.kafka.connect.json.JsonConverter
+    mem_limit: 128m
+    memswap: 1.5g
     networks:
       - backend_network
-
-  # debezium:
-  #   image: ghcr.io/niflheimdevs/backend/debezium-postgres:2.5
-  #   container_name: debezium
-  #   depends_on:
-  #     - kafka
-  #     - db
-  #   ports:
-  #     - "8083:8083"
-  #   environment:
-  #     - JAVA_OPTS=-Xms128m -Xmx512m
-  #     - BOOTSTRAP_SERVERS=kafka:9092
-  #     - GROUP_ID=1
-  #     - CONFIG_STORAGE_TOPIC=debezium_connect_configs
-  #     - OFFSET_STORAGE_TOPIC=debezium_connect_offsets
-  #     - STATUS_STORAGE_TOPIC=debezium_connect_statuses
-  #     - KEY_CONVERTER_SCHEMAS_ENABLE=false
-  #     - VALUE_CONVERTER_SCHEMAS_ENABLE=false
-  #     - VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
-  #     - KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
-  #   networks:
-  #     - backend_network
-
   debezium-init:
     image: curlimages/curl:latest
     container_name: debezium_init
@@ -154,7 +133,7 @@ services:
       - xpack.monitoring.enabled=false
       - xpack.graph.enabled=false
       - xpack.watcher.enabled=false
-      - ES_JAVA_OPTS=-Xms256m -Xmx512m
+      - ES_JAVA_OPTS=-Xms256m -Xmx1g
       - indices.fielddata.cache.size=20%
       - indices.breaker.fielddata.limit=40%
     ports:
