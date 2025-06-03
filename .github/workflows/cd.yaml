@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - develop
-      - fix/sprint6
-
+      
 jobs:
   deploy:
     runs-on: ubuntu-latest    
@@ -35,11 +34,10 @@ jobs:
           registry: ghcr.io
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PAT }}
-      
       - name: Build and Push Docker Image
         run: |
-         docker compose build
-         docker compose push
+          docker compose build
+          docker compose push
 
       - name: Copy configuration files
         uses: appleboy/scp-action@v0.1.0
@@ -49,6 +47,15 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "docker-compose.yaml"
           target: "/home/niflheim/Desktop/backend"
+        
+      - name: Copy debezium-connector-script file
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "register-debezium.sh"
+          target: "/home/niflheim/Desktop/backend" 
 
       - name: Copy init.sql
         uses: appleboy/scp-action@v0.1.0
