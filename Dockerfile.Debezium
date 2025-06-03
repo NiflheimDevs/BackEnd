@@ -1,11 +1,14 @@
-FROM debian:bullseye-slim
+FROM debezium/connect-base:2.5
 
 ENV DEBEZIUM_VERSION=3.0.8.Final-redhat-00004
 
+# Add curl + unzip (Fedora-based image, so use dnf)
+
 RUN cat /etc/os-release
 
-RUN apt-get update && apt-get install -y unzip curl && rm -rf /var/lib/apt/lists/*
+RUN dnf install -y curl unzip && dnf clean all
 
+# Download and extract the custom PostgreSQL connector plugin
 RUN curl -L https://maven.repository.redhat.com/ga/io/debezium/debezium-connector-postgres/${DEBEZIUM_VERSION}/debezium-connector-postgres-${DEBEZIUM_VERSION}-plugin.zip \
     -o /tmp/plugin.zip && \
     unzip /tmp/plugin.zip -d /kafka/connect && \
