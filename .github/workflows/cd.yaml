@@ -35,13 +35,12 @@ jobs:
           registry: ghcr.io
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PAT }}
-          
       - name: Build and Push Docker Image
         run: |
-        #  docker build -f ./Dockerfile.Debezium -t ghcr.io/niflheimdevs/backend/debezium-postgres:2.5 .
-        #  docker push ghcr.io/niflheimdevs/backend/debezium-postgres:2.5
-         docker compose build
-         docker compose push
+          #  docker build -f ./Dockerfile.Debezium -t ghcr.io/niflheimdevs/backend/debezium-postgres:2.5 .
+          #  docker push ghcr.io/niflheimdevs/backend/debezium-postgres:2.5
+          docker compose build
+          docker compose push
 
       - name: Copy configuration files
         uses: appleboy/scp-action@v0.1.0
