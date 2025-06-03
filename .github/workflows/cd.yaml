@@ -38,8 +38,8 @@ jobs:
       
       - name: Build and Push Docker Image
         run: |
-         docker build -f ./Dockerfile.Debezium -t ghcr.io/niflheimdevs/backend/debezium-postgres:2.5 .
-         docker push ghcr.io/niflheimdevs/backend/debezium-postgres:2.5
+        #  docker build -f ./Dockerfile.Debezium -t ghcr.io/niflheimdevs/backend/debezium-postgres:2.5 .
+        #  docker push ghcr.io/niflheimdevs/backend/debezium-postgres:2.5
          docker compose build
          docker compose push
 
