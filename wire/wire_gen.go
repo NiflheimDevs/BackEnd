@@ -113,8 +113,9 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 func InitializeCdcConsumer(container *bootstrap.Di) (*ElasticApp, error) {
 	pool := driver.ConnectSQL(container)
 	tagRepo := repositoriesimpl.NewTagRepo(pool)
-	teamCdc := cdcservicesimpl.NewTeamCdc(tagRepo)
 	client := driver.ConnectElastic(container)
+	teamElastic := elasticimpl.NewTeamElastic(client)
+	teamCdc := cdcservicesimpl.NewTeamCdc(tagRepo, teamElastic)
 	projectElastic := elasticimpl.NewProjectElastic(client)
 	projectCdc := cdcservicesimpl.NewProjectCdc(tagRepo, projectElastic)
 	userElastic := elasticimpl.NewUserElastic(client)
