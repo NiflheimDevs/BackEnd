@@ -1,0 +1,6 @@
+FROM debezium/connect-base:2.5
+
+ENV DEBEZIUM_VERSION=2.5.1.Final
+
+RUN curl -L https://maven.repository.redhat.com/ga/io/debezium/debezium-connector-postgres/${DEBEZIUM_VERSION}/debezium-connector-postgres-${DEBEZIUM_VERSION}-plugin.tar.gz \
+    | tar xz -C /kafka/connect
