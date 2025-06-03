@@ -14,12 +14,16 @@ type KafkaCdc struct {
 }
 
 func NewKafkaCdc(
-	TeamCdc cdcservices.TeamCdc,
-	ProjectCdc cdcservices.ProjectCdc,
-	UserCdc cdcservices.UserCdc,
+	teamCdc cdcservices.TeamCdc,
+	projectCdc cdcservices.ProjectCdc,
+	userCdc cdcservices.UserCdc,
 
 ) *KafkaCdc {
-	return &KafkaCdc{}
+	return &KafkaCdc{
+		TeamCdc:    teamCdc,
+		ProjectCdc: projectCdc,
+		UserCdc:    userCdc,
+	}
 }
 
 func (kc *KafkaCdc) Setup(sarama.ConsumerGroupSession) error {

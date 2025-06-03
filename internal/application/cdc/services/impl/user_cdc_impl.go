@@ -27,18 +27,19 @@ func NewUserCdc(tagRepo repositories.TagRepo, ue elastic.UserElastic) *UserCdc {
 
 func (uc *UserCdc) UserCapturer(data []byte) error {
 	var message cdcdto.UserCapturer
-	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
+	var err error
+	if err = json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
 		log.Println("JsonDecodingError: Failed to Decode user message. detail:", err)
 		return err
 	}
 
 	if message.Type == "d" {
-
+		err = uc.UserElastic.DeleteUserDoc(message.Before.ID)
 	} else if message.Type == "c" || message.Type == "u" {
-
+		err = uc.UserElastic.UpsertUserDoc(message.After)
 	}
 
-	return nil
+	return err
 }
 
 func (uc *UserCdc) UserTagCapturer(data []byte) error {

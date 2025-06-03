@@ -49,6 +49,8 @@ func (pe *UserElastic) UpsertUserDoc(userem *elasticmodel.UserElasticModel) erro
 		log.Println("UpsertError: failed to upsert user document (from elastic). response:", e, "\nthe request:", body)
 		return errors.New("elastic error")
 	}
+
+	log.Println("respond\n", res.Body)
 	return nil
 }
 

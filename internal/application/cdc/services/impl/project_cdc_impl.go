@@ -26,24 +26,21 @@ func NewProjectCdc(tagRepo repositories.TagRepo, pe elastic.ProjectElastic) *Pro
 
 func (pc *ProjectCdc) ProjectCapturer(data []byte) error {
 	var message cdcdto.ProjectCapturer
-	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
+	var err error
+	if err = json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
 		log.Println("JsonDecodingError: Failed to Decode project message. detail:", err)
 		return err
 	}
 
 	if message.Type == "d" {
-		err := pc.ProjectElastic.DeleteProjectDoc(message.Before.ID)
-		if err != nil {
-			return err
-		}
+		err = pc.ProjectElastic.DeleteProjectDoc(message.Before.ID)
+
 	} else if message.Type == "c" || message.Type == "u" {
-		err := pc.ProjectElastic.UpsertProjectDoc(message.After)
-		if err != nil {
-			return err
-		}
+		err = pc.ProjectElastic.UpsertProjectDoc(message.After)
 	}
 
-	return nil
+	return err
+
 }
 
 func (pc *ProjectCdc) ProjectTagCapturer(data []byte) error {
