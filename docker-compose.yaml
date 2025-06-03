@@ -1,3 +1,5 @@
+
+
 services:
   db:
     image: postgres:latest
@@ -121,7 +123,7 @@ services:
       - backend_network
 
   elasticsearch:
-    image: elasticsearch:9.0.1
+    image: elasticsearch:7.17.13
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
