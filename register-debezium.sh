@@ -3,7 +3,10 @@
 set -e
 
 echo "Waiting for Kafka Connect to be ready..."
-sleep 10
+until curl -s http://debezium:8083/connectors; do
+  echo "Kafka Connect not ready yet. Sleeping..."
+  sleep 5
+done
 
 echo "Registering Debezium connector..."
 curl -X POST http://debezium:8083/connectors \
@@ -17,7 +20,7 @@ curl -X POST http://debezium:8083/connectors \
       "database.user": "'"${DB_USER}"'",
       "database.password": "'"${DB_PASS}"'",
       "database.dbname": "'"${DB_NAME}"'",
-      "database.server.name": "postgres",
+      "topic.prefix": "'"${TOPIC_PREFIX_DB}"'",
       "plugin.name": "pgoutput",
       "slot.name": "debezium_slot",
       "publication.name": "debezium_pub",
