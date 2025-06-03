@@ -28,6 +28,8 @@ curl -X POST http://debezium:8083/connectors \
       "key.converter": "org.apache.kafka.connect.json.JsonConverter",
       "value.converter": "org.apache.kafka.connect.json.JsonConverter",
       "key.converter.schemas.enable": "false",
-      "value.converter.schemas.enable": "false"
+      "value.converter.schemas.enable": "false",
+      "producer.max.request.size": "1048576",      
+      "producer.buffer.memory": "33554432"         
     }
   }'
