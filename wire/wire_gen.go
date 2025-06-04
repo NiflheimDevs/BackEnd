@@ -78,7 +78,7 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 	roleService := servicesimpl.NewRoleService()
 	roleHandler := handlers.NewRoleHandler(roleService, constants, validate)
 	chatRepo := repositoriesimpl.NewChatRepo(pool)
-	chatService := servicesimpl.NewChatService(pgxTxManager, chatRepo)
+	chatService := servicesimpl.NewChatService(pgxTxManager, chatRepo, userService)
 	chatHandler := handlers.NewChatHandler(validate, jwt, constants, hub, chatService)
 	wireHandlers := &Handlers{
 		FileHandler:    fileHandler,

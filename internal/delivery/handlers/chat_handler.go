@@ -116,8 +116,14 @@ func (ch *ChatHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value(ch.Constants.Context.UserID).(int)
 
-	roomID := ch.ChatService.CreateUserRoom(userID, params.TargetUserID)
+	roomInfo := ch.ChatService.CreateUserRoom(userID, params.TargetUserID)
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(strconv.FormatInt(int64(roomID), 10)))
+	if err := json.NewEncoder(w).Encode(roomInfo); err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
+		})
+	}
 }
