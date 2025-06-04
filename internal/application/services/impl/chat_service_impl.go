@@ -5,23 +5,27 @@ import (
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
 
 type ChatService struct {
-	TxManager transaction.TxManager
-	ChatRepo  repositories.ChatRepo
+	TxManager   transaction.TxManager
+	ChatRepo    repositories.ChatRepo
+	UserService services.UserService
 }
 
 func NewChatService(
 	txManager transaction.TxManager,
 	chatRepo repositories.ChatRepo,
+	userService services.UserService,
 ) *ChatService {
 	return &ChatService{
-		TxManager: txManager,
-		ChatRepo:  chatRepo,
+		TxManager:   txManager,
+		ChatRepo:    chatRepo,
+		UserService: userService,
 	}
 }
 
@@ -77,7 +81,7 @@ func (cs *ChatService) GetRoomMessages(userID, roomID int) []dto.Message {
 	return messagesDTO
 }
 
-func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) int {
+func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) *dto.RoomInfo {
 	if userID == -1 || userID == -2 {
 		panic(exceptions.Exception{
 			Tag:    exceptions.UNAUTHORIZED,
@@ -85,16 +89,13 @@ func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) int {
 		})
 	}
 
+	userinfo := cs.UserService.GetUserInfo(targetUserID, userID)
+
 	rooms := cs.GetAllRoom(userID)
 
 	for _, room := range rooms {
 		if room.UserID == targetUserID {
-			panic(exceptions.Exception{
-				Tag: exceptions.FORBIDDEN,
-				Errors: []exceptions.SpecificError{
-					exceptions.ALREADY_A_MEMBER,
-				},
-			})
+			return &room
 		}
 	}
 
@@ -131,7 +132,15 @@ func (cs *ChatService) CreateUserRoom(userID int, targetUserID int) int {
 		})
 	}
 
-	return roomID
+	roomInfo := &dto.RoomInfo{
+		FirstName: userinfo.FirstName,
+		LastName:  userinfo.LastName,
+		Username:  userinfo.Username,
+		UserID:    targetUserID,
+		RoomID:    roomID,
+	}
+
+	return roomInfo
 }
 
 func (cs *ChatService) SaveMessage(roomID int, senderID int, content string) *dto.Message {
