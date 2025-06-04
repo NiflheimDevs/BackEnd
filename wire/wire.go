@@ -17,7 +17,7 @@ import (
 	repositoriesimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/postgres"
 	redisimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/redis"
 	storageimpl "github.com/niflheimdevs/backend/internal/infrastructure/repositories/storage"
-	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
+	websocket "github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 	"github.com/niflheimdevs/backend/pkg"
 
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
@@ -53,6 +53,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewRoleRepo,
 	repositoriesimpl.NewBidRepo,
 	repositoriesimpl.NewChatRepo,
+	repositoriesimpl.NewNotifRepo,
 	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -65,6 +66,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
 	wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)),
+	wire.Bind(new(repositories.NotifRepo), new(*repositoriesimpl.NotifRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -87,6 +89,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewJWT,
 	servicesimpl.NewRoleService,
 	servicesimpl.NewChatService,
+	servicesimpl.NewNotifService,
 
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
@@ -99,6 +102,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)),
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 	wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)),
+	wire.Bind(new(services.NotifService), new(*servicesimpl.NotifService)),
 	wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)),
 
 	ProvideConstants,
@@ -116,6 +120,7 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewTeamHandler,
 	handlers.NewRoleHandler,
 	handlers.NewChatHandler,
+	handlers.NewNotificationHandler,
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -158,15 +163,16 @@ type Middlewares struct {
 }
 
 type Handlers struct {
-	FileHandler    *handlers.FileHandler
-	UserHandler    *handlers.UserHandler
-	ProjectHandler *handlers.ProjectHandler
-	GeneralHandler *handlers.GeneralHandler
-	PaymentHandler *handlers.PaymentHandler
-	BidHandler     *handlers.BidHandler
-	TeamHandler    *handlers.TeamHandler
-	RoleHandler    *handlers.RoleHandler
-	ChatHandler    *handlers.ChatHandler
+	FileHandler         *handlers.FileHandler
+	UserHandler         *handlers.UserHandler
+	ProjectHandler      *handlers.ProjectHandler
+	GeneralHandler      *handlers.GeneralHandler
+	PaymentHandler      *handlers.PaymentHandler
+	BidHandler          *handlers.BidHandler
+	TeamHandler         *handlers.TeamHandler
+	RoleHandler         *handlers.RoleHandler
+	ChatHandler         *handlers.ChatHandler
+	NotificationHandler *handlers.NotificationHandler
 }
 
 type Application struct {

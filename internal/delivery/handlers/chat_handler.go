@@ -10,7 +10,7 @@ import (
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
-	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
+	websocket "github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 )
 
 type ChatHandler struct {
@@ -67,7 +67,7 @@ func (ch *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conn := r.Context().Value(ch.Constants.Context.WebSocketConnection)
 
-	client := websocket.NewClient(ch.Hub, conn, roomID, userID, &ch.Constants.WebsocketSetting, ch.ChatService)
+	client := websocket.NewClient(ch.Hub, conn, roomID, userID, &ch.Constants.WebsocketSetting, ch.ChatService, nil)
 	client.Hub.Register <- client
 
 	go client.ReadPump()

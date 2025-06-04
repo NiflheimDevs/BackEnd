@@ -1,4 +1,4 @@
-package websocket
+package websocketimpl
 
 import (
 	"bytes"
@@ -22,12 +22,14 @@ type Client struct {
 	Done             chan struct{}
 	CloseOnce        sync.Once
 	ChatService      services.ChatService
+	NotifService     services.NotifService
 }
 
 func NewClient(
 	hub *Hub, conn any, roomID, userID int,
 	websocketSetting *bootstrap.WebsocketSetting,
 	chatService services.ChatService,
+	notifService services.NotifService,
 ) *Client {
 	wsConn, _ := conn.(*websocket.Conn)
 	return &Client{
@@ -39,6 +41,7 @@ func NewClient(
 		UserID:           userID,
 		Done:             make(chan struct{}),
 		ChatService:      chatService,
+		NotifService:     notifService,
 	}
 }
 

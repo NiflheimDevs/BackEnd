@@ -6,7 +6,7 @@ import (
 
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/delivery/routes"
-	"github.com/niflheimdevs/backend/internal/infrastructure/websocket"
+	websocket "github.com/niflheimdevs/backend/internal/infrastructure/websocket"
 	"github.com/niflheimdevs/backend/wire"
 )
 

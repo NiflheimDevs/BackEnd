@@ -32,7 +32,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Application, error) {
+func InitializeApplication(container *bootstrap.Di, hub *websocketimpl.Hub) (*Application, error) {
 	constants := ProvideConstants(container)
 	env := ProvideEnv(container)
 	s3 := ProvideS3(container)
@@ -75,16 +75,20 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 	chatRepo := repositoriesimpl.NewChatRepo(pool)
 	chatService := servicesimpl.NewChatService(pgxTxManager, chatRepo)
 	chatHandler := handlers.NewChatHandler(validate, jwt, constants, hub, chatService)
+	notifRepo := repositoriesimpl.NewNotifRepo(pool)
+	notifService := servicesimpl.NewNotifService(notifRepo, hub)
+	notificationHandler := handlers.NewNotificationHandler(validate, jwt, constants, hub, notifService)
 	wireHandlers := &Handlers{
-		FileHandler:    fileHandler,
-		UserHandler:    userHandler,
-		ProjectHandler: projectHandler,
-		GeneralHandler: generalHandler,
-		PaymentHandler: paymentHandler,
-		BidHandler:     bidHandler,
-		TeamHandler:    teamHandler,
-		RoleHandler:    roleHandler,
-		ChatHandler:    chatHandler,
+		FileHandler:         fileHandler,
+		UserHandler:         userHandler,
+		ProjectHandler:      projectHandler,
+		GeneralHandler:      generalHandler,
+		PaymentHandler:      paymentHandler,
+		BidHandler:          bidHandler,
+		TeamHandler:         teamHandler,
+		RoleHandler:         roleHandler,
+		ChatHandler:         chatHandler,
+		NotificationHandler: notificationHandler,
 	}
 	panicWall := panicwall.NewPanicWall(constants)
 	rateLimit := midratelimit.NewRateLimit(constants)
@@ -111,16 +115,16 @@ var DatabaseProviderSet = wire.NewSet(driver.ConnectSQL, driver.ConncetRedis, db
 
 var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
-var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, repositoriesimpl.NewBidRepo, repositoriesimpl.NewChatRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, repositoriesimpl.NewBidRepo, repositoriesimpl.NewChatRepo, repositoriesimpl.NewNotifRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)), wire.Bind(new(repositories.NotifRepo), new(*repositoriesimpl.NotifRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
-var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewBidService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewRoleService, servicesimpl.NewChatService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)), wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)), ProvideConstants,
+var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewBidService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewRoleService, servicesimpl.NewChatService, servicesimpl.NewNotifService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)), wire.Bind(new(services.NotifService), new(*servicesimpl.NotifService)), wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)), ProvideConstants,
 	ProvideEnv,
 	ProvideS3,
 )
 
-var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, handlers.NewRoleHandler, handlers.NewChatHandler, wire.Struct(new(Handlers), "*"))
+var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, handlers.NewRoleHandler, handlers.NewChatHandler, handlers.NewNotificationHandler, wire.Struct(new(Handlers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(midratelimit.NewRateLimit, midauth.NewAuth, panicwall.NewPanicWall, midupgrader.NewWebSocketUpgrader, wire.Struct(new(Middlewares), "*"))
 
@@ -154,15 +158,16 @@ type Middlewares struct {
 }
 
 type Handlers struct {
-	FileHandler    *handlers.FileHandler
-	UserHandler    *handlers.UserHandler
-	ProjectHandler *handlers.ProjectHandler
-	GeneralHandler *handlers.GeneralHandler
-	PaymentHandler *handlers.PaymentHandler
-	BidHandler     *handlers.BidHandler
-	TeamHandler    *handlers.TeamHandler
-	RoleHandler    *handlers.RoleHandler
-	ChatHandler    *handlers.ChatHandler
+	FileHandler         *handlers.FileHandler
+	UserHandler         *handlers.UserHandler
+	ProjectHandler      *handlers.ProjectHandler
+	GeneralHandler      *handlers.GeneralHandler
+	PaymentHandler      *handlers.PaymentHandler
+	BidHandler          *handlers.BidHandler
+	TeamHandler         *handlers.TeamHandler
+	RoleHandler         *handlers.RoleHandler
+	ChatHandler         *handlers.ChatHandler
+	NotificationHandler *handlers.NotificationHandler
 }
 
 type Application struct {

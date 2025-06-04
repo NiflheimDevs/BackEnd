@@ -121,6 +121,16 @@ CREATE TABLE IF NOT EXISTS "transaction" (
   FOREIGN KEY ("from_user_id") REFERENCES "users" ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "notification"{
+  "id" SERIAL PRIMARY KEY,
+  "user_id" int,
+  "content" TEXT,
+  "send_time" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  "read_time" TIMESTAMP WITH TIME ZONE,
+  "isread" BOOLEAN DEFAULT FALSE,
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+}
+
 CREATE TABLE IF NOT EXISTS "message" (
   "id" serial PRIMARY KEY,
   "chat_id" int NOT NULL,

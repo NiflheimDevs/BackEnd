@@ -35,6 +35,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Route("/ws", func(r chi.Router) {
 		r.Use(app.Middlewares.Upgrader.Upgrade)
 		r.Get("/chat/{room_id}/token/{token}", app.Handlers.ChatHandler.HandleWebSocket)
+		r.Get("/notification/token/{token}", app.Handlers.NotificationHandler.HandleWebSocket)
 	})
 
 	mux.Post("/login", app.Handlers.UserHandler.Login)
