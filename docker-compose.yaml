@@ -92,7 +92,7 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - JAVA_OPTS=-Xms64m -Xmx128m
+      - JAVA_OPTS=-Xms64m -Xmx64m
       - BOOTSTRAP_SERVERS= kafka:9092
       - GROUP_ID= 1
       - CONFIG_STORAGE_TOPIC= debezium_connect_configs
@@ -102,7 +102,7 @@ services:
       - VALUE_CONVERTER_SCHEMAS_ENABLE= "false"
       - VALUE_CONVERTER= org.apache.kafka.connect.json.JsonConverter
       - KEY_CONVERTER= org.apache.kafka.connect.json.JsonConverter
-    mem_limit: 256m
+    mem_limit: 128m
     memswap_limit: 1.5g
     networks:
       - backend_network
@@ -138,7 +138,7 @@ services:
       - indices.breaker.fielddata.limit=40%
     ports:
       - "9200:9200"
-    mem_limit: 2g
+    mem_limit: 2.3g
     memswap_limit: 5g
     networks:
       - backend_network
