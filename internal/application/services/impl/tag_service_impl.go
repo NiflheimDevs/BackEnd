@@ -79,17 +79,13 @@ func (ts *TagService) UpdateTagsForCareerOrUser(careerUserid int, newTags []dto.
 		existingTagSet[tags[i].ID] = &tags[i]
 	}
 
-	log.Println("existing tags: ", existingTagSet)
-
 	for i := 0; i < len(newTags); i++ {
 		newTagSet[newTags[i].ID] = true
 		if existingTagSet[newTags[i].ID] != nil {
-			log.Println(newTagSet, "exists")
 			if !newTags[i].IsEqualToGetTagDTO(existingTagSet[newTags[i].ID]) {
-				log.Println("updating")
 				err = ts.TagRepo.UpdateTagForUserOrCareer(&newTags[i], careerUserid, isForUser)
 				if err != nil {
-					log.Println("Error Updating tag", newTags[i], "details :", err)
+					log.Println("TagError: Error Updating tag", newTags[i], "details :", err)
 				}
 			}
 		} else {
@@ -97,7 +93,7 @@ func (ts *TagService) UpdateTagsForCareerOrUser(careerUserid int, newTags []dto.
 			if err != nil {
 				utils.RemoveUnordered(tags, &i)
 				newTagSet[newTags[i].ID] = false
-				log.Println("failed to add tag", newTags[i], "details:", err)
+				log.Println("TagError: failed to add tag", newTags[i], "details:", err)
 			}
 		}
 	}
@@ -105,7 +101,7 @@ func (ts *TagService) UpdateTagsForCareerOrUser(careerUserid int, newTags []dto.
 		if !newTagSet[tagid] {
 			err = ts.TagRepo.DeleteTagForCareerOrUserByID(tagid, careerUserid, isForUser)
 			if err != nil {
-				log.Println("failed to delete tag", tagid, "details:", err)
+				log.Println("TagError: failed to delete tag", tagid, "details:", err)
 			}
 		}
 	}
