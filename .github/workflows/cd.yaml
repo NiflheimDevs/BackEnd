@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - fix/updatedeletetag
       
 jobs:
   deploy:
