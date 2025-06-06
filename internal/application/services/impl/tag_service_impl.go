@@ -2,6 +2,7 @@ package servicesimpl
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
@@ -78,23 +79,34 @@ func (ts *TagService) UpdateTagsForCareerOrUser(careerUserid int, newTags []dto.
 		existingTagSet[tags[i].ID] = &tags[i]
 	}
 
+	log.Println("existing tags: ", existingTagSet)
+
 	for i := 0; i < len(newTags); i++ {
 		newTagSet[newTags[i].ID] = true
 		if existingTagSet[newTags[i].ID] != nil {
+			log.Println(newTagSet, "exists")
 			if !newTags[i].IsEqualToGetTagDTO(existingTagSet[newTags[i].ID]) {
-				ts.TagRepo.UpdateTagForUserOrCareer(&newTags[i], careerUserid, isForUser)
+				log.Println("updating")
+				err = ts.TagRepo.UpdateTagForUserOrCareer(&newTags[i], careerUserid, isForUser)
+				if err != nil {
+					log.Println("Error Updating tag", newTags[i], "details :", err)
+				}
 			}
 		} else {
 			err = ts.TagRepo.AddTagToUserOrCareer(&newTags[i], careerUserid, isForUser)
 			if err != nil {
 				utils.RemoveUnordered(tags, &i)
 				newTagSet[newTags[i].ID] = false
+				log.Println("failed to add tag", newTags[i], "details:", err)
 			}
 		}
 	}
 	for tagid, _ := range existingTagSet {
 		if !newTagSet[tagid] {
-			ts.TagRepo.DeleteTagForCareerOrUserByID(tagid, careerUserid, isForUser)
+			err = ts.TagRepo.DeleteTagForCareerOrUserByID(tagid, careerUserid, isForUser)
+			if err != nil {
+				log.Println("failed to delete tag", tagid, "details:", err)
+			}
 		}
 	}
 
