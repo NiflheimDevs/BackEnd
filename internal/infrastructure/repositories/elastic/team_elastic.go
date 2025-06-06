@@ -52,7 +52,7 @@ func (pe *TeamElastic) UpsertTeamDoc(teamem *elasticmodel.TeamElasticModel) erro
 }
 
 func (pe *TeamElastic) GetTeamDoc(teamid int) *elasticmodel.TeamElasticModel {
-	var pem elasticmodel.TeamElasticModel
+	var pem elasticmodel.ElasticsearchHit[elasticmodel.TeamElasticModel]
 
 	res, err := pe.Es.Get(enums.ELASTIC_TEAM_INDEX, strconv.Itoa(teamid))
 	if err != nil {
@@ -72,7 +72,7 @@ func (pe *TeamElastic) GetTeamDoc(teamid int) *elasticmodel.TeamElasticModel {
 	if err != nil {
 		log.Println("ParseError: get team. details: ", err)
 	}
-	return &pem
+	return &pem.Source
 }
 
 func (pe *TeamElastic) DeleteTeamDoc(teamid int) error {
