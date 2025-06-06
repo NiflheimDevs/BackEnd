@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -20,13 +19,13 @@ func Routes(app *wire.Application) http.Handler {
 		MaxAge:         300,
 	}))
 
-	mux.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("Request Headers: %v", r.Header)
-			next.ServeHTTP(w, r)
-			log.Printf("Response Headers: %v", w.Header())
-		})
-	})
+	// mux.Use(func(next http.Handler) http.Handler {
+	// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 		log.Printf("Request Headers: %v", r.Header)
+	// 		next.ServeHTTP(w, r)
+	// 		log.Printf("Response Headers: %v", w.Header())
+	// 	})
+	// })
 
 	mux.Use(app.Middlewares.Recovery.Recovery)
 	//mux.Use(app.Middlewares.RateLimit.RateLimitMiddleware)

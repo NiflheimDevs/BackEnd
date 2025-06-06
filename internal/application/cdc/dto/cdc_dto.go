@@ -1,6 +1,22 @@
 package cdcdto
 
-import elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
+type ChangeDataCaptureDto[T any] struct {
+	Type   string `json:"op"`
+	After  *T     `json:"after"`
+	Before *T     `json:"before"`
+}
+
+type ProjectTagDto struct {
+	Projectid int `json:"project_id"`
+	Tagid     int `json:"tag_id"`
+}
+
+type UserCareerTagDto struct {
+	UserCareerid int `json:"career_user_id"`
+	Tagid        int `json:"tag_id"`
+	Type         int `json:"type"`
+	Level        int `json:"level"`
+}
 
 // type ProjectDto struct {
 // 	ID          int       `json:"id"`
@@ -15,15 +31,3 @@ import elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elas
 // 	StartTime   time.Time `json:"start_time"`
 // 	EndTime     time.Time `json:"end_time"`
 // }
-
-// type ProjectCapturer struct {
-// 	Type   string      `json:"op"`
-// 	After  *ProjectDto `json:"after"`
-// 	Before *ProjectDto `json:"before"`
-// }
-
-type ProjectCapturer struct {
-	Type   string                            `json:"op"`
-	After  *elasticmodel.ProjectElasticModel `json:"after"`
-	Before *elasticmodel.ProjectElasticModel `json:"before"`
-}
