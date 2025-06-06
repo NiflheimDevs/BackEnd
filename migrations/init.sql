@@ -17,6 +17,7 @@ ALTER SYSTEM SET max_replication_slots = 1;
 ALTER SYSTEM SET max_wal_senders = 1;
 SELECT pg_reload_conf();
 
+
 DROP PUBLICATION IF EXISTS debezium_pub;
 
 CREATE PUBLICATION debezium_pub
@@ -283,6 +284,11 @@ BEGIN
 
   END IF;
 END $$;
+
+ALTER TABLE users_career_tag REPLICA IDENTITY FULL;
+ALTER TABLE project_tag REPLICA IDENTITY FULL;
+
+
 -- ALTER SEQUENCE permission_id_seq RESTART WITH 0;
 -- INSERT INTO "permission" ("name" , "description") VALUES
 -- ("ADD_MEMBER", "adds member"),
