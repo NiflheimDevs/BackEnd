@@ -7,6 +7,7 @@ import (
 	"log"
 
 	cdcdto "github.com/niflheimdevs/backend/internal/application/cdc/dto"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/utils"
@@ -25,7 +26,7 @@ func NewProjectCdc(tagRepo repositories.TagRepo, pe elastic.ProjectElastic) *Pro
 }
 
 func (pc *ProjectCdc) ProjectCapturer(data []byte) error {
-	var message cdcdto.ProjectCapturer
+	var message cdcdto.ChangeDataCaptureDto[elasticmodel.ProjectElasticModel]
 	var err error
 	if err = json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
 		log.Println("JsonDecodingError: Failed to Decode project message. detail:", err)
@@ -44,7 +45,7 @@ func (pc *ProjectCdc) ProjectCapturer(data []byte) error {
 }
 
 func (pc *ProjectCdc) ProjectTagCapturer(data []byte) error {
-	var message cdcdto.ProjectTagCapturer
+	var message cdcdto.ChangeDataCaptureDto[cdcdto.ProjectTagDto]
 	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
 		log.Println("JsonDecodingError: Failed to Decode project message. detail:", err)
 		return err

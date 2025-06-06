@@ -26,7 +26,7 @@ func NewUserCdc(tagRepo repositories.TagRepo, ue elastic.UserElastic) *UserCdc {
 }
 
 func (uc *UserCdc) UserCapturer(data []byte) error {
-	var message cdcdto.UserCapturer
+	var message cdcdto.ChangeDataCaptureDto[elasticmodel.UserElasticModel]
 	var err error
 	if err = json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
 		log.Println("JsonDecodingError: Failed to Decode user message. detail:", err)
@@ -43,7 +43,7 @@ func (uc *UserCdc) UserCapturer(data []byte) error {
 }
 
 func (uc *UserCdc) UserTagCapturer(data []byte) error {
-	var message cdcdto.UserCareerTagCapturer
+	var message cdcdto.ChangeDataCaptureDto[cdcdto.UserCareerTagDto]
 	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
 		log.Println("JsonDecodingError: Failed to Decode user message. detail:", err)
 		return err
