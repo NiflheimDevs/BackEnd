@@ -1,6 +1,6 @@
 module github.com/niflheimdevs/backend
 
-go 1.23.4
+go 1.24.4
 
 require (
 	github.com/aws/aws-sdk-go v1.55.7
@@ -14,9 +14,9 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/redis/go-redis/v9 v9.9.0
-	golang.org/x/crypto v0.38.0
-	golang.org/x/time v0.11.0
+	github.com/redis/go-redis/v9 v9.10.0
+	golang.org/x/crypto v0.39.0
+	golang.org/x/time v0.12.0
 )
 
 require github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 )
 
@@ -38,6 +38,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/pixiv/go-libjpeg v0.0.0-20190822045933-3da21a74767d
-	golang.org/x/sync v0.14.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 )
