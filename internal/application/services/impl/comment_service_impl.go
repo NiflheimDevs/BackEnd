@@ -50,7 +50,7 @@ func (cs CommentService) PutComment(userID, ProjectID int, content string, star 
 	return id
 }
 
-func (cs CommentService) GetUserStar(userID int) float32 {
+func (cs CommentService) GetUserStar(userID int) float64 {
 	star, err := cs.CommentRepo.GetStar(userID)
 	if err != nil {
 		return 0

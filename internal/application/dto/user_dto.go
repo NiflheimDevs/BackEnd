@@ -21,7 +21,7 @@ type UserProfileDTO struct {
 	HighProfilePicture string    `json:"high_profile"`
 	LowProfilePicture  string    `json:"low_profile"`
 	CreatedAt          time.Time `json:"created_at"`
-	Rating             float32   `json:"rating"`
+	Rating             float64   `json:"rating"`
 }
 
 type UpdateUserDTO struct {
