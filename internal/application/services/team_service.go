@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
 
@@ -27,4 +28,5 @@ type TeamService interface {
 	UpdateTeamProfile(commanderid int, teamid int64, data []byte)
 	GetOneManTeamID(userid int) int64
 	GetAllTeamsIDs(userID int) []int64
+	SearchTeams(req *elasticmodel.SimpleQuerySearchReqDto) []map[string]any
 }

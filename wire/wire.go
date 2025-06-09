@@ -37,6 +37,7 @@ import (
 var DatabaseProviderSet = wire.NewSet(
 	driver.ConnectSQL,
 	driver.ConncetRedis,
+	driver.ConnectElastic,
 
 	db.NewTxManager,
 	wire.Bind(new(transaction.TxManager), new(*db.PgxTxManager)),
@@ -63,6 +64,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewRoleRepo,
 	repositoriesimpl.NewBidRepo,
 	repositoriesimpl.NewChatRepo,
+	elasticimpl.NewSearchElastic,
 	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -75,6 +77,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
 	wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)),
+	wire.Bind(new(elastic.SearchRepo), new(*elasticimpl.SearchRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -109,6 +112,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewJWT,
 	servicesimpl.NewRoleService,
 	servicesimpl.NewChatService,
+	servicesimpl.NewSherlockService,
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
 	wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)),
@@ -121,6 +125,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 	wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)),
 	wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)),
+	wire.Bind(new(services.SherlockService), new(*servicesimpl.SherlockService)),
 	ProvideConstants,
 	ProvideEnv,
 	ProvideS3,
@@ -147,6 +152,7 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewTeamHandler,
 	handlers.NewRoleHandler,
 	handlers.NewChatHandler,
+	handlers.NewSherlockHandler,
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -200,15 +206,16 @@ type Middlewares struct {
 }
 
 type Handlers struct {
-	FileHandler    *handlers.FileHandler
-	UserHandler    *handlers.UserHandler
-	ProjectHandler *handlers.ProjectHandler
-	GeneralHandler *handlers.GeneralHandler
-	PaymentHandler *handlers.PaymentHandler
-	BidHandler     *handlers.BidHandler
-	TeamHandler    *handlers.TeamHandler
-	RoleHandler    *handlers.RoleHandler
-	ChatHandler    *handlers.ChatHandler
+	FileHandler     *handlers.FileHandler
+	UserHandler     *handlers.UserHandler
+	ProjectHandler  *handlers.ProjectHandler
+	GeneralHandler  *handlers.GeneralHandler
+	PaymentHandler  *handlers.PaymentHandler
+	BidHandler      *handlers.BidHandler
+	TeamHandler     *handlers.TeamHandler
+	RoleHandler     *handlers.RoleHandler
+	ChatHandler     *handlers.ChatHandler
+	SherlockHandler *handlers.SherlockHandler
 }
 
 type Application struct {
@@ -220,6 +227,7 @@ type Application struct {
 type ElasticApp struct {
 	KafkaCdc *consumer.KafkaCdc
 }
+
 func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Application, error) {
 	wire.Build(
 		ProviderSet,

@@ -3,6 +3,7 @@ package servicesimpl
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/niflheimdevs/backend/bootstrap"
@@ -10,6 +11,8 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
@@ -23,6 +26,7 @@ type ProjectService struct {
 	BidRepo        repositories.BidRepo
 	TagService     services.TagService
 	TeamService    services.TeamService
+	SearchRepo     elastic.SearchRepo
 }
 
 func NewProjectService(
@@ -34,6 +38,7 @@ func NewProjectService(
 	tagService services.TagService,
 	teamService services.TeamService,
 	txManager transaction.TxManager,
+	searchRepo elastic.SearchRepo,
 ) *ProjectService {
 	return &ProjectService{
 		ProjectRepo:    projectRepo,
@@ -44,6 +49,7 @@ func NewProjectService(
 		BidRepo:        bidRepo,
 		TagService:     tagService,
 		TeamService:    teamService,
+		SearchRepo:     searchRepo,
 	}
 }
 
@@ -410,4 +416,35 @@ func (projectService *ProjectService) GetOneManTeamProjects(userID int) []models
 	oneManTeamProjects := projectService.GetTeamProjects(userID, oneManTeamID)
 
 	return oneManTeamProjects
+}
+
+func (ps *ProjectService) SearchProjects(req *elasticmodel.QueryAndTagSearchReqDto) []map[string]any {
+
+	request := elasticmodel.SearchRequest{
+		Query: req.Query,
+		Limit: req.Limit,
+		Page:  req.Page,
+		Types: []string{"projects"}, //don't care
+	}
+
+	if req.SortBy == "" {
+		request.SortBy = "_score"
+	} else {
+		request.SortBy = req.SortBy
+	}
+	if req.Order == "" {
+		request.Order = "desc"
+	} else {
+		request.Order = req.Order
+	}
+
+	res, err := ps.SearchRepo.SearchProjects(&request)
+	if err != nil {
+		log.Println(err)
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+
+	return res
 }

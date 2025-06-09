@@ -11,6 +11,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 )
 
 type TeamHandler struct {
@@ -193,4 +194,21 @@ func (th *TeamHandler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) 
 	th.TeamService.UpdateMemeberRole(userid, &params)
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (th *TeamHandler) SearchTeams(w http.ResponseWriter, r *http.Request) {
+
+	params := Validated[elasticmodel.SimpleQuerySearchReqDto](th.Validator, r)
+
+	if params.Order != "" && params.Order != "desc" && params.Order != "asc" {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	res := th.TeamService.SearchTeams(&params)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
 }

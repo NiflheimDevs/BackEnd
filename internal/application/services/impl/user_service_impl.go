@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
@@ -27,6 +30,7 @@ type UserService struct {
 	FileService services.FileService
 	TeamService services.TeamService
 	SecretSauce *pkg.SecretSauce
+	SearchRepo  elastic.SearchRepo
 }
 
 func NewUserService(
@@ -38,6 +42,7 @@ func NewUserService(
 	fileService services.FileService,
 	teamService services.TeamService,
 	secretSauce *pkg.SecretSauce,
+	searchRepo elastic.SearchRepo,
 ) *UserService {
 	return &UserService{
 		UserRepo:    userRepo,
@@ -48,6 +53,7 @@ func NewUserService(
 		FileService: fileService,
 		TeamService: teamService,
 		SecretSauce: secretSauce,
+		SearchRepo:  searchRepo,
 	}
 }
 
@@ -463,4 +469,39 @@ func (us *UserService) DeleteUser(userid int) {
 	}
 
 	us.UserRepo.DeleteUser(userid)
+}
+
+func (us *UserService) SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []map[string]any {
+
+	request := elasticmodel.SearchRequest{
+		Query: req.Query,
+		Limit: req.Limit,
+		Page:  req.Page,
+		Types: []string{"userss"}, //don't care
+	}
+
+	if req.SortBy == "" {
+		request.SortBy = "_score"
+	} else {
+		request.SortBy = req.SortBy
+	}
+	if req.Order == "" {
+		request.Order = "desc"
+	} else {
+		request.Order = req.Order
+	}
+
+	res, err := us.SearchRepo.SearchUsers(&request)
+	if err != nil {
+		log.Println(err)
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+
+	for i := 0; i < len(res); i++ {
+		res[i]["profile"] = us.FileService.GetProfilePhotoURL(res[i]["_id"].(int), false)
+	}
+
+	return res
 }
