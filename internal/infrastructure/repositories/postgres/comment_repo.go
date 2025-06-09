@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
+	"github.com/niflheimdevs/backend/internal/domain/models"
 )
 
 type CommentRepo struct {
@@ -82,7 +83,7 @@ func (cr *CommentRepo) GetStar(userID int) (float64, error) {
 	return 0, nil
 }
 
-func (cr *CommentRepo) GetUserComments(userID int) ([]dto.CommentDTO, error) {
+func (cr *CommentRepo) GetUserComments(userID int) ([]dto.CommentWithUserDTO, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -121,11 +122,11 @@ func (cr *CommentRepo) GetUserComments(userID int) ([]dto.CommentDTO, error) {
 		})
 	}
 
-	var comments []dto.CommentDTO
+	var comments []dto.CommentWithUserDTO
 
 	defer results.Close()
 	for results.Next() {
-		var comment dto.CommentDTO
+		var comment dto.CommentWithUserDTO
 		var first, last sql.NullString
 		err := results.Scan(&comment.ID, &comment.ProjectID, &comment.Content, &comment.Rating, &comment.UserID, &first, &last, &comment.Username)
 		if err != nil {
@@ -145,7 +146,7 @@ func (cr *CommentRepo) GetUserComments(userID int) ([]dto.CommentDTO, error) {
 	return comments, nil
 }
 
-func (cr *CommentRepo) GetCommentInfo(id int) dto.CommentDTO {
+func (cr *CommentRepo) GetCommentInfo(id int) dto.CommentWithUserDTO {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -160,7 +161,7 @@ func (cr *CommentRepo) GetCommentInfo(id int) dto.CommentDTO {
 			  on p.owner_id = u.id
 			  WHERE c.id = $1`
 
-	var comment dto.CommentDTO
+	var comment dto.CommentWithUserDTO
 	var first, last sql.NullString
 
 	err := cr.PG.QueryRow(ctx, query, id).Scan(&comment.ID, &comment.ProjectID, &comment.Content, &comment.Rating, &comment.UserID, &first, &last, &comment.Username)
@@ -179,4 +180,30 @@ func (cr *CommentRepo) GetCommentInfo(id int) dto.CommentDTO {
 	}
 
 	return comment
+}
+
+func (cr *CommentRepo) GetCommentOfProject(projectID int) (*models.CommentModel, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `SELECT c.id AS comment_id, c.project_id, c.content, c.rating
+			  FROM comment AS c
+			  WHERE c.project_id = $1`
+
+	var comment models.CommentModel
+
+	err := cr.PG.QueryRow(ctx, query, projectID).Scan(&comment.ID, &comment.ProjectID, &comment.Content, &comment.Rating)
+
+	if err == pgx.ErrNoRows {
+		return nil, err
+	}
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
+		})
+	}
+
+	return &comment, nil
 }

@@ -111,6 +111,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Get("/star/{user_id}", app.Handlers.CommentHandler.GetStar)
 	mux.Get("/comment/{id}", app.Handlers.CommentHandler.GetCommentInfo)
 	mux.Get("/user/comment/{user_id}", app.Handlers.CommentHandler.GetUserComments)
+	mux.Get("/project/comment/{project_id}", app.Handlers.CommentHandler.GetCommentOfProject)
 	mux.Post("/comment", app.Handlers.CommentHandler.PutComment)
 
 	mux.Get("/role/team", app.Handlers.RoleHandler.GetTeamRoles)

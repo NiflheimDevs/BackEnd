@@ -1,6 +1,6 @@
 package dto
 
-type CommentDTO struct {
+type CommentWithUserDTO struct {
 	ID        int    `json:"id"`
 	ProjectID int    `json:"project_id"`
 	Content   string `json:"content"`
@@ -13,4 +13,11 @@ type CommentDTO struct {
 
 type PutComment struct {
 	ID int `json:"id"`
+}
+
+type CommentDTO struct {
+	ID        int    `json:"id"`
+	ProjectID int    `json:"project_id"`
+	Content   string `json:"content"`
+	Rating    int    `json:"rating"`
 }
