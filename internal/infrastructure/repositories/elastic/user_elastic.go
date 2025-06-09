@@ -55,7 +55,7 @@ func (pe *UserElastic) UpsertUserDoc(userem *elasticmodel.UserElasticModel) erro
 }
 
 func (pe *UserElastic) GetUserDoc(userid int) *elasticmodel.UserElasticModel {
-	var pem elasticmodel.UserElasticModel
+	var pem elasticmodel.ElasticsearchHit[elasticmodel.UserElasticModel]
 
 	res, err := pe.Es.Get(enums.ELASTIC_USER_INDEX, strconv.Itoa(userid))
 	if err != nil {
@@ -75,7 +75,7 @@ func (pe *UserElastic) GetUserDoc(userid int) *elasticmodel.UserElasticModel {
 	if err != nil {
 		log.Println("ParseError: get user. details: ", err)
 	}
-	return &pem
+	return &pem.Source
 }
 
 func (pe *UserElastic) DeleteUserDoc(userid int) error {

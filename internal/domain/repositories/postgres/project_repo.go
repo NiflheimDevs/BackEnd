@@ -19,4 +19,5 @@ type ProjectRepo interface {
 	DeleteProject(ctx context.Context, tx transaction.Tx, projectID int)
 	UpdateProjectState(projectID int, status int)
 	GetAllProjectsRelatedToUser(userID int) []models.ProjectModel
+	EndProject(ctx context.Context, tx transaction.Tx, projectID int)
 }

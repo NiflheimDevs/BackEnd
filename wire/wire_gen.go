@@ -54,21 +54,38 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 	jwt := servicesimpl.NewJWT(constants)
 	validate := pkg.NewValidator()
 	fileHandler := handlers.NewFileHandler(constants, env, fileService, teamService, jwt, validate)
+<<<<<<< HEAD
 	redisClient := driver.ConncetRedis(container)
 	userCache := redisimpl.NewUserCache(redisClient)
 	secretSauce := pkg.NewSecretSauce()
 	userService := servicesimpl.NewUserService(userRepo, userCache, pgxTxManager, constants, env, fileService, teamService, secretSauce, searchRepo)
+=======
+	client := driver.ConncetRedis(container)
+	userCache := redisimpl.NewUserCache(client)
+	commentRepo := repositoriesimpl.NewCommentRepo(pool)
+>>>>>>> develop
 	tagRepo := repositoriesimpl.NewTagRepo(pool)
+	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo, commentRepo)
+	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
+	paymentService := servicesimpl.NewPaymentService(paymentRepo, pgxTxManager)
+	bidRepo := repositoriesimpl.NewBidRepo(pool)
 	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
+	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, bidRepo, tagService, teamService, pgxTxManager)
+	commentService := servicesimpl.NewCommentService(commentRepo, projectRepo, projectService)
+	secretSauce := pkg.NewSecretSauce()
+	userService := servicesimpl.NewUserService(userRepo, userCache, pgxTxManager, constants, env, fileService, teamService, commentService, secretSauce)
 	careerRepo := repositoriesimpl.NewCareerRepo(pool)
 	careerService := servicesimpl.NewCareerService(careerRepo, tagService, tagRepo, userRepo)
 	smsService := servicesimpl.NewSmsService(env, constants)
 	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
+<<<<<<< HEAD
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo)
 	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
 	paymentService := servicesimpl.NewPaymentService(paymentRepo, pgxTxManager)
 	bidRepo := repositoriesimpl.NewBidRepo(pool)
 	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, bidRepo, tagService, teamService, pgxTxManager, searchRepo)
+=======
+>>>>>>> develop
 	labelRepo := repositoriesimpl.NewLabelRepo(pool)
 	labelService := servicesimpl.NewLabelService(labelRepo, userRepo)
 	bidService := servicesimpl.NewBidService(projectService, paymentService, teamService, bidRepo, teamRepo, pgxTxManager)
@@ -80,8 +97,9 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 	roleService := servicesimpl.NewRoleService()
 	roleHandler := handlers.NewRoleHandler(roleService, constants, validate)
 	chatRepo := repositoriesimpl.NewChatRepo(pool)
-	chatService := servicesimpl.NewChatService(pgxTxManager, chatRepo)
+	chatService := servicesimpl.NewChatService(pgxTxManager, chatRepo, userService)
 	chatHandler := handlers.NewChatHandler(validate, jwt, constants, hub, chatService)
+<<<<<<< HEAD
 	sherlockService := servicesimpl.NewSherlockService(searchRepo, fileService)
 	sherlockHandler := handlers.NewSherlockHandler(sherlockService, validate)
 	wireHandlers := &Handlers{
@@ -95,6 +113,20 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 		RoleHandler:     roleHandler,
 		ChatHandler:     chatHandler,
 		SherlockHandler: sherlockHandler,
+=======
+	commentHandler := handlers.NewCommentHandler(commentService, validate, constants)
+	wireHandlers := &Handlers{
+		FileHandler:    fileHandler,
+		UserHandler:    userHandler,
+		ProjectHandler: projectHandler,
+		GeneralHandler: generalHandler,
+		PaymentHandler: paymentHandler,
+		BidHandler:     bidHandler,
+		TeamHandler:    teamHandler,
+		RoleHandler:    roleHandler,
+		ChatHandler:    chatHandler,
+		CommentHandler: commentHandler,
+>>>>>>> develop
 	}
 	panicWall := panicwall.NewPanicWall()
 	rateLimit := midratelimit.NewRateLimit(constants)
@@ -140,13 +172,21 @@ var ElasticAndDatabaseProviderSet = wire.NewSet(driver.ConnectElastic, driver.Co
 
 var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
+<<<<<<< HEAD
 var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, repositoriesimpl.NewBidRepo, repositoriesimpl.NewChatRepo, elasticimpl.NewSearchElastic, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)), wire.Bind(new(elastic.SearchRepo), new(*elasticimpl.SearchRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+=======
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, repositoriesimpl.NewBidRepo, repositoriesimpl.NewChatRepo, repositoriesimpl.NewCommentRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)), wire.Bind(new(repositories.CommentRepo), new(*repositoriesimpl.CommentRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+>>>>>>> develop
 
 var ElRepoProviderSet = wire.NewSet(repositoriesimpl.NewTagRepo, elasticimpl.NewProjectElastic, elasticimpl.NewUserElastic, elasticimpl.NewTeamElastic, wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(elastic.ProjectElastic), new(*elasticimpl.ProjectElastic)), wire.Bind(new(elastic.UserElastic), new(*elasticimpl.UserElastic)), wire.Bind(new(elastic.TeamElastic), new(*elasticimpl.TeamElastic)))
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
+<<<<<<< HEAD
 var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewBidService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewRoleService, servicesimpl.NewChatService, servicesimpl.NewSherlockService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)), wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)), wire.Bind(new(services.SherlockService), new(*servicesimpl.SherlockService)), ProvideConstants,
+=======
+var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewBidService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewRoleService, servicesimpl.NewChatService, servicesimpl.NewCommentService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)), wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)), wire.Bind(new(services.CommentService), new(*servicesimpl.CommentService)), ProvideConstants,
+>>>>>>> develop
 	ProvideEnv,
 	ProvideS3,
 )
@@ -155,7 +195,11 @@ var CdcServiceProviderSet = wire.NewSet(cdcservicesimpl.NewProjectCdc, cdcservic
 	ProvideEnv,
 )
 
+<<<<<<< HEAD
 var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, handlers.NewRoleHandler, handlers.NewChatHandler, handlers.NewSherlockHandler, wire.Struct(new(Handlers), "*"))
+=======
+var HandlerProviderSet = wire.NewSet(handlers.NewFileHandler, handlers.NewUserHandler, handlers.NewProjectHandler, handlers.NewGeneralHandler, handlers.NewPaymentHandler, handlers.NewBidHandler, handlers.NewTeamHandler, handlers.NewRoleHandler, handlers.NewChatHandler, handlers.NewCommentHandler, wire.Struct(new(Handlers), "*"))
+>>>>>>> develop
 
 var KafkaCdcProviderSet = wire.NewSet(consumer.NewKafkaCdc)
 
@@ -198,6 +242,7 @@ type Middlewares struct {
 }
 
 type Handlers struct {
+<<<<<<< HEAD
 	FileHandler     *handlers.FileHandler
 	UserHandler     *handlers.UserHandler
 	ProjectHandler  *handlers.ProjectHandler
@@ -208,6 +253,18 @@ type Handlers struct {
 	RoleHandler     *handlers.RoleHandler
 	ChatHandler     *handlers.ChatHandler
 	SherlockHandler *handlers.SherlockHandler
+=======
+	FileHandler    *handlers.FileHandler
+	UserHandler    *handlers.UserHandler
+	ProjectHandler *handlers.ProjectHandler
+	GeneralHandler *handlers.GeneralHandler
+	PaymentHandler *handlers.PaymentHandler
+	BidHandler     *handlers.BidHandler
+	TeamHandler    *handlers.TeamHandler
+	RoleHandler    *handlers.RoleHandler
+	ChatHandler    *handlers.ChatHandler
+	CommentHandler *handlers.CommentHandler
+>>>>>>> develop
 }
 
 type Application struct {

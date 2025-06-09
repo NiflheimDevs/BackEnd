@@ -16,17 +16,20 @@ import (
 )
 
 type ProjectRepo struct {
-	PG      *pgxpool.Pool
-	TagRepo repositories.TagRepo
+	PG          *pgxpool.Pool
+	TagRepo     repositories.TagRepo
+	CommentRepo repositories.CommentRepo
 }
 
 func NewProjectRepo(
 	PG *pgxpool.Pool,
 	tagRepo repositories.TagRepo,
+	commentRepo repositories.CommentRepo,
 ) *ProjectRepo {
 	return &ProjectRepo{
-		PG:      PG,
-		TagRepo: tagRepo,
+		PG:          PG,
+		TagRepo:     tagRepo,
+		CommentRepo: commentRepo,
 	}
 }
 
@@ -108,6 +111,14 @@ func (repo *ProjectRepo) GetProject(projectID int) (*models.ProjectModel, error)
 		})
 	}
 
+	tags := repo.TagRepo.GetProjectTag(projectID)
+
+	project.Tags = tags
+
+	comment, _ := repo.CommentRepo.GetCommentOfProject(projectID)
+
+	project.Comment = comment
+
 	return &project, nil
 }
 
@@ -163,6 +174,8 @@ func (repo *ProjectRepo) GetUserProject(userID, offset, limit int) []models.Proj
 		project.Duration = duration
 		tag := repo.TagRepo.GetProjectTag(project.ID)
 		project.Tags = tag
+		comment, _ := repo.CommentRepo.GetCommentOfProject(project.ID)
+		project.Comment = comment
 		projects = append(projects, project)
 	}
 
@@ -228,6 +241,8 @@ func (repo *ProjectRepo) GetAllProjectsRelatedToUser(userID int) []models.Projec
 		project.Duration = duration
 		tag := repo.TagRepo.GetProjectTag(project.ID)
 		project.Tags = tag
+		comment, _ := repo.CommentRepo.GetCommentOfProject(project.ID)
+		project.Comment = comment
 		projects = append(projects, project)
 	}
 
@@ -321,6 +336,21 @@ func (repo *ProjectRepo) UpdateProjectState(projectID int, status int) {
 	query := "UPDATE project SET status=$1 WHERE id=$2"
 
 	_, err := repo.PG.Exec(ctx, query, status, projectID)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+}
+
+func (repo *ProjectRepo) EndProject(ctx context.Context, tx transaction.Tx, projectID int) {
+	query := "UPDATE project SET end_time = CURRENT_TIMESTAMP WHERE id = $1"
+
+	_, err := tx.Exec(ctx, query, projectID)
+
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,

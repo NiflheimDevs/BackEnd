@@ -18,9 +18,10 @@ func Validated[T any](validate *validator.Validate, r *http.Request) T {
 		})
 	}
 
-	log.Println(params)
+	//log.Println(params)
 
 	if err := validate.Struct(params); err != nil {
+		log.Println("ValidationError:", err)
 		panic(exceptions.Exception{
 			Tag:    exceptions.BAD_REQUEST,
 			Errors: []exceptions.SpecificError{exceptions.MISSING_REQUIRED_FIELD},

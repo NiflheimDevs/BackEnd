@@ -1,4 +1,4 @@
-FROM golang:1.24.2-alpine AS builder
+FROM golang:1.24.4-alpine AS builder
 
 RUN apk add --no-cache gcc musl-dev libwebp-dev jpeg-dev
 

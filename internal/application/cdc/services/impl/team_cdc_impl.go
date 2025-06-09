@@ -6,6 +6,7 @@ import (
 	"log"
 
 	cdcdto "github.com/niflheimdevs/backend/internal/application/cdc/dto"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 )
@@ -23,7 +24,7 @@ func NewTeamCdc(tagRepo repositories.TagRepo, te elastic.TeamElastic) *TeamCdc {
 }
 
 func (tc *TeamCdc) TeamCapturer(data []byte) error {
-	var message cdcdto.TeamCdcMessage
+	var message cdcdto.ChangeDataCaptureDto[elasticmodel.TeamElasticModel]
 	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&message); err != nil {
 		log.Println("JsonDecodingError: Failed to Decode project message. detail:", err)
 		return err

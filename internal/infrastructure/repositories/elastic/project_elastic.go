@@ -53,7 +53,7 @@ func (pe *ProjectElastic) UpsertProjectDoc(projectem *elasticmodel.ProjectElasti
 }
 
 func (pe *ProjectElastic) GetProjectDoc(projectid int) *elasticmodel.ProjectElasticModel {
-	var pem elasticmodel.ProjectElasticModel
+	var pem elasticmodel.ElasticsearchHit[elasticmodel.ProjectElasticModel]
 
 	res, err := pe.Es.Get(enums.ELASTIC_PROJECT_INDEX, strconv.Itoa(projectid))
 	if err != nil {
@@ -73,7 +73,7 @@ func (pe *ProjectElastic) GetProjectDoc(projectid int) *elasticmodel.ProjectElas
 	if err != nil {
 		log.Println("ParseError: get project. details: ", err)
 	}
-	return &pem
+	return &pem.Source
 }
 
 func (pe *ProjectElastic) DeleteProjectDoc(projectid int) error {

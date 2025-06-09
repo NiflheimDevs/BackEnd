@@ -7,7 +7,7 @@ type GetTagDto struct {
 }
 
 type RecieveTagDTO struct {
-	ID    int `json:"id" validate:"required,numeric"`
+	ID    int `json:"id" validate:"numeric"`
 	Level int `json:"level" validate:"required,gt=-2,lt=6"`
 }
 

@@ -76,10 +76,6 @@ func (projectService *ProjectService) GetProject(projectID int) *models.ProjectM
 		project.State = 2
 	}
 
-	tags := projectService.TagRepo.GetProjectTag(projectID)
-
-	project.Tags = tags
-
 	return project
 }
 
@@ -348,6 +344,7 @@ func (projectService *ProjectService) EndOfProject(userID, projectID int) {
 	description := fmt.Sprintf("Pay Reamining Money For Project %d", projectID)
 
 	projectService.PaymentService.TransferMoney(ctx, tx, userID, ownerID, bid.Total-bid.PrePayment, description)
+	projectService.ProjectRepo.EndProject(ctx, tx, projectID)
 
 	if err := tx.Commit(ctx); err != nil {
 		panic(exceptions.Exception{
@@ -392,7 +389,7 @@ func (projectService *ProjectService) GetTeamProjects(userID int, teamID int64) 
 	for _, bid := range bids {
 		project, _ := projectService.ProjectRepo.GetProject(bid.ProjectID)
 
-		if (project.State == 3 || project.State == 4) && project.SelectedBid == bid.ID {
+		if (project.State > 2) && project.SelectedBid == bid.ID {
 			tags := projectService.TagRepo.GetProjectTag(project.ID)
 			project.Tags = tags
 			projects = append(projects, *project)
