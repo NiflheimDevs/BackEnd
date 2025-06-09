@@ -19,14 +19,15 @@ import (
 )
 
 type UserService struct {
-	UserRepo    repositories.UserRepo
-	CacheRepo   redis.UserCache
-	TxManager   transaction.TxManager
-	Constants   *bootstrap.Constants
-	Env         *bootstrap.Env
-	FileService services.FileService
-	TeamService services.TeamService
-	SecretSauce *pkg.SecretSauce
+	UserRepo       repositories.UserRepo
+	CacheRepo      redis.UserCache
+	TxManager      transaction.TxManager
+	Constants      *bootstrap.Constants
+	Env            *bootstrap.Env
+	FileService    services.FileService
+	TeamService    services.TeamService
+	CommentService services.CommentService
+	SecretSauce    *pkg.SecretSauce
 }
 
 func NewUserService(
@@ -37,17 +38,19 @@ func NewUserService(
 	Env *bootstrap.Env,
 	fileService services.FileService,
 	teamService services.TeamService,
+	commentService services.CommentService,
 	secretSauce *pkg.SecretSauce,
 ) *UserService {
 	return &UserService{
-		UserRepo:    userRepo,
-		CacheRepo:   cacheRepo,
-		TxManager:   txManager,
-		Constants:   constants,
-		Env:         Env,
-		FileService: fileService,
-		TeamService: teamService,
-		SecretSauce: secretSauce,
+		UserRepo:       userRepo,
+		CacheRepo:      cacheRepo,
+		TxManager:      txManager,
+		Constants:      constants,
+		Env:            Env,
+		FileService:    fileService,
+		TeamService:    teamService,
+		CommentService: commentService,
+		SecretSauce:    secretSauce,
 	}
 }
 
@@ -433,6 +436,8 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 	highpath := us.FileService.GetProfilePhotoURL(targetUserid, true)
 	lowPath := us.FileService.GetProfilePhotoURL(targetUserid, false)
 
+	rating := us.CommentService.GetUserStar(targetUserid)
+
 	response := dto.UserProfileDTO{
 		Phone:              targetInfo.Phone,
 		FirstName:          targetInfo.FirstName,
@@ -442,6 +447,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		HighProfilePicture: highpath,
 		LowProfilePicture:  lowPath,
 		CreatedAt:          targetInfo.CreatedAt,
+		Rating:             rating,
 	}
 	// againts my will
 	response.Email = targetInfo.Email
