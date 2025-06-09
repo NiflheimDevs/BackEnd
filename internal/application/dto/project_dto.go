@@ -22,6 +22,7 @@ type Project struct {
 	SelectedBid int                    `json:"selected_bid"`
 	Status      int                    `json:"status"`
 	Tags        []models.TagModel      `json:"tags"`
+	Comment     *models.CommentModel   `json:"comment"`
 	Bids        []PublicProjectBidInfo `json:"bids"`
 	FirstName   string                 `json:"first_name"`
 	LastName    string                 `json:"last_name"`

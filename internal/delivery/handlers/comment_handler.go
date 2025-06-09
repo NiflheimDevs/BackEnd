@@ -95,3 +95,19 @@ func (ch *CommentHandler) GetCommentInfo(w http.ResponseWriter, r *http.Request)
 		})
 	}
 }
+
+func (ch *CommentHandler) GetCommentOfProject(w http.ResponseWriter, r *http.Request) {
+	projectIDString := chi.URLParam(r, "project_id")
+	projectID, _ := strconv.Atoi(projectIDString)
+
+	comment := ch.CommentService.GetCommentOfProject(projectID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(comment); err != nil {
+		panic(exceptions.Exception{
+			Tag:    exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
+		})
+	}
+}

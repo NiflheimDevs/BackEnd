@@ -11,6 +11,7 @@ type ProjectModel struct {
 	SelectedBid int
 	State       int
 	Tags        []TagModel
+	Comment     *CommentModel
 	Duration    time.Time
 	StartTime   time.Time
 	EndTime     time.Time

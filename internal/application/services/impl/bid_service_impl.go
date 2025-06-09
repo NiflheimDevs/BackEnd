@@ -347,9 +347,9 @@ func (bs BidService) GetTeamBids(userID int, teamID int64) []dto.BidInfo {
 	for _, bid := range bids {
 		project := bs.ProjectService.GetProject(bid.ProjectID)
 		var status int
-		if project.State == 1 {
+		if project.State < 3 {
 			status = 1
-		} else if project.State == 2 && project.SelectedBid == bid.ID {
+		} else if project.State == 3 && project.SelectedBid == bid.ID {
 			status = 2
 		} else {
 			status = 3

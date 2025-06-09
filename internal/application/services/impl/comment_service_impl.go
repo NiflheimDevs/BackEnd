@@ -9,15 +9,18 @@ import (
 
 type CommentService struct {
 	CommentRepo    repositories.CommentRepo
+	ProjectRepo    repositories.ProjectRepo
 	ProjectService services.ProjectService
 }
 
 func NewCommentService(
 	commentRepo repositories.CommentRepo,
+	projectRepo repositories.ProjectRepo,
 	projectService services.ProjectService,
 ) *CommentService {
 	return &CommentService{
 		CommentRepo:    commentRepo,
+		ProjectRepo:    projectRepo,
 		ProjectService: projectService,
 	}
 }
@@ -47,6 +50,8 @@ func (cs CommentService) PutComment(userID, ProjectID int, content string, star 
 
 	id := cs.CommentRepo.AddComment(ProjectID, project.SelectedBid, content, star)
 
+	cs.ProjectRepo.UpdateProjectState(ProjectID, 5)
+
 	return id
 }
 
@@ -58,7 +63,8 @@ func (cs CommentService) GetUserStar(userID int) float64 {
 	return star
 }
 
-func (cs CommentService) GetUserComments(userID int) []dto.CommentDTO {
+
+func (cs CommentService) GetUserComments(userID int) []dto.CommentWithUserDTO {
 	comments, err := cs.CommentRepo.GetUserComments(userID)
 	if err != nil {
 		return nil
@@ -66,7 +72,24 @@ func (cs CommentService) GetUserComments(userID int) []dto.CommentDTO {
 	return comments
 }
 
-func (cs CommentService) GetCommentInfo(id int) dto.CommentDTO {
+func (cs CommentService) GetCommentInfo(id int) *dto.CommentWithUserDTO {
 	comment := cs.CommentRepo.GetCommentInfo(id)
-	return comment
+	return &comment
+}
+
+func (cs CommentService) GetCommentOfProject(projectID int) *dto.CommentDTO {
+	comment, err := cs.CommentRepo.GetCommentOfProject(projectID)
+
+	if err != nil {
+		return nil
+	}
+
+	dto := &dto.CommentDTO{
+		ID:        comment.ID,
+		ProjectID: comment.ProjectID,
+		Content:   comment.Content,
+		Rating:    comment.Rating,
+	}
+
+	return dto
 }
