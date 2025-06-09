@@ -121,6 +121,11 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Get("/chat/{room_id}", app.Handlers.ChatHandler.GetRoomMessages)
 	mux.Post("/chat/create", app.Handlers.ChatHandler.CreateRoom)
 
+	mux.Get("/search/projects", app.Handlers.ProjectHandler.SearchProjects)
+	mux.Get("/search/users", app.Handlers.UserHandler.SearchUsers)
+	mux.Get("/search/teams", app.Handlers.TeamHandler.SearchTeams)
+	mux.Get("/search", app.Handlers.SherlockHandler.Search)
+
 	mux.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
