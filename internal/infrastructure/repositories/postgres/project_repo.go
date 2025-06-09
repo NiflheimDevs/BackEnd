@@ -330,3 +330,18 @@ func (repo *ProjectRepo) UpdateProjectState(projectID int, status int) {
 		})
 	}
 }
+
+func (repo *ProjectRepo) EndProject(ctx context.Context, tx transaction.Tx, projectID int) {
+	query := "UPDATE project SET end_time = CURRENT_TIMESTAMP WHERE id = $1"
+
+	_, err := tx.Exec(ctx, query, projectID)
+
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+			Errors: []exceptions.SpecificError{
+				exceptions.DATABASE_ERROR,
+			},
+		})
+	}
+}

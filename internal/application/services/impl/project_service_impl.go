@@ -342,6 +342,7 @@ func (projectService *ProjectService) EndOfProject(userID, projectID int) {
 	description := fmt.Sprintf("Pay Reamining Money For Project %d", projectID)
 
 	projectService.PaymentService.TransferMoney(ctx, tx, userID, ownerID, bid.Total-bid.PrePayment, description)
+	projectService.ProjectRepo.EndProject(ctx, tx, projectID)
 
 	if err := tx.Commit(ctx); err != nil {
 		panic(exceptions.Exception{
