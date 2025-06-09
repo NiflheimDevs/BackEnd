@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - feat/searchapi
       
 jobs:
   deploy:
