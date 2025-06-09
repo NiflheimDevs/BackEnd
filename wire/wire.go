@@ -63,6 +63,7 @@ var RepoProviderSet = wire.NewSet(
 	repositoriesimpl.NewRoleRepo,
 	repositoriesimpl.NewBidRepo,
 	repositoriesimpl.NewChatRepo,
+	repositoriesimpl.NewCommentRepo,
 	storageimpl.NewS3Storage,
 	redisimpl.NewUserCache,
 	wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)),
@@ -75,6 +76,7 @@ var RepoProviderSet = wire.NewSet(
 	wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)),
 	wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)),
 	wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)),
+	wire.Bind(new(repositories.CommentRepo), new(*repositoriesimpl.CommentRepo)),
 	wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)),
 	wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)),
 )
@@ -109,6 +111,7 @@ var ServiceProviderSet = wire.NewSet(
 	servicesimpl.NewJWT,
 	servicesimpl.NewRoleService,
 	servicesimpl.NewChatService,
+	servicesimpl.NewCommentService,
 	wire.Bind(new(services.UserService), new(*servicesimpl.UserService)),
 	wire.Bind(new(services.TagService), new(*servicesimpl.TagService)),
 	wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)),
@@ -121,6 +124,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(services.JWT), new(*servicesimpl.JWT)),
 	wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)),
 	wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)),
+	wire.Bind(new(services.CommentService), new(*servicesimpl.CommentService)),
 	ProvideConstants,
 	ProvideEnv,
 	ProvideS3,
@@ -147,6 +151,7 @@ var HandlerProviderSet = wire.NewSet(
 	handlers.NewTeamHandler,
 	handlers.NewRoleHandler,
 	handlers.NewChatHandler,
+	handlers.NewCommentHandler,
 	wire.Struct(new(Handlers), "*"),
 )
 
@@ -209,6 +214,7 @@ type Handlers struct {
 	TeamHandler    *handlers.TeamHandler
 	RoleHandler    *handlers.RoleHandler
 	ChatHandler    *handlers.ChatHandler
+	CommentHandler *handlers.CommentHandler
 }
 
 type Application struct {
@@ -220,6 +226,7 @@ type Application struct {
 type ElasticApp struct {
 	KafkaCdc *consumer.KafkaCdc
 }
+
 func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Application, error) {
 	wire.Build(
 		ProviderSet,
