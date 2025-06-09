@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - Fix/Comment
       
 jobs:
   deploy:

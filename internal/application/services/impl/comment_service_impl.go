@@ -51,12 +51,18 @@ func (cs CommentService) PutComment(userID, ProjectID int, content string, star 
 }
 
 func (cs CommentService) GetUserStar(userID int) float32 {
-	star := cs.CommentRepo.GetStar(userID)
+	star, err := cs.CommentRepo.GetStar(userID)
+	if err != nil {
+		return 0
+	}
 	return star
 }
 
 func (cs CommentService) GetUserComments(userID int) []dto.CommentDTO {
-	comments := cs.CommentRepo.GetUserComments(userID)
+	comments, err := cs.CommentRepo.GetUserComments(userID)
+	if err != nil {
+		return nil
+	}
 	return comments
 }
 
