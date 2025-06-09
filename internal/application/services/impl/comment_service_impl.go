@@ -63,6 +63,7 @@ func (cs CommentService) GetUserStar(userID int) float64 {
 	return star
 }
 
+
 func (cs CommentService) GetUserComments(userID int) []dto.CommentWithUserDTO {
 	comments, err := cs.CommentRepo.GetUserComments(userID)
 	if err != nil {
