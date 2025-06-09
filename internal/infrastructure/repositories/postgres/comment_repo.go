@@ -3,9 +3,11 @@ package repositoriesimpl
 import (
 	"context"
 	"database/sql"
+	"log"
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
@@ -41,7 +43,7 @@ func (cr *CommentRepo) AddComment(projectID, bidID int, content string, star int
 	return id
 }
 
-func (cr *CommentRepo) GetStar(userID int) float32 {
+func (cr *CommentRepo) GetStar(userID int) (float64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -57,21 +59,30 @@ func (cr *CommentRepo) GetStar(userID int) float32 {
 			  on b.project_id = p.id
 			  where (t.type = 1 and t.title = $1) or (ut.user_id = $1::integer and (ut.left_at is null or ut.left_at > p.end_time))`
 
-	var average float32
+	var average sql.NullFloat64
 
 	err := cr.PG.QueryRow(ctx, query, strconv.Itoa(userID)).Scan(&average)
 
+	if err == pgx.ErrNoRows {
+		return 0, err
+	}
+
 	if err != nil {
+		log.Println(err)
 		panic(exceptions.Exception{
 			Tag:    exceptions.INTERNAL_ERROR,
 			Errors: []exceptions.SpecificError{exceptions.DATABASE_ERROR},
 		})
 	}
 
-	return average
+	if average.Valid {
+		return average.Float64, nil
+	}
+
+	return 0, nil
 }
 
-func (cr *CommentRepo) GetUserComments(userID int) []dto.CommentDTO {
+func (cr *CommentRepo) GetUserComments(userID int) ([]dto.CommentDTO, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -98,6 +109,10 @@ func (cr *CommentRepo) GetUserComments(userID int) []dto.CommentDTO {
 			`
 
 	results, err := cr.PG.Query(ctx, query, strconv.Itoa(userID), userID)
+
+	if err == pgx.ErrNoRows {
+		return nil, err
+	}
 
 	if err != nil {
 		panic(exceptions.Exception{
@@ -127,7 +142,7 @@ func (cr *CommentRepo) GetUserComments(userID int) []dto.CommentDTO {
 		}
 		comments = append(comments, comment)
 	}
-	return comments
+	return comments, nil
 }
 
 func (cr *CommentRepo) GetCommentInfo(id int) dto.CommentDTO {
