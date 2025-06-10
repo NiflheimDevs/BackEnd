@@ -86,6 +86,7 @@ services:
   debezium:
     image: debezium/connect:2.5
     container_name: debezium
+    restart: always
     depends_on:
       - kafka
       - db
@@ -125,6 +126,7 @@ services:
   elasticsearch:
     image: elasticsearch:7.17.13
     container_name: elasticsearch
+    restart: always
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
