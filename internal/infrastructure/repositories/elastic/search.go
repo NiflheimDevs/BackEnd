@@ -46,9 +46,9 @@ func (se *SearchRepo) SearchUsers(req *elasticmodel.SearchRequest) ([]map[string
 						"multi_match": map[string]any{
 							"query": req.Query,
 							"fields": []string{
-								"users.username^3",
-								"users.firstname^3",
-								"users.lastname^3",
+								"username^3",
+								"firstname^3",
+								"lastname^3",
 							},
 							"fuzziness": "AUTO",
 						},
@@ -128,8 +128,8 @@ func (se *SearchRepo) SearchProjects(req *elasticmodel.SearchRequest) ([]map[str
 						"multi_match": map[string]any{
 							"query": req.Query,
 							"fields": []string{
-								"projects.title^3",
-								"projects.description",
+								"title^3",
+								"description",
 							},
 							"fuzziness": "AUTO",
 						},
@@ -216,13 +216,11 @@ func (se *SearchRepo) SearchUsersProjectsTeams(req *elasticmodel.SearchRequest) 
 			"multi_match": map[string]any{
 				"query": req.Query,
 				"fields": []string{
-					"users.username^3",
-					"users.firstname^3",
-					"users.lastname^3",
-					"projects.title^3",
-					"projects.description",
-					"teams.title^3",
-					"teams.description",
+					"username^3",
+					"firstname^3",
+					"lastname^3",
+					"title^3",
+					"description",
 				},
 				"fuzziness": "AUTO",
 			},
@@ -282,8 +280,8 @@ func (se *SearchRepo) SearchTeams(req *elasticmodel.SearchRequest) ([]map[string
 			"multi_match": map[string]any{
 				"query": req.Query,
 				"fields": []string{
-					"teams.title^3",
-					"teams.description"},
+					"title^3",
+					"description"},
 				"fuzziness": "AUTO",
 			},
 		},
