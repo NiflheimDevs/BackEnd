@@ -120,7 +120,7 @@ services:
     depends_on:
       - debezium
     volumes:
-      - ./register-debezium.sh:/register-debezium.sh
+      - scripts/register-debezium.sh:/register-debezium.sh
     entrypoint: ["sh", "/register-debezium.sh"]
     networks:
       - backend_network
@@ -130,7 +130,10 @@ services:
     depends_on:
       - elasticsearch
     volumes:
-      - ./setup-elasticsearch.sh:/setup-elasticsearch.sh
+      - scripts/setup-elasticsearch.sh:/setup-elasticsearch.sh
+      - configs/create_index_teams.json:/create_index_teams.json
+      - configs/create_index_users.json:/create_index_users.json
+      - configs/create_index_projects.json:/create_index_projects.json
     entrypoint: ["sh", "/setup-elasticsearch.sh"]
     networks:
       - backend_network
