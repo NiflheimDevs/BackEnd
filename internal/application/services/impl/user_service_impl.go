@@ -506,14 +506,7 @@ func (us *UserService) SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []
 	}
 
 	for i := 0; i < len(res); i++ {
-		id, err := strconv.Atoi(res[i]["_id"].(string))
-		if err != nil {
-			log.Println("CastError: converting _id. details:", err)
-			panic(exceptions.Exception{
-				Tag: exceptions.INTERNAL_ERROR,
-			})
-		}
-		res[i]["profile"] = us.FileService.GetProfilePhotoURL(id, false)
+		res[i]["profile"] = us.FileService.GetProfilePhotoURL(res[i]["id"].(int), false)
 	}
 
 	return res
