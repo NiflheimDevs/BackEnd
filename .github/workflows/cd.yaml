@@ -55,7 +55,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "config/*"
+          source: "configs/*"
           target: "/home/niflheim/Desktop/backend"
         
       - name: Copy scripts
