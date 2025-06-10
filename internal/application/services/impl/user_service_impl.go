@@ -506,7 +506,7 @@ func (us *UserService) SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []
 	}
 
 	for i := 0; i < len(res); i++ {
-		res[i]["profile"] = us.FileService.GetProfilePhotoURL(res[i]["id"].(int), false)
+		res[i]["profile"] = us.FileService.GetProfilePhotoURL(int(res[i]["id"].(float64)), false)
 	}
 
 	return res

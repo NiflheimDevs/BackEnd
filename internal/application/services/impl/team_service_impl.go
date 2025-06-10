@@ -648,7 +648,7 @@ func (ts *TeamService) SearchTeams(req *elasticmodel.SimpleQuerySearchReqDto) []
 	}
 
 	for i := 0; i < len(res); i++ {
-		res[i]["profile"] = ts.FileService.GetTeamProfilePhotoURL(res[i]["id"].(int64), false)
+		res[i]["profile"] = ts.FileService.GetTeamProfilePhotoURL(int64(res[i]["id"].(float64)), false)
 	}
 
 	return res
