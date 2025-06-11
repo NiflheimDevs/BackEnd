@@ -378,7 +378,7 @@ func (ph *ProjectHandler) SearchProjects(w http.ResponseWriter, r *http.Request)
 		})
 	}
 
-	res := ph.UserService.SearchUsers(&params)
+	res := ph.ProjectService.SearchProjects(&params)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
