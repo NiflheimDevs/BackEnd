@@ -44,9 +44,9 @@ func (ss *SherlockService) SearchEverything(req *elasticmodel.SearchRequest) []e
 
 	for i := 0; i < len(res); i++ {
 		if res[i].Index == enums.ELASTIC_USER_INDEX {
-			res[i].Source["profile"] = ss.FileService.GetProfilePhotoURL(res[i].Source["_id"].(int), false)
+			res[i].Source["profile"] = ss.FileService.GetProfilePhotoURL(int(res[i].Source["id"].(float64)), false)
 		} else if res[i].Index == enums.ELASTIC_TEAM_INDEX {
-			res[i].Source["profile"] = ss.FileService.GetTeamProfilePhotoURL(res[i].Source["_id"].(int64), false)
+			res[i].Source["profile"] = ss.FileService.GetTeamProfilePhotoURL(int64(res[i].Source["id"].(float64)), false)
 		}
 	}
 
