@@ -12,6 +12,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 	"github.com/niflheimdevs/backend/internal/utils"
 )
 
@@ -365,4 +366,21 @@ func (ph *ProjectHandler) GetParticipatedProjectsForUser(w http.ResponseWriter, 
 			Errors: []exceptions.SpecificError{exceptions.CAST_ERROR},
 		})
 	}
+}
+
+func (ph *ProjectHandler) SearchProjects(w http.ResponseWriter, r *http.Request) {
+
+	params := Validated[elasticmodel.QueryAndTagSearchReqDto](ph.Validator, r)
+
+	if params.Order != "" && params.Order != "desc" && params.Order != "asc" {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	res := ph.ProjectService.SearchProjects(&params)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
 }

@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 )
 
 type ProjectService interface {
@@ -17,4 +18,5 @@ type ProjectService interface {
 	GetTeamProjects(userID int, teamID int64) []models.ProjectModel
 	GetParticipatedProjectsForUser(userid int) []models.ProjectModel
 	GetOneManTeamProjects(userID int) []models.ProjectModel
+	SearchProjects(req *elasticmodel.QueryAndTagSearchReqDto) []map[string]any
 }

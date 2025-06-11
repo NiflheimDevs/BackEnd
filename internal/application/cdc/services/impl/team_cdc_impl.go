@@ -32,8 +32,14 @@ func (tc *TeamCdc) TeamCapturer(data []byte) error {
 
 	var err error
 	if message.Type == "d" {
+		if message.Before.Type == 1 {
+			return nil
+		}
 		err = tc.TeamElastic.DeleteTeamDoc(message.Before.ID)
 	} else if message.Type == "c" || message.Type == "u" {
+		if message.After.Type == 1 {
+			return nil
+		}
 		err = tc.TeamElastic.UpsertTeamDoc(message.After)
 	}
 

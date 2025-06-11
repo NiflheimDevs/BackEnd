@@ -12,6 +12,7 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 	"github.com/niflheimdevs/backend/internal/utils"
 )
 
@@ -299,4 +300,21 @@ func (uh *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(newaccesstoken))
+}
+
+func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+
+	params := Validated[elasticmodel.QueryAndTagSearchReqDto](uh.Validator, r)
+
+	if params.Order != "" && params.Order != "desc" && params.Order != "asc" {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	res := uh.UserService.SearchUsers(&params)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
 }

@@ -78,6 +78,8 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    mem_limit: 512m
+    memswap_limit: 2g
     ports:
       - "9092:9092"
     networks:
@@ -86,13 +88,14 @@ services:
   debezium:
     image: debezium/connect:2.5
     container_name: debezium
+    restart: always
     depends_on:
       - kafka
       - db
     ports:
       - "8083:8083"
     environment:
-      - JAVA_OPTS=-Xms64m -Xmx64m
+      - JAVA_OPTS=-Xms128m -Xmx256m
       - BOOTSTRAP_SERVERS= kafka:9092
       - GROUP_ID= 1
       - CONFIG_STORAGE_TOPIC= debezium_connect_configs
@@ -102,14 +105,16 @@ services:
       - VALUE_CONVERTER_SCHEMAS_ENABLE= "false"
       - VALUE_CONVERTER= org.apache.kafka.connect.json.JsonConverter
       - KEY_CONVERTER= org.apache.kafka.connect.json.JsonConverter
-    mem_limit: 128m
-    memswap_limit: 1.5g
+    mem_limit: 512m
+    memswap_limit: 2g
     networks:
       - backend_network
   debezium-init:
     image: curlimages/curl:latest
     container_name: debezium_init
     environment:
+      DB_HOST: $(DB_HOST)
+      DB_PORT: $(DB_PORT)
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
       DB_NAME: ${DB_NAME}
@@ -117,14 +122,30 @@ services:
     depends_on:
       - debezium
     volumes:
-      - ./register-debezium.sh:/register-debezium.sh
+      - ./scripts/register-debezium.sh:/register-debezium.sh
     entrypoint: ["sh", "/register-debezium.sh"]
     networks:
       - backend_network
+  elasticsearch-init:
+    image: curlimages/curl:latest
+    container_name: elasticsearch_init
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./scripts/setup-elasticsearch.sh:/setup-elasticsearch.sh
+      - ./configs/create_index_teams.json:/create_index_teams.json
+      - ./configs/create_index_users.json:/create_index_users.json
+      - ./configs/create_index_projects.json:/create_index_projects.json
+    entrypoint: ["sh", "/setup-elasticsearch.sh"]
+    networks:
+      - backend_network
+
+
 
   elasticsearch:
     image: elasticsearch:7.17.13
     container_name: elasticsearch
+    restart: always
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -138,8 +159,8 @@ services:
       - indices.breaker.fielddata.limit=40%
     ports:
       - "9200:9200"
-    mem_limit: 2.3g
-    memswap_limit: 5g
+    mem_limit: 2g
+    memswap_limit: 6g
     networks:
       - backend_network
     volumes:

@@ -9,6 +9,8 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/utils"
@@ -22,6 +24,7 @@ type TeamService struct {
 	RoleRepo           repositories.RoleRepo
 	TransactionManager transaction.TxManager
 	FileService        services.FileService
+	SearchRepo         elastic.SearchRepo
 }
 
 func NewTeamService(
@@ -30,6 +33,7 @@ func NewTeamService(
 	roleRepo repositories.RoleRepo,
 	tManager transaction.TxManager,
 	fileService services.FileService,
+	sp elastic.SearchRepo,
 ) *TeamService {
 	return &TeamService{
 		TeamRepo:           teamRepo,
@@ -37,6 +41,7 @@ func NewTeamService(
 		RoleRepo:           roleRepo,
 		TransactionManager: tManager,
 		FileService:        fileService,
+		SearchRepo:         sp,
 	}
 }
 
@@ -234,15 +239,14 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 		})
 	}
 
-	// ? maybe use transaction
-	ts.FileService.DeleteTeamProfilePhoto(teamid)
-
 	err := ts.TeamRepo.DeleteTeam(teamid)
 	if err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
+
+	go ts.FileService.DeleteTeamProfilePhoto(teamid)
 
 }
 
@@ -613,4 +617,39 @@ func (ts *TeamService) GetOneManTeamID(userid int) int64 {
 		})
 	}
 	return teamid
+}
+
+func (ts *TeamService) SearchTeams(req *elasticmodel.SimpleQuerySearchReqDto) []map[string]any {
+
+	request := elasticmodel.SearchRequest{
+		Query: req.Query,
+		Limit: req.Limit,
+		Page:  req.Page,
+		Types: []string{"teams"}, //don't care
+	}
+
+	if req.SortBy == "" {
+		request.SortBy = "_score"
+	} else {
+		request.SortBy = req.SortBy
+	}
+	if req.Order == "" {
+		request.Order = "desc"
+	} else {
+		request.Order = req.Order
+	}
+
+	res, err := ts.SearchRepo.SearchTeams(&request)
+	if err != nil {
+		log.Println(err)
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+
+	for i := 0; i < len(res); i++ {
+		res[i]["profile"] = ts.FileService.GetTeamProfilePhotoURL(int64(res[i]["id"].(float64)), false)
+	}
+
+	return res
 }

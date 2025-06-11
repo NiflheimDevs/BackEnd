@@ -15,8 +15,8 @@ curl -X POST http://debezium:8083/connectors \
     "name": "postgres-connector",
     "config": {
       "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-      "database.hostname": "db",
-      "database.port": "5432",
+      "database.hostname": "'"${DB_HOST}"'",
+      "database.port": "'"${DB_PORT}"'",
       "database.user": "'"${DB_USER}"'",
       "database.password": "'"${DB_PASS}"'",
       "database.dbname": "'"${DB_NAME}"'",

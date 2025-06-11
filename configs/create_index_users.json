@@ -1,0 +1,60 @@
+{
+    "settings": {
+        "index": {
+            "max_ngram_diff": 10  
+        },
+        "analysis": {
+            "tokenizer": {
+                "edge_ngram_tokenizer": {
+                    "type": "edge_ngram",
+                    "min_gram": 2,
+                    "max_gram": 20,
+                    "token_chars": ["letter"]
+                },
+                "ngram_tokenizer": {
+                    "type": "ngram",
+                    "min_gram": 3,
+                    "max_gram": 7,
+                    "token_chars": ["letter"]
+                }
+            },
+            "analyzer": {
+                "autocomplete": {
+                    "type": "custom",
+                    "tokenizer": "edge_ngram_tokenizer",
+                    "filter": ["lowercase"]
+                },
+                "ngram_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "ngram_tokenizer",
+                    "filter": ["lowercase"]
+                }
+            }
+        }
+  },
+    "mappings": {
+        "properties": {
+            "username": {
+                "type": "text",
+                "analyzer": "ngram_analyzer",
+                "search_analyzer": "standard"
+            },
+            "firstname": {
+                "type": "text",
+                "analyzer": "ngram_analyzer",
+                "search_analyzer": "standard"
+            },
+            "lastname": {
+                "type": "text",
+                "analyzer": "ngram_analyzer",
+                "search_analyzer": "standard"
+            },
+            "bio": {
+                "type": "text",
+                "analyzer": "autocomplete",
+                "search_analyzer": "standard"
+            }
+            
+        }
+    }
+}

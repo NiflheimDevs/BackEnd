@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
+	"github.com/niflheimdevs/backend/internal/domain/repositories/elastic"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/redis"
@@ -28,6 +31,7 @@ type UserService struct {
 	TeamService    services.TeamService
 	CommentService services.CommentService
 	SecretSauce    *pkg.SecretSauce
+	SearchRepo     elastic.SearchRepo
 }
 
 func NewUserService(
@@ -40,6 +44,7 @@ func NewUserService(
 	teamService services.TeamService,
 	commentService services.CommentService,
 	secretSauce *pkg.SecretSauce,
+	searchRepo elastic.SearchRepo,
 ) *UserService {
 	return &UserService{
 		UserRepo:       userRepo,
@@ -49,8 +54,9 @@ func NewUserService(
 		Env:            Env,
 		FileService:    fileService,
 		TeamService:    teamService,
-		CommentService: commentService,
 		SecretSauce:    secretSauce,
+		SearchRepo:     searchRepo,
+		CommentService: commentService,
 	}
 }
 
@@ -469,4 +475,40 @@ func (us *UserService) DeleteUser(userid int) {
 	}
 
 	us.UserRepo.DeleteUser(userid)
+}
+
+func (us *UserService) SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []map[string]any {
+
+	request := elasticmodel.SearchRequest{
+		Query: req.Query,
+		Tags:  req.Tags,
+		Limit: req.Limit,
+		Page:  req.Page,
+		Types: []string{"userss"}, //don't care
+	}
+
+	if req.SortBy == "" {
+		request.SortBy = "_score"
+	} else {
+		request.SortBy = req.SortBy
+	}
+	if req.Order == "" {
+		request.Order = "desc"
+	} else {
+		request.Order = req.Order
+	}
+
+	res, err := us.SearchRepo.SearchUsers(&request)
+	if err != nil {
+		log.Println(err)
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+
+	for i := 0; i < len(res); i++ {
+		res[i]["profile"] = us.FileService.GetProfilePhotoURL(int(res[i]["id"].(float64)), false)
+	}
+
+	return res
 }

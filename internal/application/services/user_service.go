@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/domain/models"
+	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
 )
 
 type UserService interface {
@@ -23,4 +24,5 @@ type UserService interface {
 	UpdatePhone(phone string, userid string)
 	GetUserInfo(targetUserid int, userid int) *dto.UserProfileDTO
 	DeleteUser(userid int)
+	SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []map[string]any
 }
