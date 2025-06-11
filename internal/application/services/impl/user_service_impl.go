@@ -481,6 +481,7 @@ func (us *UserService) SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []
 
 	request := elasticmodel.SearchRequest{
 		Query: req.Query,
+		Tags:  req.Tags,
 		Limit: req.Limit,
 		Page:  req.Page,
 		Types: []string{"userss"}, //don't care

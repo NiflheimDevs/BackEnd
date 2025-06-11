@@ -419,6 +419,7 @@ func (ps *ProjectService) SearchProjects(req *elasticmodel.QueryAndTagSearchReqD
 
 	request := elasticmodel.SearchRequest{
 		Query: req.Query,
+		Tags:  req.Tags,
 		Limit: req.Limit,
 		Page:  req.Page,
 		Types: []string{"projects"}, //don't care
