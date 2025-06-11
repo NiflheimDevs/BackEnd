@@ -34,7 +34,7 @@ func (se *SearchRepo) SearchUsers(req *elasticmodel.SearchRequest) ([]map[string
 	mustTagFilters := make([]any, 0, len(req.Tags))
 	for _, tag := range req.Tags {
 		mustTagFilters = append(mustTagFilters, map[string]any{
-			"term": map[string]any{"tags.name": tag},
+			"term": map[string]any{"tags.name.keyword": tag},
 		})
 	}
 
@@ -116,7 +116,7 @@ func (se *SearchRepo) SearchProjects(req *elasticmodel.SearchRequest) ([]map[str
 	mustTagFilters := make([]any, 0, len(req.Tags))
 	for _, tag := range req.Tags {
 		mustTagFilters = append(mustTagFilters, map[string]any{
-			"term": map[string]any{"tags.name": tag},
+			"term": map[string]any{"tags.name.keyword": tag},
 		})
 	}
 
