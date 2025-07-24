@@ -23,7 +23,7 @@ func NewEmailService(
 	}
 }
 
-func (es EmailService) SendNotification(userID int, subject string, body string) error {
+func (es *EmailService) SendNotification(userID int, subject string, body string) error {
 	user, _ := es.UserRepo.FindUserByID(userID)
 
 	if user.Is_verified {
@@ -43,7 +43,7 @@ func (es EmailService) SendNotification(userID int, subject string, body string)
 	return nil
 }
 
-func (es EmailService) SendEmail(to, subject string, body string) error {
+func (es *EmailService) SendEmail(to, subject string, body string) error {
 	from := es.Env.Email.MainAddr
 	host := es.Env.Email.Host
 	port, _ := strconv.Atoi(es.Env.Email.Port)
