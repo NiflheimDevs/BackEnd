@@ -16,6 +16,7 @@ type Constants struct {
 	RateLimiter      RateLimiter
 	WebsocketSetting WebsocketSetting
 	Kafka            Kafka
+	UrlTokenSetting  UrlTokenSetting
 }
 
 type Kafka struct {
@@ -56,6 +57,12 @@ type WebsocketSetting struct {
 	MessageBufferSize int
 }
 
+type UrlTokenSetting struct {
+	Length           int
+	ExpiryTeamInvite time.Duration
+	ExpirtyEmailVer  time.Duration
+}
+
 func NewConstant() *Constants {
 	return &Constants{
 		Database: DBConst{
@@ -94,6 +101,11 @@ func NewConstant() *Constants {
 			PingPeriod:        54 * time.Second,
 			MaxMessageSize:    524288,
 			MessageBufferSize: 256,
+		},
+		UrlTokenSetting: UrlTokenSetting{
+			Length:           32,
+			ExpiryTeamInvite: 24 * 7 * time.Hour,
+			ExpirtyEmailVer:  24 * 2 * time.Hour,
 		},
 	}
 }
