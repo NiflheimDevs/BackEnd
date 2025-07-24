@@ -33,3 +33,5 @@ curl -X POST http://debezium:8083/connectors \
       "producer.buffer.memory": "33554432"         
     }
   }'
+
+sleep 30
