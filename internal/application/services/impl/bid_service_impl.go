@@ -19,6 +19,7 @@ type BidService struct {
 	ProjectService services.ProjectService
 	PaymentService services.PaymentService
 	TeamService    services.TeamService
+	MailService    services.EmailService
 	TxManager      transaction.TxManager
 	BidRepo        repositories.BidRepo
 	TeamRepo       repositories.TeamRepo
@@ -28,6 +29,7 @@ func NewBidService(
 	projectservice services.ProjectService,
 	paymentservice services.PaymentService,
 	teamservice services.TeamService,
+	mailService services.EmailService,
 	bidRepo repositories.BidRepo,
 	teamRepo repositories.TeamRepo,
 	txManager transaction.TxManager,
@@ -36,6 +38,7 @@ func NewBidService(
 		ProjectService: projectservice,
 		PaymentService: paymentservice,
 		TeamService:    teamservice,
+		MailService:    mailService,
 		BidRepo:        bidRepo,
 		TeamRepo:       teamRepo,
 		TxManager:      txManager,
@@ -148,6 +151,8 @@ func (bs BidService) PutBidOnProject(info dto.BidInfo) int {
 
 	bidID := bs.BidRepo.PutBid(info)
 
+	//bs.MailService.SendNotification(info.UserID, "")
+
 	return bidID
 }
 
@@ -222,6 +227,8 @@ func (bs BidService) AcceptBid(userID int, bidID int, projectID int) {
 			},
 		})
 	}
+
+	//bs.MailService.SendNotification(ownerID, "")
 }
 
 func (bs BidService) UpdateBid(info dto.BidInfo) {
@@ -303,6 +310,8 @@ func (bs BidService) UpdateBid(info dto.BidInfo) {
 	}
 
 	bs.BidRepo.UpdateBid(info)
+
+	//bs.MailService.SendNotification(project.OwnerID, "")
 }
 
 func (bs BidService) GetTeamBids(userID int, teamID int64) []dto.BidInfo {

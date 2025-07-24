@@ -5,21 +5,25 @@ import (
 	"time"
 
 	"github.com/niflheimdevs/backend/internal/application/dto"
+	"github.com/niflheimdevs/backend/internal/application/services"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	repositories "github.com/niflheimdevs/backend/internal/domain/repositories/postgres"
 	"github.com/niflheimdevs/backend/internal/domain/repositories/postgres/transaction"
 )
 
 type PaymentService struct {
+	MailService services.EmailService
 	PaymentRepo repositories.PaymentRepo
 	TxManager   transaction.TxManager
 }
 
 func NewPaymentService(
+	mailService services.EmailService,
 	paymentRepo repositories.PaymentRepo,
 	txManager transaction.TxManager,
 ) *PaymentService {
 	return &PaymentService{
+		MailService: mailService,
 		PaymentRepo: paymentRepo,
 		TxManager:   txManager,
 	}
@@ -127,6 +131,8 @@ func (paymentService *PaymentService) ProjectPayment(ctx context.Context, tx tra
 
 	paymentService.PaymentRepo.Withdraw(ctx, tx, userID, amount, "")
 	paymentService.PaymentRepo.UpdateWallet(ctx, tx, userID, -1*amount)
+
+	//paymentService.MailService.SendNotification(userID, "")
 }
 
 func (paymentService *PaymentService) Deposit(userID int, amount int64, description string) {
@@ -180,6 +186,8 @@ func (paymentService *PaymentService) Deposit(userID int, amount int64, descript
 			},
 		})
 	}
+
+	//paymentService.MailService.SendNotification(userID, "")
 }
 
 func (paymentService *PaymentService) Withdraw(userID int, amount int64, description string) {
@@ -243,6 +251,8 @@ func (paymentService *PaymentService) Withdraw(userID int, amount int64, descrip
 			},
 		})
 	}
+
+	//paymentService.MailService.SendNotification(userID,"")
 }
 
 func (paymentService *PaymentService) TransferMoney(ctx context.Context, tx transaction.Tx, fromUserID, toUserID int, amount int64, description string) {
@@ -260,4 +270,7 @@ func (paymentService *PaymentService) TransferMoney(ctx context.Context, tx tran
 	paymentService.PaymentRepo.UpdateWallet(ctx, tx, fromUserID, -1*amount)
 	paymentService.PaymentRepo.UpdateWallet(ctx, tx, toUserID, amount)
 	paymentService.PaymentRepo.TransferMoney(ctx, tx, fromUserID, toUserID, amount, description)
+
+	// paymentService.MailService.SendNotification(toUserID, "")
+	// paymentService.MailService.SendNotification(fromUserID, "")
 }
