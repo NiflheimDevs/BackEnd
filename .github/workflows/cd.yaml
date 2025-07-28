@@ -67,6 +67,9 @@ jobs:
           source: "scripts/*"
           target: "/home/niflheim/Desktop/backend" 
 
+      - name: Ensure html-templates directory exists
+        run: mkdir -p ./internal/application/email_templates
+
       - name: Copy html-templates
         uses: appleboy/scp-action@v0.1.0
         with:
@@ -74,7 +77,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "internal/application/email_templates/*"
-          target: "/home/niflheim/Desktop/backend"     
+          target: "/home/niflheim/Desktop/backend"
 
       - name: Copy init.sql
         uses: appleboy/scp-action@v0.1.0
