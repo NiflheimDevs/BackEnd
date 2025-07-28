@@ -109,7 +109,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Get("/team/{team_id}/project", app.Handlers.ProjectHandler.GetTeamProjects)
 	mux.Get("/team/bidding", app.Handlers.TeamHandler.GetTeamsForBidding)
 	mux.Get("/team/{team_id}/bid", app.Handlers.BidHandler.GetTeamBids)
-	mux.Patch("/team/invite", app.Handlers.TeamHandler.AcceptInvite)
+	mux.Post("/team/invite", app.Handlers.TeamHandler.AcceptInvite)
 
 	mux.Get("/star/{user_id}", app.Handlers.CommentHandler.GetStar)
 	mux.Get("/comment/{id}", app.Handlers.CommentHandler.GetCommentInfo)
