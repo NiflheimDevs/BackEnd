@@ -74,7 +74,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            mkdir -p /home/niflheim/Desktop/backend/internal/application/email_templates
+            mkdir -p ~/Desktop/backend/internal/application/email_templates
 
       - name: Copy html-templates
         uses: appleboy/scp-action@v0.1.0
