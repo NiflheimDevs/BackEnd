@@ -68,7 +68,7 @@ jobs:
           target: "/home/niflheim/Desktop/backend" 
 
       - name: Ensure html-templates directory exists
-        run: mkdir -p ./internal/application/email_templates
+        run: mkdir -p /home/niflheim/Desktop/backend/internal/application/email_templates
 
       - name: Copy html-templates
         uses: appleboy/scp-action@v0.1.0
