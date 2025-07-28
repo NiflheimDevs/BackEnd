@@ -1,6 +1,11 @@
 package pkg
 
-import "gopkg.in/gomail.v2"
+import (
+	"bytes"
+	"html/template"
+
+	"gopkg.in/gomail.v2"
+)
 
 func NewMessage(from, to, subject string, body string) *gomail.Message {
 	msg := gomail.NewMessage()
@@ -17,4 +22,25 @@ func SendEmail(host string, port int, username, password string, msg *gomail.Mes
 
 	err := dialer.DialAndSend(msg)
 	return err
+}
+
+func RenderTemplate(templatePath string, data interface{}) (string, error) {
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func NewHTMLMessage(from, to, subject, htmlBody string) *gomail.Message {
+	msg := gomail.NewMessage()
+	msg.SetHeader("From", from)
+	msg.SetHeader("To", to)
+	msg.SetHeader("Subject", subject)
+	msg.SetBody("text/html", htmlBody)
+	return msg
 }
