@@ -20,4 +20,5 @@ type UserRepo interface {
 	UpdateEmail(userid int, email string) (int64, error)
 	UpdatePhone(phonenumber string, userid string)
 	DeleteUser(userid int)
+	VerifyEmail(userid int) error
 }

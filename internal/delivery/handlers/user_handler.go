@@ -318,3 +318,33 @@ func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(res)
 }
+
+func (uh *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	useridString := chi.URLParam(r, "userid")
+	userid, err := strconv.Atoi(useridString)
+
+	if err != nil || userid <= 0 || token == "" {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	uh.UserService.VerifyEmail(userid, token)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uh *UserHandler) ResendEmailVerification(w http.ResponseWriter, r *http.Request) {
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+	// if err != nil || userid <= 0 {
+	// 	panic(exceptions.Exception{
+	// 		Tag: exceptions.BAD_REQUEST,
+	// 	})
+	// }
+
+	uh.UserService.ResendEmailVerification(userid)
+
+	w.WriteHeader(http.StatusNoContent)
+}
