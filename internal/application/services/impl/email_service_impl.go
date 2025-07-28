@@ -191,7 +191,7 @@ func (es *EmailService) SendAcceptedInvitationEmail(inviteeid, inviterid int, te
 		InviteeUsername: invitee.Username,
 		TeamName:        teamInfo.Title,
 	}
-	return es.sendAcceptedInvitationEmail(invitee.Email, &data)
+	return es.sendAcceptedInvitationEmail(inviter.Email, &data)
 }
 
 func (es *EmailService) sendAcceptedInvitationEmail(to string, data *dto.InvitationAcceptedHTML) error {
