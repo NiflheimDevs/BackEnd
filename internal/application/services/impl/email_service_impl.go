@@ -138,13 +138,19 @@ func (es *EmailService) SendEmailVerificationEmail(userid int) error {
 		Username:        user.Username,
 		VerificationURL: "https://bidlancer.ir/verify/email/?userid=" + strconv.Itoa(user.ID) + "&token=" + token,
 	}
-	return es.sendEmailVerificationEmail(user.Email, &data)
+	err = es.sendEmailVerificationEmail(user.Email, &data)
+	if err != nil {
+		log.Println("SendEmailVerificationEmail: email sending error. details:", err, "\nto:", user.Email, "\ndata:", data)
+		return err
+	}
+	return nil
 }
 
 func (es *EmailService) sendEmailVerificationEmail(to string, data *dto.EmailVerificationHTML) error {
 	templatePath := es.getTemplatePath("email_verification.html")
 	htmlBody, err := pkg.RenderTemplate(templatePath, data)
 	if err != nil {
+		log.Println("SendEmailVerificationEmail: template rendering error. details:", err)
 		return err
 	}
 	from := es.Env.Email.MainAddr
