@@ -320,17 +320,20 @@ func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
-	token := chi.URLParam(r, "token")
-	useridString := chi.URLParam(r, "userid")
-	userid, err := strconv.Atoi(useridString)
+	type Param struct {
+		Token  string `json:"token" validate:"required"`
+		UserID int    `json:"userid" validate:"required"`
+	}
 
-	if err != nil || userid <= 0 || token == "" {
+	params := Validated[Param](uh.Validator, r)
+
+	if params.UserID <= 0 || params.Token == "" {
 		panic(exceptions.Exception{
 			Tag: exceptions.BAD_REQUEST,
 		})
 	}
 
-	uh.UserService.VerifyEmail(userid, token)
+	uh.UserService.VerifyEmail(params.UserID, params.Token)
 
 	w.WriteHeader(http.StatusNoContent)
 }
