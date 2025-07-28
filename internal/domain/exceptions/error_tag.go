@@ -66,6 +66,8 @@ const (
 	NOT_A_MEMBER     SpecificError = "NOT_A_MEMBER"
 
 	LACKS_PERMISSION SpecificError = "LACKS_PERMISSION"
+
+	Token_EXPIRED SpecificError = "TOKEN_EXPIRED"
 )
 
 const (
