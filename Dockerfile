@@ -30,6 +30,10 @@ RUN mkdir -p ./SSL
 COPY ./SSL/certificate.pem ./SSL
 COPY ./SSL/privatekey.key ./SSL
 
+RUN mkdir -p ./internal/application/email_templates
+
+COPY ./internal/application/email_templates/* ./internal/application/email_templates/
+
 COPY --from=builder /app/main .
 
 COPY .env .
