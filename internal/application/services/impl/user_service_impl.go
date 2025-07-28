@@ -368,6 +368,7 @@ func (us *UserService) UpdateEmail(userid int, email string) {
 func (us *UserService) VerifyEmail(userid int, token string) {
 	urlToken, err := us.UrlTokenService.GetTokenWithPurpose(token, enums.EmailVerification)
 	if err != nil {
+		log.Println("VerifyEmailError: ", err)
 		if urlToken != nil {
 			panic(exceptions.Exception{
 				Tag:    exceptions.UNPROCESSABLE,
