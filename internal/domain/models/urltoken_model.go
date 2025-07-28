@@ -7,13 +7,13 @@ import (
 )
 
 type UrlToken struct {
-	ID           int
-	Token        string
-	Purpose      enums.UrlTokenPurpose
-	UserID       *int
-	InvitedEmail string
-	TeamID       *int
-	SenderID     *int
-	ExpiresAt    time.Time
-	CreatedAt    time.Time
+	ID      int
+	Token   string
+	Purpose enums.UrlTokenPurpose
+	UserID  *int
+	// InvitedEmail string
+	TeamID    *int64
+	SenderID  *int
+	ExpiresAt time.Time
+	CreatedAt time.Time
 }
