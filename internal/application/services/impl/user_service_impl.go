@@ -11,6 +11,7 @@ import (
 	"github.com/niflheimdevs/backend/bootstrap"
 	"github.com/niflheimdevs/backend/internal/application/dto"
 	"github.com/niflheimdevs/backend/internal/application/services"
+	"github.com/niflheimdevs/backend/internal/domain/enums"
 	"github.com/niflheimdevs/backend/internal/domain/exceptions"
 	"github.com/niflheimdevs/backend/internal/domain/models"
 	elasticmodel "github.com/niflheimdevs/backend/internal/domain/models/elastic"
@@ -22,16 +23,18 @@ import (
 )
 
 type UserService struct {
-	UserRepo       repositories.UserRepo
-	CacheRepo      redis.UserCache
-	TxManager      transaction.TxManager
-	Constants      *bootstrap.Constants
-	Env            *bootstrap.Env
-	FileService    services.FileService
-	TeamService    services.TeamService
-	CommentService services.CommentService
-	SecretSauce    *pkg.SecretSauce
-	SearchRepo     elastic.SearchRepo
+	UserRepo        repositories.UserRepo
+	CacheRepo       redis.UserCache
+	TxManager       transaction.TxManager
+	Constants       *bootstrap.Constants
+	Env             *bootstrap.Env
+	FileService     services.FileService
+	TeamService     services.TeamService
+	CommentService  services.CommentService
+	SecretSauce     *pkg.SecretSauce
+	SearchRepo      elastic.SearchRepo
+	EmailService    services.EmailService
+	UrlTokenService services.UrlTokenService
 }
 
 func NewUserService(
@@ -45,18 +48,22 @@ func NewUserService(
 	commentService services.CommentService,
 	secretSauce *pkg.SecretSauce,
 	searchRepo elastic.SearchRepo,
+	emailService services.EmailService,
+	urlTokenService services.UrlTokenService,
 ) *UserService {
 	return &UserService{
-		UserRepo:       userRepo,
-		CacheRepo:      cacheRepo,
-		TxManager:      txManager,
-		Constants:      constants,
-		Env:            Env,
-		FileService:    fileService,
-		TeamService:    teamService,
-		SecretSauce:    secretSauce,
-		SearchRepo:     searchRepo,
-		CommentService: commentService,
+		UserRepo:        userRepo,
+		CacheRepo:       cacheRepo,
+		TxManager:       txManager,
+		Constants:       constants,
+		Env:             Env,
+		FileService:     fileService,
+		TeamService:     teamService,
+		SecretSauce:     secretSauce,
+		SearchRepo:      searchRepo,
+		CommentService:  commentService,
+		EmailService:    emailService,
+		UrlTokenService: urlTokenService,
 	}
 }
 
@@ -354,6 +361,51 @@ func (us *UserService) UpdateEmail(userid int, email string) {
 			Errors: []exceptions.SpecificError{exceptions.EMAIL_TAKEN},
 		})
 	}
+
+	go us.EmailService.SendEmailVerificationEmail(userid)
+}
+
+func (us *UserService) VerifyEmail(userid int, token string) {
+	urlToken, err := us.UrlTokenService.GetTokenWithPurpose(token, enums.EmailVerification)
+	if err != nil {
+		log.Println("VerifyEmailError: ", err)
+		if urlToken != nil {
+			panic(exceptions.Exception{
+				Tag:    exceptions.UNPROCESSABLE,
+				Errors: []exceptions.SpecificError{exceptions.Token_EXPIRED},
+			})
+		}
+		panic(exceptions.Exception{
+			Tag: exceptions.NOT_FOUND,
+		})
+	}
+
+	if urlToken.UserID == nil || *urlToken.UserID != userid {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
+	err = us.UserRepo.VerifyEmail(userid)
+	if err != nil {
+		log.Println("VerifyEmailError: ", err)
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+
+}
+
+func (us *UserService) ResendEmailVerification(userid int) {
+	if userid < 0 {
+		panic(exceptions.Exception{
+			Tag: exceptions.UNAUTHORIZED,
+			Errors: []exceptions.SpecificError{
+				exceptions.AUTH_ACCESS_DENIED,
+			},
+		})
+	}
+	go us.EmailService.SendEmailVerificationEmail(userid)
 }
 
 func (us *UserService) UpdateUsername(userid int, username string) {

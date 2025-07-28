@@ -25,4 +25,7 @@ type UserService interface {
 	GetUserInfo(targetUserid int, userid int) *dto.UserProfileDTO
 	DeleteUser(userid int)
 	SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []map[string]any
+
+	VerifyEmail(userid int, token string)
+	ResendEmailVerification(userid int)
 }

@@ -318,3 +318,36 @@ func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(res)
 }
+
+func (uh *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	type Param struct {
+		Token  string `json:"token" validate:"required"`
+		UserID int    `json:"userid" validate:"required"`
+	}
+
+	params := Validated[Param](uh.Validator, r)
+
+	if params.UserID <= 0 || params.Token == "" {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	uh.UserService.VerifyEmail(params.UserID, params.Token)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uh *UserHandler) ResendEmailVerification(w http.ResponseWriter, r *http.Request) {
+
+	userid, _ := r.Context().Value(uh.Constants.Context.UserID).(int)
+	// if err != nil || userid <= 0 {
+	// 	panic(exceptions.Exception{
+	// 		Tag: exceptions.BAD_REQUEST,
+	// 	})
+	// }
+
+	uh.UserService.ResendEmailVerification(userid)
+
+	w.WriteHeader(http.StatusNoContent)
+}

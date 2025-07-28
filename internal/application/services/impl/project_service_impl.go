@@ -20,6 +20,7 @@ import (
 type ProjectService struct {
 	ProjectRepo    repositories.ProjectRepo
 	PaymentService services.PaymentService
+	MailService    services.EmailService
 	Constants      *bootstrap.Constants
 	TxManager      transaction.TxManager
 	TagRepo        repositories.TagRepo
@@ -32,6 +33,7 @@ type ProjectService struct {
 func NewProjectService(
 	projectRepo repositories.ProjectRepo,
 	paymentService services.PaymentService,
+	mailService services.EmailService,
 	constants *bootstrap.Constants,
 	tagRepo repositories.TagRepo,
 	bidRepo repositories.BidRepo,
@@ -43,6 +45,7 @@ func NewProjectService(
 	return &ProjectService{
 		ProjectRepo:    projectRepo,
 		PaymentService: paymentService,
+		MailService:    mailService,
 		Constants:      constants,
 		TxManager:      txManager,
 		TagRepo:        tagRepo,
@@ -161,6 +164,8 @@ func (projectService *ProjectService) CreateProject(userID int, title, descripti
 			},
 		})
 	}
+
+	//projectService.MailService.SendNotification(userID, "")
 
 	return projectID
 }

@@ -14,6 +14,7 @@ type Env struct {
 	Storage S3
 	Kafka   KafkaBroker
 	Elastic ElasticSearch
+	Email   Email
 }
 
 type PGDatabase struct {
@@ -45,6 +46,15 @@ type SMS struct {
 	IPAddr        string
 	APIKey        string
 	APISandboxKey string
+}
+
+type Email struct {
+	Host      string
+	Port      string
+	Username  string
+	Password  string
+	NotifAddr string
+	MainAddr  string
 }
 
 type Server struct {
@@ -110,6 +120,14 @@ func NewEnvironment() *Env {
 		Elastic: ElasticSearch{
 			Port:    os.Getenv("ELASTIC_PORT"),
 			Address: os.Getenv("ELASTIC_ADDR"),
+		},
+		Email: Email{
+			Host:      os.Getenv("EMAIL_HOST"),
+			Port:      os.Getenv("EMAIL_PORT"),
+			Username:  os.Getenv("EMAIL_USERNAME"),
+			Password:  os.Getenv("EMAIL_PASSWORD"),
+			NotifAddr: os.Getenv("EMAIL_NOTIF_ADDR"),
+			MainAddr:  os.Getenv("EMAIL_MAIN_ADDR"),
 		},
 	}
 }

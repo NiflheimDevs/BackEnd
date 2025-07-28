@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Team Invitation</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #333333;
+        }
+
+        p {
+            font-size: 16px;
+            color: #555555;
+            line-height: 1.6;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #999999;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>You’ve Been Invited!</h1>
+        <p><strong>{{.InviterUsername}}</strong> has invited you to join the team <strong>{{.TeamName}}</strong>.</p>
+        <p>Click the button below to see more details.</p>
+        <a href="{{.RedirectURL}}" class="button">View Invitation</a>
+        <p>If the button doesn’t work, copy and paste this link into your browser:</p>
+        <p><a href="{{.RedirectURL}}">{{.RedirectURL}}</a></p>
+        <div class="footer">
+            You received this email because someone invited you to join their team.
+        </div>
+    </div>
+</body>
+
+</html>

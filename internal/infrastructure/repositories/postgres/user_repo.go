@@ -167,6 +167,24 @@ func (repo *UserRepo) UpdateEmail(userid int, email string) (int64, error) {
 	return res.RowsAffected(), err
 }
 
+func (repo *UserRepo) VerifyEmail(userid int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	UPDATE users
+	SET is_verified = true
+	WHERE id = $1`
+
+	_, err := repo.PG.Exec(ctx, query, userid)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+	return err
+}
+
 func (repo *UserRepo) UpdatePhone(phonenumber string, userid string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

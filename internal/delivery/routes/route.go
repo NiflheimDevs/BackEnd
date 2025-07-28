@@ -75,6 +75,8 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Put("/user/update-email", app.Handlers.UserHandler.UpdateEmail)
 	mux.Put("/user/update-phone/send-otp", app.Handlers.UserHandler.UpdatePhoneSendOTP)
 	mux.Put("/user/update-phone/verify", app.Handlers.UserHandler.UpdatePhoneVerify)
+	mux.Patch("/user/verify-email", app.Handlers.UserHandler.VerifyEmail)
+	mux.Post("/user/resend-email-verification", app.Handlers.UserHandler.ResendEmailVerification)
 
 	mux.Post("/user/profile", app.Handlers.FileHandler.UploadProfilePhoto)
 	mux.Delete("/user/profile", app.Handlers.FileHandler.DeleteProfilePhoto)
@@ -107,6 +109,7 @@ func Routes(app *wire.Application) http.Handler {
 	mux.Get("/team/{team_id}/project", app.Handlers.ProjectHandler.GetTeamProjects)
 	mux.Get("/team/bidding", app.Handlers.TeamHandler.GetTeamsForBidding)
 	mux.Get("/team/{team_id}/bid", app.Handlers.BidHandler.GetTeamBids)
+	mux.Post("/team/invite", app.Handlers.TeamHandler.AcceptInvite)
 
 	mux.Get("/star/{user_id}", app.Handlers.CommentHandler.GetStar)
 	mux.Get("/comment/{id}", app.Handlers.CommentHandler.GetCommentInfo)

@@ -50,7 +50,10 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 	pgxTxManager := db.NewTxManager(pool)
 	client := driver.ConnectElastic(container)
 	searchRepo := elasticimpl.NewSearchElastic(client)
-	teamService := servicesimpl.NewTeamService(teamRepo, userRepo, roleRepo, pgxTxManager, fileService, searchRepo)
+	urlTokenRepo := repositoriesimpl.NewUrlTokenRepo(pool)
+	urlTokenService := servicesimpl.NewUrlTokenService(urlTokenRepo, constants)
+	emailService := servicesimpl.NewEmailService(userRepo, env, teamRepo, urlTokenService)
+	teamService := servicesimpl.NewTeamService(teamRepo, userRepo, roleRepo, pgxTxManager, fileService, searchRepo, emailService, urlTokenService)
 	jwt := servicesimpl.NewJWT(constants)
 	validate := pkg.NewValidator()
 	fileHandler := handlers.NewFileHandler(constants, env, fileService, teamService, jwt, validate)
@@ -60,20 +63,20 @@ func InitializeApplication(container *bootstrap.Di, hub *websocket.Hub) (*Applic
 	tagRepo := repositoriesimpl.NewTagRepo(pool)
 	projectRepo := repositoriesimpl.NewProjectRepo(pool, tagRepo, commentRepo)
 	paymentRepo := repositoriesimpl.NewPaymentRepo(pool)
-	paymentService := servicesimpl.NewPaymentService(paymentRepo, pgxTxManager)
+	paymentService := servicesimpl.NewPaymentService(emailService, paymentRepo, pgxTxManager)
 	bidRepo := repositoriesimpl.NewBidRepo(pool)
 	tagService := servicesimpl.NewTagService(tagRepo, userRepo)
-	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, constants, tagRepo, bidRepo, tagService, teamService, pgxTxManager, searchRepo)
+	projectService := servicesimpl.NewProjectService(projectRepo, paymentService, emailService, constants, tagRepo, bidRepo, tagService, teamService, pgxTxManager, searchRepo)
 	commentService := servicesimpl.NewCommentService(commentRepo, projectRepo, projectService)
 	secretSauce := pkg.NewSecretSauce()
-	userService := servicesimpl.NewUserService(userRepo, userCache, pgxTxManager, constants, env, fileService, teamService, commentService, secretSauce, searchRepo)
+	userService := servicesimpl.NewUserService(userRepo, userCache, pgxTxManager, constants, env, fileService, teamService, commentService, secretSauce, searchRepo, emailService, urlTokenService)
 	careerRepo := repositoriesimpl.NewCareerRepo(pool)
 	careerService := servicesimpl.NewCareerService(careerRepo, tagService, tagRepo, userRepo)
 	smsService := servicesimpl.NewSmsService(env, constants)
 	userHandler := handlers.NewUserHandler(constants, userService, jwt, validate, tagService, careerService, smsService)
 	labelRepo := repositoriesimpl.NewLabelRepo(pool)
 	labelService := servicesimpl.NewLabelService(labelRepo, userRepo)
-	bidService := servicesimpl.NewBidService(projectService, paymentService, teamService, bidRepo, teamRepo, pgxTxManager)
+	bidService := servicesimpl.NewBidService(projectService, paymentService, teamService, emailService, bidRepo, teamRepo, pgxTxManager)
 	projectHandler := handlers.NewProjectHandler(constants, projectService, userService, labelService, bidService, jwt, validate)
 	generalHandler := handlers.NewGeneralHandler(tagService, careerService, labelService, jwt, constants, validate)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, constants, validate)
@@ -144,13 +147,13 @@ var ElasticAndDatabaseProviderSet = wire.NewSet(driver.ConnectElastic, driver.Co
 
 var PkgProviderSet = wire.NewSet(pkg.NewValidator, pkg.NewSecretSauce)
 
-var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, repositoriesimpl.NewBidRepo, repositoriesimpl.NewChatRepo, elasticimpl.NewSearchElastic, repositoriesimpl.NewCommentRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)), wire.Bind(new(elastic.SearchRepo), new(*elasticimpl.SearchRepo)), wire.Bind(new(repositories.CommentRepo), new(*repositoriesimpl.CommentRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
+var RepoProviderSet = wire.NewSet(repositoriesimpl.NewUserRepo, repositoriesimpl.NewProjectRepo, repositoriesimpl.NewCareerRepo, repositoriesimpl.NewTagRepo, repositoriesimpl.NewLabelRepo, repositoriesimpl.NewPaymentRepo, repositoriesimpl.NewTeamRepo, repositoriesimpl.NewRoleRepo, repositoriesimpl.NewBidRepo, repositoriesimpl.NewChatRepo, repositoriesimpl.NewUrlTokenRepo, elasticimpl.NewSearchElastic, repositoriesimpl.NewCommentRepo, storageimpl.NewS3Storage, redisimpl.NewUserCache, wire.Bind(new(repositories.UserRepo), new(*repositoriesimpl.UserRepo)), wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(repositories.CareerRepo), new(*repositoriesimpl.CareerRepo)), wire.Bind(new(repositories.LabelRepo), new(*repositoriesimpl.LabelRepo)), wire.Bind(new(repositories.ProjectRepo), new(*repositoriesimpl.ProjectRepo)), wire.Bind(new(repositories.PaymentRepo), new(*repositoriesimpl.PaymentRepo)), wire.Bind(new(repositories.BidRepo), new(*repositoriesimpl.BidRepo)), wire.Bind(new(repositories.TeamRepo), new(*repositoriesimpl.TeamRepo)), wire.Bind(new(repositories.RoleRepo), new(*repositoriesimpl.RoleRepo)), wire.Bind(new(repositories.ChatRepo), new(*repositoriesimpl.ChatRepo)), wire.Bind(new(repositories.UrlTokenRepo), new(*repositoriesimpl.UrlTokenRepo)), wire.Bind(new(elastic.SearchRepo), new(*elasticimpl.SearchRepo)), wire.Bind(new(repositories.CommentRepo), new(*repositoriesimpl.CommentRepo)), wire.Bind(new(storage.S3Storage), new(*storageimpl.S3Storage)), wire.Bind(new(redis.UserCache), new(*redisimpl.UserCache)))
 
 var ElRepoProviderSet = wire.NewSet(repositoriesimpl.NewTagRepo, elasticimpl.NewProjectElastic, elasticimpl.NewUserElastic, elasticimpl.NewTeamElastic, wire.Bind(new(repositories.TagRepo), new(*repositoriesimpl.TagRepo)), wire.Bind(new(elastic.ProjectElastic), new(*elasticimpl.ProjectElastic)), wire.Bind(new(elastic.UserElastic), new(*elasticimpl.UserElastic)), wire.Bind(new(elastic.TeamElastic), new(*elasticimpl.TeamElastic)))
 
 var FileServiceProviderSet = wire.NewSet(servicesimpl.NewFileService, wire.Bind(new(services.FileService), new(*servicesimpl.FileService)))
 
-var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewBidService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewRoleService, servicesimpl.NewChatService, servicesimpl.NewSherlockService, servicesimpl.NewCommentService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)), wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)), wire.Bind(new(services.SherlockService), new(*servicesimpl.SherlockService)), wire.Bind(new(services.CommentService), new(*servicesimpl.CommentService)), ProvideConstants,
+var ServiceProviderSet = wire.NewSet(servicesimpl.NewUserService, servicesimpl.NewTagService, servicesimpl.NewCareerService, servicesimpl.NewLabelService, servicesimpl.NewProjectService, servicesimpl.NewPaymentService, servicesimpl.NewTeamService, servicesimpl.NewBidService, servicesimpl.NewSmsService, servicesimpl.NewJWT, servicesimpl.NewRoleService, servicesimpl.NewChatService, servicesimpl.NewSherlockService, servicesimpl.NewCommentService, servicesimpl.NewEmailService, servicesimpl.NewUrlTokenService, wire.Bind(new(services.UserService), new(*servicesimpl.UserService)), wire.Bind(new(services.TagService), new(*servicesimpl.TagService)), wire.Bind(new(services.CareerService), new(*servicesimpl.CareerService)), wire.Bind(new(services.LabelService), new(*servicesimpl.LabelService)), wire.Bind(new(services.ProjectService), new(*servicesimpl.ProjectService)), wire.Bind(new(services.PaymentService), new(*servicesimpl.PaymentService)), wire.Bind(new(services.TeamService), new(*servicesimpl.TeamService)), wire.Bind(new(services.BidService), new(*servicesimpl.BidService)), wire.Bind(new(services.SmsService), new(*servicesimpl.SmsService)), wire.Bind(new(services.JWT), new(*servicesimpl.JWT)), wire.Bind(new(services.ChatService), new(*servicesimpl.ChatService)), wire.Bind(new(services.RoleService), new(*servicesimpl.RoleService)), wire.Bind(new(services.SherlockService), new(*servicesimpl.SherlockService)), wire.Bind(new(services.CommentService), new(*servicesimpl.CommentService)), wire.Bind(new(services.EmailService), new(*servicesimpl.EmailService)), wire.Bind(new(services.UrlTokenService), new(*servicesimpl.UrlTokenService)), ProvideConstants,
 	ProvideEnv,
 	ProvideS3,
 )

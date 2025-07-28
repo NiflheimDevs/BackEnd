@@ -25,6 +25,8 @@ type TeamService struct {
 	TransactionManager transaction.TxManager
 	FileService        services.FileService
 	SearchRepo         elastic.SearchRepo
+	EmailService       services.EmailService
+	UrlTokenService    services.UrlTokenService
 }
 
 func NewTeamService(
@@ -34,6 +36,8 @@ func NewTeamService(
 	tManager transaction.TxManager,
 	fileService services.FileService,
 	sp elastic.SearchRepo,
+	emailService services.EmailService,
+	uts services.UrlTokenService,
 ) *TeamService {
 	return &TeamService{
 		TeamRepo:           teamRepo,
@@ -42,6 +46,8 @@ func NewTeamService(
 		TransactionManager: tManager,
 		FileService:        fileService,
 		SearchRepo:         sp,
+		EmailService:       emailService,
+		UrlTokenService:    uts,
 	}
 }
 
@@ -105,7 +111,7 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
-	ts.addMembersFunc(teamid, teamInfo.Members)
+	ts.InviteMembers(userid, teamid, teamInfo.Members)
 
 	return teamid
 }
@@ -252,7 +258,7 @@ func (ts *TeamService) DeleteTeam(commanderid int, teamid int64) {
 
 // TODO: email? some sort of request must be sent and then when it is accepted, the member gets added
 // ! this version is naive
-func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
+func (ts *TeamService) InviteMembers(userid int, teamid int64, members []int) {
 	if userid < 0 {
 		panic(exceptions.Exception{
 			Tag: exceptions.UNAUTHORIZED,
@@ -275,7 +281,40 @@ func (ts *TeamService) AddMembers(userid int, teamid int64, members []int) {
 		})
 	}
 
-	ts.addMembersFunc(teamid, members)
+	go ts.EmailService.SendTeamInvites(userid, members, teamid)
+	// ts.addMembersFunc(teamid, members)
+}
+
+func (ts *TeamService) AcceptInvite(token string, teamid int64) {
+	urltoken, err := ts.UrlTokenService.GetTokenWithPurpose(token, enums.TeamInvite)
+	// ik this is weird. i am doing this under time pressure. cut me some slacks
+	if err != nil {
+		if urltoken == nil {
+			panic(exceptions.Exception{
+				Tag: exceptions.NOT_FOUND,
+			})
+		}
+		panic(exceptions.Exception{
+			Tag:    exceptions.FORBIDDEN,
+			Errors: []exceptions.SpecificError{exceptions.Token_EXPIRED},
+		})
+	}
+
+	if *urltoken.TeamID != teamid {
+		panic(exceptions.Exception{
+			Tag: exceptions.FORBIDDEN,
+		})
+	}
+
+	err = ts.TeamRepo.AddMember(*urltoken.UserID, *urltoken.TeamID, "", enums.TEAM_NEWBIE)
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.INTERNAL_ERROR,
+		})
+	}
+
+	go ts.UrlTokenService.DeleteToken(token)
+	go ts.EmailService.SendAcceptedInvitationEmail(*urltoken.UserID, *urltoken.SenderID, *urltoken.TeamID)
 }
 
 func (ts *TeamService) addMembersFunc(teamid int64, members []int) {
