@@ -82,7 +82,7 @@ func (es *EmailService) SendTeamInvites(userid int, newMembers []int, teamid int
 		if !userInfo.Is_verified {
 			continue
 		}
-		token, err := es.UrlTokenService.GenerateEmailVerificationToken(userInfo.ID)
+		token, err := es.UrlTokenService.GenerateTeamInviteToken(userInfo.ID, userid, teamid)
 		if err != nil {
 			log.Println("SendTeamInviteError: token generation error. details:", err)
 			continue
