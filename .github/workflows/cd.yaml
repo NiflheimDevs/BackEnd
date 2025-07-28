@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-      - Feat/email 
+      - Feat/Email 
       
 jobs:
   deploy:
