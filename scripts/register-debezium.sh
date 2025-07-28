@@ -16,7 +16,7 @@ curl -X POST http://debezium:8083/connectors \
     "config": {
       "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
       "database.hostname": "'"${DB_HOST}"'",
-      "database.port": "'"${DB_PORT}"'",
+      "database.port": '"${DB_PORT}"',
       "database.user": "'"${DB_USER}"'",
       "database.password": "'"${DB_PASS}"'",
       "database.dbname": "'"${DB_NAME}"'",
@@ -33,3 +33,5 @@ curl -X POST http://debezium:8083/connectors \
       "producer.buffer.memory": "33554432"         
     }
   }'
+
+sleep 30
