@@ -33,7 +33,7 @@ func (r *UrlTokenRepo) InsertToken(token *models.UrlToken) error {
 		token.Token,
 		token.Purpose,
 		token.UserID,
-		// token.InvitedEmail,
+		token.InvitedEmail,
 		token.TeamID,
 		token.SenderID,
 		token.ExpiresAt,
