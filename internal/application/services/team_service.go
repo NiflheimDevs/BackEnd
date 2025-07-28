@@ -20,7 +20,7 @@ type TeamService interface {
 	UpdateMemeberRole(commanderid int, info *dto.UpdateMemberRoleDto)
 	DeleteTeam(commanderid int, teamid int64)
 	// GetTeamWithRole(userid int, teamid int64) *dto.GetTeamDto
-	AddMembers(userid int, teamid int64, members []int)
+	InviteMembers(userid int, teamid int64, members []int)
 	LeaveTeam(userid int, teamid int64)
 	KickMemebr(commanderid int, poorGuysid []int, teamid int64)
 	GetMembers(commanderid int, teamid int64) []dto.SendMemberDto
@@ -29,4 +29,5 @@ type TeamService interface {
 	GetOneManTeamID(userid int) int64
 	GetAllTeamsIDs(userID int) []int64
 	SearchTeams(req *elasticmodel.SimpleQuerySearchReqDto) []map[string]any
+	AcceptInvite(token string, teamid int64)
 }

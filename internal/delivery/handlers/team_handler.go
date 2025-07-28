@@ -180,7 +180,7 @@ func (th *TeamHandler) AddMembers(w http.ResponseWriter, r *http.Request) {
 
 	userid, _ := r.Context().Value(th.Constants.Context.UserID).(int)
 
-	th.TeamService.AddMembers(userid, params.TeamID, params.NewMembers)
+	th.TeamService.InviteMembers(userid, params.TeamID, params.NewMembers)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -211,4 +211,18 @@ func (th *TeamHandler) SearchTeams(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(res)
+}
+
+func (th *TeamHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
+	type Params struct {
+		// idk why not getting userid as well
+		TeamID int64  `json:"team_id" validate:"required,numeric"`
+		Token  string `json:"token" validate:"required"`
+	}
+
+	params := Validated[Params](th.Validator, r)
+
+	th.TeamService.AcceptInvite(params.Token, params.TeamID)
+
+	w.WriteHeader(http.StatusNoContent)
 }
