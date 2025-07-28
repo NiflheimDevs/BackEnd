@@ -111,7 +111,7 @@ func (ts *TeamService) CreateTeam(userid int, teamInfo *dto.TeamCreateDto) int64
 			Tag: exceptions.INTERNAL_ERROR,
 		})
 	}
-	ts.addMembersFunc(teamid, teamInfo.Members)
+	ts.InviteMembers(userid, teamid, teamInfo.Members)
 
 	return teamid
 }

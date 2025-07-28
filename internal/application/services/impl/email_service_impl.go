@@ -104,7 +104,7 @@ func (es *EmailService) SendTeamInvites(userid int, newMembers []int, teamid int
 }
 
 func (es *EmailService) sendTeamInviteEmail(to string, data *dto.TeamInviteHTML) error {
-	templatePath := es.getTemplatePath("invite.html")
+	templatePath := es.getTemplatePath("team_invite.html")
 	htmlBody, err := pkg.RenderTemplate(templatePath, data)
 	if err != nil {
 		return err
