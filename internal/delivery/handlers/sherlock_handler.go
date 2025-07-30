@@ -44,7 +44,7 @@ func (sh *SherlockHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	params := &elasticmodel.SearchRequest{
 		Query:  q.Get("query"),
-		Types:  q["type"],
+		Types:  q["types"],
 		Page:   page,
 		Limit:  limit,
 		SortBy: q.Get("sort_by"),

@@ -397,6 +397,10 @@ func (ph *ProjectHandler) SearchProjects(w http.ResponseWriter, r *http.Request)
 		Order:  q.Get("order"),
 	}
 
+	if len(params.Tags) == 1 && params.Tags[0] == "" {
+		params.Tags = nil
+	}
+
 	if params.Order != "" && params.Order != "desc" && params.Order != "asc" {
 		panic(exceptions.Exception{
 			Tag: exceptions.BAD_REQUEST,

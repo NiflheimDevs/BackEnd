@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -332,6 +331,10 @@ func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 		Order:  q.Get("order"),
 	}
 
+	if len(dto.Tags) == 1 && dto.Tags[0] == "" {
+		dto.Tags = nil
+	}
+
 	if dto.Order != "" && dto.Order != "desc" && dto.Order != "asc" {
 		panic(exceptions.Exception{
 			Tag: exceptions.BAD_REQUEST,
@@ -343,8 +346,6 @@ func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 			Tag: exceptions.BAD_REQUEST,
 		})
 	}
-
-	log.Println("Search Users:", dto)
 
 	res := uh.UserService.SearchUsers(dto)
 
