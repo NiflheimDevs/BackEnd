@@ -536,7 +536,7 @@ func (us *UserService) SearchUsers(req *elasticmodel.QueryAndTagSearchReqDto) []
 		Tags:  req.Tags,
 		Limit: req.Limit,
 		Page:  req.Page,
-		Types: []string{"userss"}, //don't care
+		Types: []string{"users"}, //don't care
 	}
 
 	if req.SortBy == "" {

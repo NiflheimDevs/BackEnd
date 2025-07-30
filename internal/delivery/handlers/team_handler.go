@@ -198,7 +198,30 @@ func (th *TeamHandler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) 
 
 func (th *TeamHandler) SearchTeams(w http.ResponseWriter, r *http.Request) {
 
-	params := Validated[elasticmodel.SimpleQuerySearchReqDto](th.Validator, r)
+	// params := Validated[elasticmodel.SimpleQuerySearchReqDto](th.Validator, r)
+	q := r.URL.Query()
+
+	page, err := strconv.Atoi(q.Get("page"))
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	limit, err := strconv.Atoi(q.Get("limit"))
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	params := &elasticmodel.SimpleQuerySearchReqDto{
+		Query:  q.Get("query"),
+		Page:   page,
+		Limit:  limit,
+		SortBy: q.Get("sort_by"),
+		Order:  q.Get("order"),
+	}
 
 	if params.Order != "" && params.Order != "desc" && params.Order != "asc" {
 		panic(exceptions.Exception{
@@ -206,7 +229,7 @@ func (th *TeamHandler) SearchTeams(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	res := th.TeamService.SearchTeams(&params)
+	res := th.TeamService.SearchTeams(params)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

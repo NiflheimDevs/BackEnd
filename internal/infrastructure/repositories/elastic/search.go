@@ -227,8 +227,8 @@ func (se *SearchRepo) SearchUsersProjectsTeams(req *elasticmodel.SearchRequest) 
 		},
 		"sort": []any{
 			map[string]any{
-				"_score": map[string]any{
-					"order": "desc",
+				req.SortBy: map[string]any{
+					"order": req.Order,
 				},
 			},
 		},

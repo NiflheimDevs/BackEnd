@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -306,12 +307,6 @@ func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 
 	// params := Validated[elasticmodel.QueryAndTagSearchReqDto](uh.Validator, r)
 
-	// if params.Order != "" && params.Order != "desc" && params.Order != "asc" {
-	// 	panic(exceptions.Exception{
-	// 		Tag: exceptions.BAD_REQUEST,
-	// 	})
-	// }
-
 	q := r.URL.Query()
 
 	page, err := strconv.Atoi(q.Get("page"))
@@ -337,11 +332,19 @@ func (uh *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 		Order:  q.Get("order"),
 	}
 
+	if dto.Order != "" && dto.Order != "desc" && dto.Order != "asc" {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
 	if err := StructValidator(uh.Validator, dto); err != nil {
 		panic(exceptions.Exception{
 			Tag: exceptions.BAD_REQUEST,
 		})
 	}
+
+	log.Println("Search Users:", dto)
 
 	res := uh.UserService.SearchUsers(dto)
 
