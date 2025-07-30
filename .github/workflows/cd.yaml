@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - fix/searchapi
       
 jobs:
   deploy:
