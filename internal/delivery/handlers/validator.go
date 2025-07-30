@@ -31,3 +31,8 @@ func Validated[T any](validate *validator.Validate, r *http.Request) T {
 
 	return params
 }
+
+func StructValidator(validate *validator.Validate, s any) error {
+	return validate.Struct(s)
+
+}
