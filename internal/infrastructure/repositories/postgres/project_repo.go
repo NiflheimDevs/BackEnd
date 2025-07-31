@@ -194,7 +194,7 @@ func (repo *ProjectRepo) GetAllProjectsRelatedToUser(userID int) []models.Projec
 	JOIN team AS t ON ut.team_id = t.id
 	JOIN bid AS b ON t.id = b.team_id
 	JOIN project AS p ON b.project_id = p.id
-	WHERE u.id = $1 AND p.status > 2 AND (ut.joined_at < b.created_time) AND (ut.left_at IS NULL OR (p.status = 4 AND ut.left_at < p.end_time) ));`
+	WHERE u.id = $1 AND p.status > 2 AND (ut.joined_at < b.created_time) AND (ut.left_at IS NULL OR (p.status = 4 AND ut.left_at < p.end_time));`
 
 	result, err := repo.PG.Query(ctx, query, userID)
 
