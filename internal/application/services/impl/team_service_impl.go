@@ -177,7 +177,7 @@ func (ts *TeamService) GetInternalTeamInfo(teamid int64) *dto.GetInternalTeamInf
 			})
 		}
 		team.Type = 2
-		team.Profile = ts.FileService.GetProfilePhotoURL(int(team.ID), false)
+		team.Profile = ts.FileService.GetProfilePhotoURL(team.OwnerID, false)
 	} else {
 		team.Type = 1
 		team.Profile = ts.FileService.GetTeamProfilePhotoURL(teamid, false)

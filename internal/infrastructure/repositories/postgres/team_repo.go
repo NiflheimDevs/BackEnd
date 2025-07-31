@@ -441,7 +441,7 @@ func (tr *TeamRepo) GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, e
 	defer cancel()
 
 	firstquery := `
-		SELECT t.title
+		SELECT t.id,t.title
 		FROM team AS t
 		WHERE t.id = $1 AND t.type = 1
 	`
@@ -453,7 +453,7 @@ func (tr *TeamRepo) GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, e
 	var team dto.GetInternalTeamInfo
 	var useridstring string
 
-	err := tr.PG.QueryRow(ctx, firstquery, teamid).Scan(&useridstring)
+	err := tr.PG.QueryRow(ctx, firstquery, teamid).Scan(&team.ID, &useridstring)
 	if err == pgx.ErrNoRows {
 		return nil, err
 	}
@@ -476,7 +476,6 @@ func (tr *TeamRepo) GetOneManTeamInfo(teamid int64) (*dto.GetInternalTeamInfo, e
 	if bio.Valid {
 		team.Description = bio.String
 	}
-	team.ID = int64(userid)
 
 	return &team, nil
 }

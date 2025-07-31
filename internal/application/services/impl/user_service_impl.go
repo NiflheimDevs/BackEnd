@@ -494,7 +494,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 	highpath := us.FileService.GetProfilePhotoURL(targetUserid, true)
 	lowPath := us.FileService.GetProfilePhotoURL(targetUserid, false)
 
-	rating := us.CommentService.GetUserStar(targetUserid)
+	rating, commentCount := us.CommentService.GetUserStarAndComment(targetUserid)
 
 	response := dto.UserProfileDTO{
 		Phone:              targetInfo.Phone,
@@ -506,6 +506,7 @@ func (us *UserService) GetUserInfo(targetUserid int, userid int) *dto.UserProfil
 		LowProfilePicture:  lowPath,
 		CreatedAt:          targetInfo.CreatedAt,
 		Rating:             rating,
+		CommentCount:       commentCount,
 	}
 	// againts my will
 	response.Email = targetInfo.Email
