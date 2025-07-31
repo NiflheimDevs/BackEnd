@@ -370,7 +370,36 @@ func (ph *ProjectHandler) GetParticipatedProjectsForUser(w http.ResponseWriter, 
 
 func (ph *ProjectHandler) SearchProjects(w http.ResponseWriter, r *http.Request) {
 
-	params := Validated[elasticmodel.QueryAndTagSearchReqDto](ph.Validator, r)
+	// params := Validated[elasticmodel.QueryAndTagSearchReqDto](ph.Validator, r)
+
+	q := r.URL.Query()
+
+	page, err := strconv.Atoi(q.Get("page"))
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	limit, err := strconv.Atoi(q.Get("limit"))
+	if err != nil {
+		panic(exceptions.Exception{
+			Tag: exceptions.BAD_REQUEST,
+		})
+	}
+
+	params := &elasticmodel.QueryAndTagSearchReqDto{
+		Query:  q.Get("query"),
+		Tags:   q["tags"],
+		Page:   page,
+		Limit:  limit,
+		SortBy: q.Get("sort_by"),
+		Order:  q.Get("order"),
+	}
+
+	if len(params.Tags) == 1 && params.Tags[0] == "" {
+		params.Tags = nil
+	}
 
 	if params.Order != "" && params.Order != "desc" && params.Order != "asc" {
 		panic(exceptions.Exception{
@@ -378,7 +407,7 @@ func (ph *ProjectHandler) SearchProjects(w http.ResponseWriter, r *http.Request)
 		})
 	}
 
-	res := ph.ProjectService.SearchProjects(&params)
+	res := ph.ProjectService.SearchProjects(params)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

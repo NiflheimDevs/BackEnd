@@ -33,6 +33,9 @@ func (ss *SherlockService) SearchEverything(req *elasticmodel.SearchRequest) []e
 	if req.Order == "" {
 		req.Order = "desc"
 	}
+	if len(req.Types) == 0 || (len(req.Tags) == 1 && req.Tags[0] == "") {
+		req.Types = []string{enums.ELASTIC_USER_INDEX, enums.ELASTIC_PROJECT_INDEX, enums.ELASTIC_TEAM_INDEX}
+	}
 
 	res, err := ss.SearchRepo.SearchUsersProjectsTeams(req)
 	if err != nil {
