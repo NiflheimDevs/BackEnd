@@ -6,7 +6,7 @@ import (
 
 type CommentService interface {
 	PutComment(userID, ProjectID int, content string, star int) int
-	GetUserStar(userID int) float64
+	GetUserStarAndComment(userID int) (float64, int)
 	GetUserComments(userID int) []dto.CommentWithUserDTO
 	GetCommentInfo(id int) *dto.CommentWithUserDTO
 	GetCommentOfProject(projectID int) *dto.CommentDTO

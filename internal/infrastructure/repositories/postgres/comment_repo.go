@@ -83,6 +83,11 @@ func (cr *CommentRepo) GetStar(userID int) (float64, error) {
 	return 0, nil
 }
 
+func (cr *CommentRepo) GetCommentCount(userID int) (int, error) {
+	comment, err := cr.GetUserComments(userID)
+	return len(comment), err
+}
+
 func (cr *CommentRepo) GetUserComments(userID int) ([]dto.CommentWithUserDTO, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

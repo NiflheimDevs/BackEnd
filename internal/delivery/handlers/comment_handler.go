@@ -57,7 +57,7 @@ func (ch *CommentHandler) GetStar(w http.ResponseWriter, r *http.Request) {
 	userIDString := chi.URLParam(r, "user_id")
 	userID, _ := strconv.Atoi(userIDString)
 
-	star := ch.CommentService.GetUserStar(userID)
+	star, _ := ch.CommentService.GetUserStarAndComment(userID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
