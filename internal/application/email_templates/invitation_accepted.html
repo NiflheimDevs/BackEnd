@@ -1,35 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
-    <title>Invitation Accepted</title>
+    <title>پذیرش دعوت</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        html {
+            height: 100%;
+        }
+
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Vazirmatn', sans-serif;
             margin: 0;
             padding: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top left, #ffdee9, #b5fffc);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
 
         .container {
-            max-width: 600px;
-            margin: 40px auto;
+            max-width: 700px;
+            margin: 80px auto;
+            padding: 40px 30px;
             background-color: #ffffff;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 150px;
+            margin: 0 auto 30px;
         }
 
         h1 {
-            color: #333333;
-            font-size: 24px;
+            font-size: 30px;
+            color: #d81b60;
+            margin-bottom: 20px;
         }
 
         p {
-            font-size: 16px;
-            color: #555555;
-            line-height: 1.6;
+            font-size: 17px;
+            color: #444;
+            margin: 12px 0;
         }
 
         .highlight {
@@ -38,24 +53,24 @@
         }
 
         .footer {
-            margin-top: 30px;
+            margin-top: 40px;
             font-size: 13px;
-            color: #999999;
-            text-align: center;
+            color: #888;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Invitation Accepted 🎉</h1>
-        <p>Hi <strong>{{.InviterUsername}}</strong>,</p>
-        <p><span class="highlight">{{.InviteeUsername}}</span> has accepted your invitation to join the team <span
-                class="highlight">{{.TeamName}}</span>.</p>
-        <p>You can now collaborate with them inside your team workspace.</p>
-        <p>Thanks for growing your team with us!</p>
+        <img src="../../../../Downloads/BIDLANCERLOGO.svg" alt="Bidlancer Logo" class="logo">
+        <h1>پذیرش دعوت 🎉</h1>
+        <p>سلام <strong>{{.InviterUsername}}</strong> عزیز،</p>
+        <p>کاربر <span class="highlight">{{.InviteeUsername}}</span> دعوت شما برای پیوستن به تیم
+            <span class="highlight">{{.TeamName}}</span> را پذیرفته است.</p>
+        <p>اکنون می‌توانید با یکدیگر در محیط تیم همکاری کنید.</p>
+        <p>از اینکه تیم خود را با ما رشد می‌دهید متشکریم!</p>
         <div class="footer">
-            This is an automated message – no need to reply.
+            این پیام به صورت خودکار ارسال شده است – نیازی به پاسخ نیست.
         </div>
     </div>
 </body>
