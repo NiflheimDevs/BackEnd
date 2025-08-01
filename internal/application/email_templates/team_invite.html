@@ -1,66 +1,101 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
-    <title>Team Invitation</title>
+    <title>دعوت به تیم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        html {
+            height: 100%;
+        }
+
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Vazirmatn', sans-serif;
             margin: 0;
             padding: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top left, #ffdee9, #b5fffc);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
 
         .container {
-            max-width: 600px;
-            margin: 40px auto;
+            max-width: 700px;
+            margin: 80px auto;
+            padding: 40px 30px;
             background-color: #ffffff;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 150px;
+            margin: 0 auto 30px;
         }
 
         h1 {
-            color: #333333;
+            font-size: 30px;
+            color: #d81b60;
+            margin-bottom: 20px;
         }
 
         p {
-            font-size: 16px;
-            color: #555555;
-            line-height: 1.6;
+            font-size: 17px;
+            color: #444;
+            margin: 12px 0;
         }
 
         .button {
             display: inline-block;
-            margin-top: 20px;
-            padding: 12px 24px;
-            background-color: #28a745;
+            margin-top: 25px;
+            padding: 14px 28px;
+            background: linear-gradient(to right, #43cea2, #185a9d);
             color: white;
             text-decoration: none;
-            border-radius: 6px;
             font-weight: bold;
+            border-radius: 10px;
+            font-size: 16px;
+            box-shadow: 0 5px 15px rgba(24, 90, 157, 0.5);
+        }
+
+        .button:hover {
+            opacity: 0.9;
+        }
+
+        .url-box {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-radius: 6px;
+            direction: ltr;
+            font-family: monospace;
+            font-size: 13px;
+            color: #000;
         }
 
         .footer {
-            margin-top: 30px;
+            margin-top: 40px;
             font-size: 13px;
-            color: #999999;
-            text-align: center;
+            color: #888;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>You’ve Been Invited!</h1>
-        <p><strong>{{.InviterUsername}}</strong> has invited you to join the team <strong>{{.TeamName}}</strong>.</p>
-        <p>Click the button below to see more details.</p>
-        <a href="{{.RedirectURL}}" class="button">View Invitation</a>
-        <p>If the button doesn’t work, copy and paste this link into your browser:</p>
-        <p><a href="{{.RedirectURL}}">{{.RedirectURL}}</a></p>
+        <img src="cid:logo" alt="Bidlancer Logo" class="logo">
+        <h1>دعوت به تیم</h1>
+        <p><strong>{{.InviterUsername}}</strong> شما را به تیم <strong>{{.TeamName}}</strong> دعوت کرده است.</p>
+        <p>برای مشاهده جزئیات، روی دکمه زیر کلیک کنید:</p>
+        <a href="{{.RedirectURL}}" class="button">مشاهده دعوت‌نامه</a>
+        <p>اگر دکمه بالا کار نمی‌کند، لینک زیر را در مرورگر خود باز کنید:</p>
+        <div class="url-box">
+            {{.RedirectURL}}
+        </div>
         <div class="footer">
-            You received this email because someone invited you to join their team.
+            این ایمیل به این دلیل برای شما ارسال شده که شخصی شما را به تیمی دعوت کرده است.
         </div>
     </div>
 </body>
