@@ -3,6 +3,7 @@ package pkg
 import (
 	"bytes"
 	"html/template"
+	"path/filepath"
 
 	"gopkg.in/gomail.v2"
 )
@@ -42,7 +43,7 @@ func NewHTMLMessage(from, to, subject, htmlBody string) *gomail.Message {
 	msg.SetHeader("To", to)
 	msg.SetHeader("Subject", subject)
 	msg.SetBody("text/html", htmlBody)
-	msg.Embed("./internal/application/email_templates/src/BIDLANCERLOGO.svg", gomail.SetHeader(map[string][]string{
+	msg.Embed(filepath.Join("internal", "application", "email_templates", "src", "BIDLANCERLOGO.svg"), gomail.SetHeader(map[string][]string{
 		"Content-ID": {"<logo>"},
 	}))
 	return msg
