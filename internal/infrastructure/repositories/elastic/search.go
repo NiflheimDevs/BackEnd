@@ -430,7 +430,7 @@ func (se *SearchRepo) extractInnerHits(respond *elasticmodel.SearchResult) []map
 
 	var result []map[string]any
 
-	for i := 0; i < respond.Hits.Total.Value; i++ {
+	for i := 0; i < respond.Hits.Total.Value-1; i++ {
 		result = append(result, respond.Hits.Hits[i].Source)
 	}
 
