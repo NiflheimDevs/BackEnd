@@ -85,7 +85,8 @@ func (pc *ProjectCdc) ProjectTagCapturer(data []byte) error {
 				break
 			}
 		}
-	} else if message.Type == "c" {
+		//temp
+	} else if message.Type == "c" || message.Type == "u" {
 		project.Tags = append(project.Tags, tag.Name)
 	}
 
