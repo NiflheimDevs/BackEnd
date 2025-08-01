@@ -38,42 +38,73 @@ func (se *SearchRepo) SearchUsers(req *elasticmodel.SearchRequest) ([]map[string
 		})
 	}
 
-	query := map[string]any{
-		"query": map[string]any{
-			"bool": map[string]any{
-				"must": []any{
-					map[string]any{
-						"multi_match": map[string]any{
-							"query": req.Query,
-							"fields": []string{
-								"username^3",
-								"firstname^3",
-								"lastname^3",
-							},
-							"fuzziness": "AUTO",
-						},
-					},
-				},
-				"filter": []any{
-					map[string]any{
-						"bool": map[string]any{
-							"must": mustTagFilters,
-						},
-					},
-				},
-			},
-		},
-		"sort": []any{
-			map[string]any{
-				req.SortBy: map[string]any{
-					"order": req.Order,
-				},
-			},
-		},
-		"from": from,
-		"size": req.Limit,
-	}
+	var query map[string]any
 
+	if req.Query == "" {
+		query = map[string]any{
+			"query": map[string]any{
+				"bool": map[string]any{
+					"must": []any{
+						map[string]any{
+							"match_all": map[string]any{},
+						},
+					},
+					"filter": []any{
+						map[string]any{
+							"bool": map[string]any{
+								"must": mustTagFilters,
+							},
+						},
+					},
+				},
+			},
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
+				},
+			},
+			"from": from,
+			"size": req.Limit,
+		}
+	} else {
+		query = map[string]any{
+			"query": map[string]any{
+				"bool": map[string]any{
+					"must": []any{
+						map[string]any{
+							"multi_match": map[string]any{
+								"query": req.Query,
+								"fields": []string{
+									"username^3",
+									"firstname^3",
+									"lastname^3",
+								},
+								"fuzziness": "AUTO",
+							},
+						},
+					},
+					"filter": []any{
+						map[string]any{
+							"bool": map[string]any{
+								"must": mustTagFilters,
+							},
+						},
+					},
+				},
+			},
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
+				},
+			},
+			"from": from,
+			"size": req.Limit,
+		}
+	}
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
 		return nil, err
@@ -119,45 +150,80 @@ func (se *SearchRepo) SearchProjects(req *elasticmodel.SearchRequest) ([]map[str
 			"term": map[string]any{"tags.keyword": tag},
 		})
 	}
-
-	query := map[string]any{
-		"query": map[string]any{
-			"bool": map[string]any{
-				"must": []any{
-					map[string]any{
-						"multi_match": map[string]any{
-							"query": req.Query,
-							"fields": []string{
-								"title^3",
-								"description",
+	var query map[string]any
+	if req.Query == "" {
+		query = map[string]any{
+			"query": map[string]any{
+				"bool": map[string]any{
+					"must": []any{
+						map[string]any{
+							"match_all": map[string]any{},
+						},
+					},
+					"filter": []any{
+						map[string]any{
+							"bool": map[string]any{
+								"must": mustTagFilters,
 							},
-							"fuzziness": "AUTO",
-						},
-					},
-				},
-				"filter": []any{
-					map[string]any{
-						"bool": map[string]any{
-							"must": mustTagFilters,
 						},
 					},
 				},
 			},
-		},
-		"sort": []any{
-			map[string]any{
-				req.SortBy: map[string]any{
-					"order": req.Order,
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
+				},
+				map[string]any{
+					"created_time": map[string]any{
+						"order": "asc",
+					},
 				},
 			},
-			map[string]any{
-				"created_time": map[string]any{
-					"order": "asc",
+			"from": from,
+			"size": req.Limit,
+		}
+	} else {
+		query = map[string]any{
+			"query": map[string]any{
+				"bool": map[string]any{
+					"must": []any{
+						map[string]any{
+							"multi_match": map[string]any{
+								"query": req.Query,
+								"fields": []string{
+									"title^3",
+									"description",
+								},
+								"fuzziness": "AUTO",
+							},
+						},
+					},
+					"filter": []any{
+						map[string]any{
+							"bool": map[string]any{
+								"must": mustTagFilters,
+							},
+						},
+					},
 				},
 			},
-		},
-		"from": from,
-		"size": req.Limit,
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
+				},
+				map[string]any{
+					"created_time": map[string]any{
+						"order": "asc",
+					},
+				},
+			},
+			"from": from,
+			"size": req.Limit,
+		}
 	}
 
 	var buf bytes.Buffer
@@ -210,30 +276,47 @@ func (se *SearchRepo) SearchUsersProjectsTeams(req *elasticmodel.SearchRequest) 
 	if from < 0 {
 		from = 0
 	}
-
-	query := map[string]any{
-		"query": map[string]any{
-			"multi_match": map[string]any{
-				"query": req.Query,
-				"fields": []string{
-					"username^3",
-					"firstname^3",
-					"lastname^3",
-					"title^3",
-					"description",
-				},
-				"fuzziness": "AUTO",
+	var query map[string]any
+	if req.Query == "" {
+		query = map[string]any{
+			"query": map[string]any{
+				"match_all": map[string]any{},
 			},
-		},
-		"sort": []any{
-			map[string]any{
-				req.SortBy: map[string]any{
-					"order": req.Order,
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
 				},
 			},
-		},
-		"from": from,
-		"size": req.Limit,
+			"from": from,
+			"size": req.Limit,
+		}
+	} else {
+		query = map[string]any{
+			"query": map[string]any{
+				"multi_match": map[string]any{
+					"query": req.Query,
+					"fields": []string{
+						"username^3",
+						"firstname^3",
+						"lastname^3",
+						"title^3",
+						"description",
+					},
+					"fuzziness": "AUTO",
+				},
+			},
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
+				},
+			},
+			"from": from,
+			"size": req.Limit,
+		}
 	}
 
 	var buf bytes.Buffer
@@ -274,26 +357,43 @@ func (se *SearchRepo) SearchTeams(req *elasticmodel.SearchRequest) ([]map[string
 	if from < 0 {
 		from = 0
 	}
-
-	query := map[string]any{
-		"query": map[string]any{
-			"multi_match": map[string]any{
-				"query": req.Query,
-				"fields": []string{
-					"title^3",
-					"description"},
-				"fuzziness": "AUTO",
+	var query map[string]any
+	if req.Query == "" {
+		query = map[string]any{
+			"query": map[string]any{
+				"match_all": map[string]any{},
 			},
-		},
-		"sort": []any{
-			map[string]any{
-				req.SortBy: map[string]any{
-					"order": req.Order,
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
 				},
 			},
-		},
-		"from": from,
-		"size": req.Limit,
+			"from": from,
+			"size": req.Limit,
+		}
+	} else {
+		query = map[string]any{
+			"query": map[string]any{
+				"multi_match": map[string]any{
+					"query": req.Query,
+					"fields": []string{
+						"title^3",
+						"description"},
+					"fuzziness": "AUTO",
+				},
+			},
+			"sort": []any{
+				map[string]any{
+					req.SortBy: map[string]any{
+						"order": req.Order,
+					},
+				},
+			},
+			"from": from,
+			"size": req.Limit,
+		}
 	}
 
 	var buf bytes.Buffer
