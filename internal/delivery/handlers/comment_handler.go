@@ -68,6 +68,10 @@ func (ch *CommentHandler) GetUserComments(w http.ResponseWriter, r *http.Request
 	userIDString := chi.URLParam(r, "user_id")
 	userID, _ := strconv.Atoi(userIDString)
 
+	if userID == 0 {
+		userID = r.Context().Value(ch.Constants.Context.UserID).(int)
+	}
+
 	comments := ch.CommentService.GetUserComments(userID)
 
 	w.Header().Set("Content-Type", "application/json")
