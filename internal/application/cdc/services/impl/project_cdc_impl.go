@@ -59,6 +59,10 @@ func (pc *ProjectCdc) ProjectTagCapturer(data []byte) error {
 	case "c":
 		tagid = message.After.Tagid
 		projectid = message.After.Projectid
+	// temporary
+	case "u":
+		projectid = message.After.Projectid
+		tagid = message.After.Tagid
 	default:
 		return errors.New("not supported operation (u is unsupported)")
 	}
@@ -81,7 +85,8 @@ func (pc *ProjectCdc) ProjectTagCapturer(data []byte) error {
 				break
 			}
 		}
-	} else if message.Type == "c" {
+		//temp
+	} else if message.Type == "c" || message.Type == "u" {
 		project.Tags = append(project.Tags, tag.Name)
 	}
 

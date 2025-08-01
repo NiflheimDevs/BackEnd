@@ -28,7 +28,7 @@ type SearchRequest struct {
 }
 
 type SimpleQuerySearchReqDto struct {
-	Query  string `json:"query" validate:"required"`
+	Query  string `json:"query"`
 	Page   int    `json:"page" validate:"required"`
 	Limit  int    `json:"limit" validate:"required"`
 	SortBy string `json:"sort_by"`
@@ -36,7 +36,7 @@ type SimpleQuerySearchReqDto struct {
 }
 
 type QueryAndTagSearchReqDto struct {
-	Query  string   `json:"query" validate:"required"`
+	Query  string   `json:"query"`
 	Tags   []string `json:"tags"`
 	Page   int      `json:"page" validate:"required"`
 	Limit  int      `json:"limit" validate:"required"`
